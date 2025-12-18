@@ -8,12 +8,17 @@
 import Foundation
 
 class LevelUpChoiceGenerator {
-    private var availableWeapons: [BaseWeapon.Type] = []
+    private var weaponFactories: [() -> BaseWeapon] = []
     private var ownedPassives: [PassiveItem] = []
     
     init() {
-        // Initialize available weapons (will expand as we add more)
-        availableWeapons = [CurvedDagger.self]
+        // Initialize available weapons using factory closures
+        weaponFactories = [
+            { CurvedDagger() },
+            { SandBolt() },
+            { SunRay() },
+            { DustDevil() }
+        ]
     }
     
     func generateChoices(
@@ -114,13 +119,13 @@ class LevelUpChoiceGenerator {
     }
     
     private func generateNewWeapon(excluding: Set<String>) -> BaseWeapon? {
-        // For now, only CurvedDagger is available
-        // Will expand as we add more weapons
-        let weapon = CurvedDagger()
-        if !excluding.contains(weapon.weaponName) {
-            return weapon
+        // Get available weapons that aren't already owned
+        let available = weaponFactories.compactMap { factory -> BaseWeapon? in
+            let weapon = factory()
+            return excluding.contains(weapon.weaponName) ? nil : weapon
         }
-        return nil
+        
+        return available.randomElement()
     }
     
     private func generateNewPassive(excluding: Set<PassiveItemType>) -> PassiveItem? {
