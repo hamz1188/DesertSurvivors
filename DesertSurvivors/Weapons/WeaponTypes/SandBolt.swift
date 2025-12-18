@@ -49,7 +49,7 @@ class SandBolt: BaseWeapon {
             projectile.update(deltaTime: deltaTime)
             
             // Check collision
-            if let hitEnemy = projectile.checkCollision(with: enemies) {
+            if projectile.checkCollision(with: enemies) != nil {
                 projectile.removeFromParent()
                 return true
             }

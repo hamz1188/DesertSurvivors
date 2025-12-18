@@ -107,7 +107,6 @@ class LevelUpUI: SKNode {
         let buttonHeight: CGFloat = 80
         let spacing: CGFloat = 10
         let startY: CGFloat = 120
-        let buttonWidth: CGFloat = 350
         
         for (index, choice) in choices.enumerated() {
             let button = createChoiceButton(choice: choice, index: index)
