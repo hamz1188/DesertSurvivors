@@ -17,7 +17,15 @@ class LevelUpChoiceGenerator {
             { CurvedDagger() },
             { SandBolt() },
             { SunRay() },
-            { DustDevil() }
+            { DustDevil() },
+            { ScorpionTail() },
+            { MirageClone() },
+            { OilFlask() },
+            { DesertEagle() },
+            { SandstormShield() },
+            { AncientCurse() },
+            { Quicksand() },
+            { DjinnsFlame() }
         ]
     }
     
