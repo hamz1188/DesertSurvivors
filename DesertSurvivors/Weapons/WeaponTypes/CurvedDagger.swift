@@ -35,9 +35,8 @@ class CurvedDagger: BaseWeapon {
     }
     
     override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
-        
-        // Update orbit
+        // Don't call super.update for orbiting weapons - they work continuously
+        // Update orbit continuously
         currentAngle += orbitSpeed * CGFloat(deltaTime)
         
         // Update dagger positions
@@ -49,7 +48,7 @@ class CurvedDagger: BaseWeapon {
             dagger.position = CGPoint(x: x, y: y)
             dagger.zRotation = angle + .pi / 2
             
-            // Check collision with enemies
+            // Check collision with enemies (with a small cooldown to prevent spam)
             checkDaggerCollision(dagger: dagger, enemies: enemies)
         }
     }

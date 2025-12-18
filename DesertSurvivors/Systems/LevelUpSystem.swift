@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Darwin
 
 class LevelUpSystem {
     var currentLevel: Int = 1
@@ -13,7 +14,7 @@ class LevelUpSystem {
     var xpForNextLevel: Float
     
     init() {
-        xpForNextLevel = calculateXPForLevel(2)
+        xpForNextLevel = LevelUpSystem.calculateXPForLevel(2)
     }
     
     func addXP(_ amount: Float, multiplier: Float = 1.0) {
@@ -27,13 +28,13 @@ class LevelUpSystem {
     private func levelUp() {
         currentLevel += 1
         currentXP -= xpForNextLevel
-        xpForNextLevel = calculateXPForLevel(currentLevel + 1)
+        xpForNextLevel = LevelUpSystem.calculateXPForLevel(currentLevel + 1)
         
         // Trigger level up event (will show UI)
         NotificationCenter.default.post(name: .playerLevelUp, object: nil, userInfo: ["level": currentLevel])
     }
     
-    private func calculateXPForLevel(_ level: Int) -> Float {
+    private static func calculateXPForLevel(_ level: Int) -> Float {
         return Constants.baseXP * pow(Constants.xpMultiplier, Float(level - 1))
     }
     

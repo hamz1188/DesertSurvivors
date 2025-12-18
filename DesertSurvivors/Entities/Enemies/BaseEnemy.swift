@@ -8,7 +8,7 @@
 import SpriteKit
 
 class BaseEnemy: SKNode {
-    let name: String
+    var enemyName: String
     var maxHealth: Float
     var currentHealth: Float
     var moveSpeed: CGFloat
@@ -18,12 +18,15 @@ class BaseEnemy: SKNode {
     weak var target: Player?
     
     init(name: String, maxHealth: Float, moveSpeed: CGFloat, damage: Float) {
-        self.name = name
+        self.enemyName = name
         self.maxHealth = maxHealth
         self.currentHealth = maxHealth
         self.moveSpeed = moveSpeed
         self.damage = damage
         super.init()
+        
+        // Set SKNode's name property (inherited, optional String)
+        self.name = name
         
         setupSprite()
         setupPhysics()
@@ -63,8 +66,9 @@ class BaseEnemy: SKNode {
     }
     
     func takeDamage(_ amount: Float) {
+        guard isAlive else { return }
         currentHealth -= amount
-        if currentHealth <= 0 && isAlive {
+        if currentHealth <= 0 {
             die()
         }
     }

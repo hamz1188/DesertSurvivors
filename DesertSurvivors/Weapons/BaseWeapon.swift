@@ -8,7 +8,7 @@
 import SpriteKit
 
 protocol WeaponProtocol {
-    var name: String { get }
+    var weaponName: String { get }
     var baseDamage: Float { get }
     var cooldown: TimeInterval { get }
     var level: Int { get set }
@@ -19,21 +19,21 @@ protocol WeaponProtocol {
 }
 
 class BaseWeapon: SKNode, WeaponProtocol {
-    let name: String
+    var weaponName: String
     let baseDamage: Float
     var cooldown: TimeInterval
     var level: Int = 1
     let maxLevel: Int = 8
     
     private var currentCooldown: TimeInterval = 0
-    weak var scene: SKScene?
     var damageMultiplier: Float = 1.0
     
     init(name: String, baseDamage: Float, cooldown: TimeInterval) {
-        self.name = name
+        self.weaponName = name
         self.baseDamage = baseDamage
         self.cooldown = cooldown
         super.init()
+        self.name = name // Set SKNode's name property (optional String)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -48,6 +48,7 @@ class BaseWeapon: SKNode, WeaponProtocol {
             currentCooldown = cooldown
         }
     }
+    
     
     func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
         // Override in subclasses

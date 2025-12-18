@@ -17,7 +17,7 @@ class WeaponManager {
     }
     
     func addWeapon(_ weapon: BaseWeapon) {
-        weapon.scene = scene
+        // scene property is readonly, but weapon will have access to it when added to scene
         if let stats = playerStats {
             weapon.damageMultiplier = stats.damageMultiplier
         }
