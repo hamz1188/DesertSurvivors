@@ -128,22 +128,38 @@ class SandstormShield: BaseWeapon {
     override func upgrade() {
         super.upgrade()
 
-        // Increase shield radius and add more segments
+        // Level-based upgrades
+        // Level 1: 6 segments, 70 radius, 2.0 speed
+        // Level 2: 7 segments, 80 radius, 2.3 speed
+        // Level 3: 8 segments, 90 radius, 2.6 speed
+        // Level 4: 9 segments, 100 radius, 2.9 speed
+        // Level 5: 10 segments, 110 radius, 3.2 speed
+        // Level 6: 11 segments, 120 radius, 3.5 speed
+        // Level 7: 12 segments, 130 radius, 3.8 speed
+        // Level 8: 13 segments, 140 radius, 4.1 speed
+
         shieldRadius = 70 + CGFloat(level - 1) * 10
         orbitSpeed = 2.0 + CGFloat(level - 1) * 0.3
 
         // Add more shield segments at higher levels
-        if level > 1 && shieldSegments.count < 12 {
-            let newSegmentCount = 6 + (level - 1)
-            while shieldSegments.count < newSegmentCount {
-                let segment = SKShapeNode(rectOf: CGSize(width: 40, height: 15), cornerRadius: 5)
-                segment.fillColor = SKColor.yellow.withAlphaComponent(0.6)
-                segment.strokeColor = .orange
-                segment.lineWidth = 2
-                segment.zPosition = Constants.ZPosition.weapon
+        let targetSegmentCount = 6 + (level - 1)
+        while shieldSegments.count < targetSegmentCount && shieldSegments.count < 13 {
+            let segment = SKShapeNode(rectOf: CGSize(width: 40, height: 15), cornerRadius: 5)
+            segment.fillColor = SKColor.yellow.withAlphaComponent(0.6)
+            segment.strokeColor = level >= 5 ? .red : .orange
+            segment.lineWidth = 2
+            segment.zPosition = Constants.ZPosition.weapon
 
-                shieldSegments.append(segment)
-                shieldNode?.addChild(segment)
+            shieldSegments.append(segment)
+            shieldNode?.addChild(segment)
+        }
+
+        // Visual enhancement at higher levels
+        if level >= 8 {
+            for segment in shieldSegments {
+                segment.fillColor = SKColor.orange.withAlphaComponent(0.8)
+                segment.strokeColor = .red
+                segment.lineWidth = 3
             }
         }
     }

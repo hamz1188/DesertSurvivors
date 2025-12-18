@@ -158,14 +158,39 @@ class CurvedDagger: BaseWeapon {
     
     override func upgrade() {
         super.upgrade()
-        
-        // Add more daggers and increase orbit radius
-        if level <= 4 {
+
+        // Level-based upgrades
+        // Level 1: 1 dagger, 60 radius, 3.0 speed
+        // Level 2: 2 daggers, 70 radius, 3.5 speed
+        // Level 3: 3 daggers, 80 radius, 4.0 speed
+        // Level 4: 4 daggers, 90 radius, 4.5 speed
+        // Level 5: 5 daggers, 100 radius, 5.0 speed
+        // Level 6: 6 daggers, 110 radius, 5.5 speed
+        // Level 7: 7 daggers, 120 radius, 6.0 speed
+        // Level 8: 8 daggers, 130 radius, 6.5 speed
+
+        // Add daggers up to level count
+        while daggers.count < level {
             createDagger()
         }
-        
+
+        // Scale properties
         orbitRadius = 60 + CGFloat(level - 1) * 10
         orbitSpeed = 3.0 + CGFloat(level - 1) * 0.5
+
+        // Visual enhancement at higher levels
+        if level >= 5 {
+            for dagger in daggers {
+                dagger.color = .orange.withAlphaComponent(0.9)
+                dagger.setScale(1.2)
+            }
+        }
+        if level >= 8 {
+            for dagger in daggers {
+                dagger.color = .red
+                dagger.setScale(1.5)
+            }
+        }
     }
     
     override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {

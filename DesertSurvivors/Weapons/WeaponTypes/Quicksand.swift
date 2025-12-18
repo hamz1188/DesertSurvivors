@@ -210,11 +210,20 @@ class Quicksand: BaseWeapon {
     override func upgrade() {
         super.upgrade()
 
-        // Increase trap size, duration, damage, and max traps
+        // Level-based upgrades
+        // Level 1: 3 traps, 100 radius, 10s duration, 4.0 damage, 50% slow
+        // Level 2: 3 traps, 115 radius, 11.5s duration, 4.8 damage, 45% slow
+        // Level 3: 4 traps, 130 radius, 13s duration, 5.6 damage, 40% slow
+        // Level 4: 4 traps, 145 radius, 14.5s duration, 6.4 damage, 35% slow
+        // Level 5: 5 traps, 160 radius, 16s duration, 7.2 damage, 30% slow
+        // Level 6: 5 traps, 175 radius, 17.5s duration, 8.0 damage, 25% slow
+        // Level 7: 6 traps, 190 radius, 19s duration, 8.8 damage, 20% slow
+        // Level 8: 6 traps, 205 radius, 20.5s duration, 9.6 damage, 20% slow
+
         trapRadius = 100 + CGFloat(level - 1) * 15
         trapDuration = 10.0 + Double(level - 1) * 1.5
         trapDamage = 4.0 + Float(level - 1) * 0.8
-        maxTraps = min(3 + (level - 1) / 2, 6) // Max 6 traps
-        slowMultiplier = max(0.5 - Float(level - 1) * 0.05, 0.2) // Slower at higher levels
+        maxTraps = min(3 + (level - 1) / 2, 6)
+        slowMultiplier = max(0.5 - Float(level - 1) * 0.05, 0.2)
     }
 }

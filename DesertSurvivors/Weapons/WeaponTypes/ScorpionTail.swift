@@ -158,10 +158,20 @@ class ScorpionTail: BaseWeapon {
     override func upgrade() {
         super.upgrade()
 
-        // Increase whip length, width, and poison chance
+        // Level-based upgrades
+        // Level 1: 150 length, 30 width, 20% poison, 2.0 poison damage
+        // Level 2: 170 length, 35 width, 25% poison, 2.5 poison damage
+        // Level 3: 190 length, 40 width, 30% poison, 3.0 poison damage
+        // Level 4: 210 length, 45 width, 35% poison, 3.5 poison damage
+        // Level 5: 230 length, 50 width, 40% poison, 4.0 poison damage
+        // Level 6: 250 length, 55 width, 45% poison, 4.5 poison damage
+        // Level 7: 270 length, 60 width, 50% poison, 5.0 poison damage
+        // Level 8: 290 length, 65 width, 60% poison, 5.5 poison damage
+
         whipLength = 150 + CGFloat(level - 1) * 20
         whipWidth = 30 + CGFloat(level - 1) * 5
-        poisonChance = min(0.2 + Float(level - 1) * 0.05, 0.6) // Max 60% poison chance
+        poisonChance = min(0.2 + Float(level - 1) * 0.05, 0.6)
         poisonDamage = 2.0 + Float(level - 1) * 0.5
+        poisonDuration = 3.0 + Double(level - 1) * 0.5 // Poison lasts longer at higher levels
     }
 }

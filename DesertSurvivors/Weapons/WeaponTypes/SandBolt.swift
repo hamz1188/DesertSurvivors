@@ -21,24 +21,34 @@ class SandBolt: BaseWeapon {
     
     override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
         guard let scene = scene else { return }
-        
+
         // Find nearest enemy
         guard let nearestEnemy = findNearestEnemy(from: playerPosition, enemies: enemies) else {
             return
         }
-        
-        // Fire projectile at nearest enemy
-        let direction = (nearestEnemy.position - playerPosition).normalized()
-        let projectile = Projectile(
-            damage: getDamage(),
-            speed: projectileSpeed,
-            direction: direction,
-            color: .brown
-        )
-        
-        projectile.position = playerPosition
-        scene.addChild(projectile)
-        activeProjectiles.append(projectile)
+
+        // Determine number of projectiles based on level
+        let projectileCount = level < 4 ? 1 : level < 6 ? 2 : level < 8 ? 3 : 4
+
+        for i in 0..<projectileCount {
+            let spreadAngle: CGFloat = projectileCount > 1 ? CGFloat(i - projectileCount / 2) * 0.2 : 0
+            let direction = (nearestEnemy.position - playerPosition).normalized()
+            let rotatedDirection = CGPoint(
+                x: direction.x * cos(spreadAngle) - direction.y * sin(spreadAngle),
+                y: direction.x * sin(spreadAngle) + direction.y * cos(spreadAngle)
+            )
+
+            let projectile = Projectile(
+                damage: getDamage(),
+                speed: projectileSpeed,
+                direction: rotatedDirection,
+                color: level >= 5 ? .orange : .brown
+            )
+
+            projectile.position = playerPosition
+            scene.addChild(projectile)
+            activeProjectiles.append(projectile)
+        }
     }
     
     override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
@@ -80,8 +90,14 @@ class SandBolt: BaseWeapon {
     
     override func upgrade() {
         super.upgrade()
-        
-        // Increase projectile count and speed
+
+        // Level-based upgrades
+        // Level 1: 1 projectile, 300 speed
+        // Level 2-3: 1 projectile, faster
+        // Level 4-5: 2 projectiles per attack
+        // Level 6-7: 3 projectiles per attack
+        // Level 8: 4 projectiles per attack
+
         projectileSpeed = 300 + CGFloat(level - 1) * 50
     }
 }

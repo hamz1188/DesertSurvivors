@@ -196,8 +196,17 @@ class DesertEagle: BaseWeapon {
     override func upgrade() {
         super.upgrade()
 
-        // Increase falcon count, speed, and lifetime
-        maxFalcons = 1 + (level - 1) / 2 // 1, 1, 2, 2, 3, 3, 4, 4
+        // Level-based upgrades
+        // Level 1: 1 falcon, 350 speed, 6.0s lifetime
+        // Level 2: 1 falcon, 380 speed, 6.5s lifetime
+        // Level 3: 2 falcons, 410 speed, 7.0s lifetime
+        // Level 4: 2 falcons, 440 speed, 7.5s lifetime
+        // Level 5: 3 falcons, 470 speed, 8.0s lifetime
+        // Level 6: 3 falcons, 500 speed, 8.5s lifetime
+        // Level 7: 4 falcons, 530 speed, 9.0s lifetime
+        // Level 8: 4 falcons, 560 speed, 9.5s lifetime
+
+        maxFalcons = 1 + (level - 1) / 2
         falconSpeed = 350 + CGFloat(level - 1) * 30
         falconLifetime = 6.0 + Double(level - 1) * 0.5
     }

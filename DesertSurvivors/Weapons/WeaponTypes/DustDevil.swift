@@ -93,10 +93,27 @@ class DustDevil: BaseWeapon {
     
     override func upgrade() {
         super.upgrade()
-        
-        // Increase radius and duration
+
+        // Level-based upgrades
+        // Level 1: 80 radius, 3.0s duration, 0.2s damage interval
+        // Level 2: 95 radius, 3.5s duration
+        // Level 3: 110 radius, 4.0s duration
+        // Level 4: 125 radius, 4.5s duration, faster damage
+        // Level 5: 140 radius, 5.0s duration
+        // Level 6: 155 radius, 5.5s duration
+        // Level 7: 170 radius, 6.0s duration
+        // Level 8: 185 radius, 6.5s duration, even faster damage
+
         devilRadius = 80 + CGFloat(level - 1) * 15
         devilDuration = 3.0 + Double(level - 1) * 0.5
+
+        // Faster damage ticks at higher levels
+        if level >= 4 {
+            damageInterval = 0.15
+        }
+        if level >= 8 {
+            damageInterval = 0.1
+        }
     }
 }
 

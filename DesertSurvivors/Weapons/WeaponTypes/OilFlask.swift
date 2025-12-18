@@ -205,7 +205,16 @@ class OilFlask: BaseWeapon {
     override func upgrade() {
         super.upgrade()
 
-        // Increase pool size, duration, and damage
+        // Level-based upgrades
+        // Level 1: 80 radius, 5.0s pool, 3.0 DoT, 400 speed
+        // Level 2: 90 radius, 5.5s pool, 3.5 DoT, 450 speed
+        // Level 3: 100 radius, 6.0s pool, 4.0 DoT, 500 speed
+        // Level 4: 110 radius, 6.5s pool, 4.5 DoT, 550 speed
+        // Level 5: 120 radius, 7.0s pool, 5.0 DoT, 600 speed
+        // Level 6: 130 radius, 7.5s pool, 5.5 DoT, 650 speed
+        // Level 7: 140 radius, 8.0s pool, 6.0 DoT, 700 speed
+        // Level 8: 150 radius, 8.5s pool, 6.5 DoT, 750 speed
+
         poolRadius = 80 + CGFloat(level - 1) * 10
         poolDuration = 5.0 + Double(level - 1) * 0.5
         poolDamage = 3.0 + Float(level - 1) * 0.5

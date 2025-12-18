@@ -207,11 +207,20 @@ class DjinnsFlame: BaseWeapon {
     override func upgrade() {
         super.upgrade()
 
-        // Increase flame count, lifetime, speed, and hits per flame
-        flameCount = 3 + (level - 1) / 2 // 3, 3, 4, 4, 5, 5, 6, 6
+        // Level-based upgrades
+        // Level 1: 3 flames, 2 hits, 200 speed, 8s lifetime, 400 seek radius
+        // Level 2: 3 flames, 2 hits, 230 speed, 9s lifetime, 450 seek radius
+        // Level 3: 4 flames, 2 hits, 260 speed, 10s lifetime, 500 seek radius
+        // Level 4: 4 flames, 3 hits, 290 speed, 11s lifetime, 550 seek radius
+        // Level 5: 5 flames, 3 hits, 320 speed, 12s lifetime, 600 seek radius
+        // Level 6: 5 flames, 3 hits, 350 speed, 13s lifetime, 650 seek radius
+        // Level 7: 6 flames, 4 hits, 380 speed, 14s lifetime, 700 seek radius
+        // Level 8: 6 flames, 4 hits, 410 speed, 15s lifetime, 750 seek radius
+
+        flameCount = 3 + (level - 1) / 2
         flameLifetime = 8.0 + Double(level - 1) * 1.0
         flameSpeed = 200 + CGFloat(level - 1) * 30
         seekRadius = 400 + CGFloat(level - 1) * 50
-        maxHitsPerFlame = 2 + (level - 1) / 3 // 2, 2, 2, 3, 3, 3, 4, 4
+        maxHitsPerFlame = 2 + (level - 1) / 3
     }
 }

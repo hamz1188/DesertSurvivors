@@ -95,8 +95,17 @@ class SunRay: BaseWeapon {
     
     override func upgrade() {
         super.upgrade()
-        
-        // Increase beam width and length
+
+        // Level-based upgrades
+        // Level 1: 20 width, 400 length, 0.5s duration
+        // Level 2: 25 width, 450 length, 0.6s duration
+        // Level 3: 30 width, 500 length, 0.7s duration
+        // Level 4: 35 width, 550 length, 0.8s duration
+        // Level 5: 40 width, 600 length, 0.9s duration
+        // Level 6: 45 width, 650 length, 1.0s duration
+        // Level 7: 50 width, 700 length, 1.1s duration
+        // Level 8: 55 width, 750 length, 1.2s duration
+
         beamWidth = 20 + CGFloat(level - 1) * 5
         beamLength = 400 + CGFloat(level - 1) * 50
         beamDuration = 0.5 + Double(level - 1) * 0.1

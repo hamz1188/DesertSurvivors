@@ -148,8 +148,17 @@ class MirageClone: BaseWeapon {
     override func upgrade() {
         super.upgrade()
 
-        // Increase number of clones and their duration
-        maxClones = 2 + (level - 1) / 2 // 2, 2, 3, 3, 4, 4, 5, 5
+        // Level-based upgrades
+        // Level 1: 2 clones, 8s duration, 0.5s attack speed
+        // Level 2: 2 clones, 9s duration, 0.5s attack speed
+        // Level 3: 3 clones, 10s duration, 0.45s attack speed
+        // Level 4: 3 clones, 11s duration, 0.45s attack speed
+        // Level 5: 4 clones, 12s duration, 0.4s attack speed
+        // Level 6: 4 clones, 13s duration, 0.4s attack speed
+        // Level 7: 5 clones, 14s duration, 0.35s attack speed
+        // Level 8: 5 clones, 15s duration, 0.3s attack speed
+
+        maxClones = 2 + (level - 1) / 2
         cloneDuration = 8.0 + Double(level - 1) * 1.0
     }
 }

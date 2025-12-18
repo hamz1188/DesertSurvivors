@@ -176,10 +176,19 @@ class AncientCurse: BaseWeapon {
     override func upgrade() {
         super.upgrade()
 
-        // Increase curse duration, radius, and max cursed enemies
+        // Level-based upgrades
+        // Level 1: 3 enemies, 300 radius, 8s duration, 1.5x damage
+        // Level 2: 3 enemies, 350 radius, 9s duration, 1.6x damage
+        // Level 3: 4 enemies, 400 radius, 10s duration, 1.7x damage
+        // Level 4: 4 enemies, 450 radius, 11s duration, 1.8x damage
+        // Level 5: 5 enemies, 500 radius, 12s duration, 1.9x damage
+        // Level 6: 5 enemies, 550 radius, 13s duration, 2.0x damage
+        // Level 7: 6 enemies, 600 radius, 14s duration, 2.1x damage
+        // Level 8: 6 enemies, 650 radius, 15s duration, 2.2x damage
+
         curseDuration = 8.0 + Double(level - 1) * 1.0
         curseRadius = 300 + CGFloat(level - 1) * 50
-        maxCursedEnemies = 3 + (level - 1) / 2 // 3, 3, 4, 4, 5, 5, 6, 6
-        curseDamageMultiplier = 1.5 + Float(level - 1) * 0.1 // Up to 2.2x at level 8
+        maxCursedEnemies = 3 + (level - 1) / 2
+        curseDamageMultiplier = 1.5 + Float(level - 1) * 0.1
     }
 }
