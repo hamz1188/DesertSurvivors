@@ -7,10 +7,11 @@
 
 import SpriteKit
 
+/// Basic swarmer enemy - low HP, medium speed
 class SandScarab: BaseEnemy {
     init() {
-        super.init(name: "Sand Scarab", maxHealth: 20, moveSpeed: 120, damage: 5)
-        spriteNode?.color = .brown
+        super.init(name: "Sand Scarab", maxHealth: 20, moveSpeed: 120, damage: 5, xpValue: 5)
+        setColor(.brown)
     }
     
     required init?(coder aDecoder: NSCoder) {

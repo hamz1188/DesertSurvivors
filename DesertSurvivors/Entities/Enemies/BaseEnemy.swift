@@ -13,16 +13,21 @@ class BaseEnemy: SKNode {
     var currentHealth: Float
     var moveSpeed: CGFloat
     var damage: Float
+    var xpValue: Float = 10 // Experience value when killed
     
     var spriteNode: SKSpriteNode!
     weak var target: Player?
     
-    init(name: String, maxHealth: Float, moveSpeed: CGFloat, damage: Float) {
+    private var originalColor: SKColor = .red
+    private var isFlashing: Bool = false
+    
+    init(name: String, maxHealth: Float, moveSpeed: CGFloat, damage: Float, xpValue: Float = 10) {
         self.enemyName = name
         self.maxHealth = maxHealth
         self.currentHealth = maxHealth
         self.moveSpeed = moveSpeed
         self.damage = damage
+        self.xpValue = xpValue
         super.init()
         
         // Set SKNode's name property (inherited, optional String)
@@ -39,7 +44,7 @@ class BaseEnemy: SKNode {
     private func setupSprite() {
         // Placeholder sprite - colored circle
         let size = CGSize(width: 25, height: 25)
-        spriteNode = SKSpriteNode(color: .red, size: size)
+        spriteNode = SKSpriteNode(color: originalColor, size: size)
         spriteNode.zPosition = Constants.ZPosition.enemy
         addChild(spriteNode)
     }
@@ -54,6 +59,8 @@ class BaseEnemy: SKNode {
     }
     
     func update(deltaTime: TimeInterval, playerPosition: CGPoint) {
+        guard isAlive else { return }
+        
         // Move toward player
         let direction = (playerPosition - position).normalized()
         let movement = direction * moveSpeed * CGFloat(deltaTime)
@@ -68,18 +75,51 @@ class BaseEnemy: SKNode {
     func takeDamage(_ amount: Float) {
         guard isAlive else { return }
         currentHealth -= amount
+        
+        // Visual feedback
+        flashDamage()
+        
         if currentHealth <= 0 {
             die()
         }
     }
     
+    private func flashDamage() {
+        guard !isFlashing else { return }
+        isFlashing = true
+        
+        let flashWhite = SKAction.run { [weak self] in
+            self?.spriteNode.color = .white
+        }
+        let wait = SKAction.wait(forDuration: 0.05)
+        let resetColor = SKAction.run { [weak self] in
+            guard let self = self else { return }
+            self.spriteNode.color = self.originalColor
+            self.isFlashing = false
+        }
+        spriteNode.run(SKAction.sequence([flashWhite, wait, resetColor]))
+    }
+    
     func die() {
-        // Override in subclasses for death effects
+        // Death animation
         currentHealth = 0
+        
+        // Scale down and fade out
+        let shrink = SKAction.scale(to: 0.5, duration: 0.15)
+        let fade = SKAction.fadeOut(withDuration: 0.15)
+        let group = SKAction.group([shrink, fade])
+        
+        spriteNode.run(group)
     }
     
     var isAlive: Bool {
         return currentHealth > 0 && parent != nil
+    }
+    
+    /// Set the enemy's base color (used by subclasses)
+    func setColor(_ color: SKColor) {
+        originalColor = color
+        spriteNode?.color = color
     }
 }
 

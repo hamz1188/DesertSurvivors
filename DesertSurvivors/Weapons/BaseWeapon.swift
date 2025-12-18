@@ -10,7 +10,7 @@ import SpriteKit
 protocol WeaponProtocol {
     var weaponName: String { get }
     var baseDamage: Float { get }
-    var cooldown: TimeInterval { get }
+    var baseCooldown: TimeInterval { get }
     var level: Int { get set }
     var maxLevel: Int { get }
     
@@ -21,17 +21,27 @@ protocol WeaponProtocol {
 class BaseWeapon: SKNode, WeaponProtocol {
     var weaponName: String
     let baseDamage: Float
-    var cooldown: TimeInterval
+    let baseCooldown: TimeInterval
     var level: Int = 1
     let maxLevel: Int = 8
     
     private var currentCooldown: TimeInterval = 0
     var damageMultiplier: Float = 1.0
+    var cooldownReduction: Float = 0 // 0.0 to 0.9 (90% max)
+    var attackSpeedMultiplier: Float = 1.0
+    var critChance: Float = 0
+    var critMultiplier: Float = 2.0
+    
+    /// The effective cooldown after applying cooldown reduction and attack speed
+    var effectiveCooldown: TimeInterval {
+        let reducedCooldown = baseCooldown * Double(1.0 - cooldownReduction)
+        return reducedCooldown / Double(attackSpeedMultiplier)
+    }
     
     init(name: String, baseDamage: Float, cooldown: TimeInterval) {
         self.weaponName = name
         self.baseDamage = baseDamage
-        self.cooldown = cooldown
+        self.baseCooldown = cooldown
         super.init()
         self.name = name // Set SKNode's name property (optional String)
     }
@@ -45,10 +55,9 @@ class BaseWeapon: SKNode, WeaponProtocol {
         
         if currentCooldown <= 0 {
             attack(playerPosition: playerPosition, enemies: enemies, deltaTime: deltaTime)
-            currentCooldown = cooldown
+            currentCooldown = effectiveCooldown
         }
     }
-    
     
     func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
         // Override in subclasses
@@ -59,8 +68,25 @@ class BaseWeapon: SKNode, WeaponProtocol {
         level += 1
     }
     
+    /// Calculate damage including level scaling and critical hits
     func getDamage() -> Float {
-        return baseDamage * damageMultiplier * Float(level)
+        var damage = baseDamage * damageMultiplier * Float(level)
+        
+        // Check for critical hit
+        if critChance > 0 && Float.random(in: 0...1) < critChance {
+            damage *= critMultiplier
+        }
+        
+        return damage
+    }
+    
+    /// Update weapon stats from player stats
+    func updateStats(from playerStats: PlayerStats) {
+        damageMultiplier = playerStats.damageMultiplier
+        cooldownReduction = playerStats.cooldownReduction
+        attackSpeedMultiplier = playerStats.attackSpeedMultiplier
+        critChance = playerStats.critChance
+        critMultiplier = playerStats.critMultiplier
     }
 }
 

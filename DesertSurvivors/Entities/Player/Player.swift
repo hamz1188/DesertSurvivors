@@ -14,6 +14,15 @@ class Player: SKNode {
     
     private var spriteNode: SKSpriteNode!
     
+    // Invincibility frames system
+    private var isInvincible: Bool = false
+    private var invincibilityTimer: TimeInterval = 0
+    private let invincibilityDuration: TimeInterval = 0.5 // 0.5 seconds of invincibility after hit
+    
+    // Health regeneration
+    private var regenTimer: TimeInterval = 0
+    var healthRegenPerSecond: Float = 0 // Set by Second Wind passive
+    
     init(stats: PlayerStats = PlayerStats()) {
         self.stats = stats
         super.init()
@@ -50,6 +59,27 @@ class Player: SKNode {
             let movement = movementDirection.normalized() * speed
             position = position + movement
         }
+        
+        // Update invincibility timer
+        if isInvincible {
+            invincibilityTimer -= deltaTime
+            if invincibilityTimer <= 0 {
+                isInvincible = false
+                spriteNode.alpha = 1.0
+            } else {
+                // Flash effect during invincibility
+                spriteNode.alpha = sin(invincibilityTimer * 20) > 0 ? 1.0 : 0.3
+            }
+        }
+        
+        // Health regeneration
+        if healthRegenPerSecond > 0 && stats.currentHealth < stats.maxHealth {
+            regenTimer += deltaTime
+            if regenTimer >= 1.0 {
+                heal(healthRegenPerSecond)
+                regenTimer = 0
+            }
+        }
     }
     
     func setMovementDirection(_ direction: CGPoint) {
@@ -58,11 +88,36 @@ class Player: SKNode {
     }
     
     func takeDamage(_ amount: Float) {
+        // Don't take damage if invincible
+        guard !isInvincible else { return }
+        
         stats.takeDamage(amount)
+        
+        // Activate invincibility frames
+        isInvincible = true
+        invincibilityTimer = invincibilityDuration
+        
+        // Visual feedback - flash red
+        flashDamage()
     }
     
     func heal(_ amount: Float) {
         stats.heal(amount)
+    }
+    
+    private func flashDamage() {
+        let flashRed = SKAction.run { [weak self] in
+            self?.spriteNode.color = .red
+        }
+        let wait = SKAction.wait(forDuration: 0.1)
+        let resetColor = SKAction.run { [weak self] in
+            self?.spriteNode.color = .blue
+        }
+        spriteNode.run(SKAction.sequence([flashRed, wait, resetColor]))
+    }
+    
+    var canTakeDamage: Bool {
+        return !isInvincible
     }
 }
 

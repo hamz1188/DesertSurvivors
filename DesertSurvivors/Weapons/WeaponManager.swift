@@ -17,9 +17,9 @@ class WeaponManager {
     }
     
     func addWeapon(_ weapon: BaseWeapon) {
-        // scene property is readonly, but weapon will have access to it when added to scene
+        // Apply current player stats to new weapon
         if let stats = playerStats {
-            weapon.damageMultiplier = stats.damageMultiplier
+            weapon.updateStats(from: stats)
         }
         weapons.append(weapon)
         // Weapon should be added as child of player, not scene directly
@@ -42,12 +42,16 @@ class WeaponManager {
     func updatePlayerStats(_ stats: PlayerStats) {
         playerStats = stats
         for weapon in weapons {
-            weapon.damageMultiplier = stats.damageMultiplier
+            weapon.updateStats(from: stats)
         }
     }
     
     func getWeapons() -> [BaseWeapon] {
         return weapons
+    }
+    
+    func getWeaponCount() -> Int {
+        return weapons.count
     }
 }
 

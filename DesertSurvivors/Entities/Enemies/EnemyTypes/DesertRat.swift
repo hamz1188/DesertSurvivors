@@ -7,10 +7,11 @@
 
 import SpriteKit
 
+/// Fast, very low HP, comes in groups
 class DesertRat: BaseEnemy {
     init() {
-        super.init(name: "Desert Rat", maxHealth: 10, moveSpeed: 180, damage: 3)
-        spriteNode?.color = .gray
+        super.init(name: "Desert Rat", maxHealth: 10, moveSpeed: 180, damage: 3, xpValue: 3)
+        setColor(.gray)
     }
     
     required init?(coder aDecoder: NSCoder) {

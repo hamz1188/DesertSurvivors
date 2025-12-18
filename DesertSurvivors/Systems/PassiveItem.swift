@@ -124,8 +124,7 @@ class PassiveItem {
             stats.maxHealth += Float(level) * 20
             stats.currentHealth += Float(level) * 20 // Also heal
         case .secondWind:
-            // Handled separately in update loop
-            break
+            stats.healthRegenPerSecond += Float(level) * 0.5
         case .mirageStep:
             stats.moveSpeed += Float(level) * 0.1 * 200 // 10% of base speed
         case .magneticCharm:
@@ -135,33 +134,37 @@ class PassiveItem {
         case .scholarsMind:
             stats.experienceMultiplier += Float(level) * 0.1
         case .merchantsEye:
-            // Handled separately for gold drops
-            break
+            stats.goldMultiplier += Float(level) * 0.15
         case .sandstormCloak:
-            // Dodge chance handled separately
-            break
+            stats.dodgeChance += Float(level) * 0.05
         case .djinnLamp:
             stats.damageMultiplier += Float(level) * 0.05
+            stats.burnChance += Float(level) * 0.05
         case .scarabAmulet:
-            // Lifesteal handled separately
-            break
+            stats.lifesteal += Float(level) * 0.03
         case .venomVial:
-            // Poison handled separately
-            break
+            stats.poisonChance += Float(level) * 0.1
         case .mirrorOfTruth:
-            // Critical chance handled separately
-            break
+            stats.critChance += Float(level) * 0.05
         case .eagleFeather:
-            // Attack speed handled separately
-            break
+            stats.attackSpeedMultiplier += Float(level) * 0.05
         case .desertRose:
             stats.maxHealth += Float(level) * 10
             stats.currentHealth += Float(level) * 10
+            stats.damageReduction += Float(level) * 0.05
         case .canopicJar:
             stats.experienceMultiplier += Float(level) * 0.1
         case .hourglass:
             stats.duration += Float(level) * 0.08
         }
+    }
+    
+    /// Returns the regeneration bonus for Second Wind passive
+    func getHealthRegen() -> Float {
+        if type == .secondWind {
+            return Float(level) * 0.5
+        }
+        return 0
     }
 }
 

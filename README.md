@@ -104,11 +104,11 @@ All core gameplay systems have been implemented and are functional:
 
 #### ✅ Completed:
 - ✅ **LevelUpUI System** - Full UI with 3-4 choice selection, game pause/resume
-- ✅ **Passive Items System** - All 16 passive items implemented with 5 levels each
+- ✅ **Passive Items System** - All 22 passive items implemented with 5 levels each
   - Offensive: Sharpened Steel, Swift Hands, Eagle Eye, Expansive Force, Lasting Effect
-  - Defensive: Desert Armor, Oasis Heart, Second Wind, Mirage Step
-  - Utility: Magnetic Charm, Fortune's Favor, Scholar's Mind, Merchant's Eye
-  - Evolution Items: Sandstorm Cloak, Djinn Lamp, Scarab Amulet, Venom Vial, Mirror of Truth, Eagle Feather, Desert Rose, Canopic Jar, Hourglass
+  - Defensive: Desert Armor, Oasis Heart, Second Wind ✅ (HP regen now works!), Mirage Step
+  - Utility: Magnetic Charm, Fortune's Favor, Scholar's Mind, Merchant's Eye ✅ (gold multiplier works!)
+  - Evolution Items: Sandstorm Cloak ✅ (dodge chance!), Djinn Lamp ✅ (burn chance!), Scarab Amulet ✅ (lifesteal!), Venom Vial ✅ (poison chance!), Mirror of Truth ✅ (crit chance!), Eagle Feather ✅ (attack speed!), Desert Rose ✅ (damage reduction!), Canopic Jar, Hourglass
 - ✅ **PassiveItemManager** - Tracks and applies passive effects to player stats
 - ✅ **LevelUpChoiceGenerator** - Generates random level-up choices (weapons, passives, gold, health)
 - ✅ **4 Weapons Implemented** (4/12):
@@ -265,6 +265,10 @@ All core gameplay systems have been implemented and are functional:
 - ✅ All compiler warnings resolved
 - ✅ Proper handling of SKNode property conflicts
 - ✅ Focus system warnings suppressed
+- ✅ Player invincibility frames prevent damage spam
+- ✅ All passive item effects now properly apply to player stats
+- ✅ Weapons properly use cooldown reduction and attack speed multipliers
+- ✅ Visual feedback for damage (flash effects)
 
 ---
 
@@ -284,6 +288,13 @@ All core gameplay systems have been implemented and are functional:
 - Created Projectile base class for reusable projectile weapons
 - Fixed all compilation errors and warnings
 - Improved code quality and architecture
+- **NEW:** Player now has invincibility frames after taking damage (0.5s)
+- **NEW:** Health regeneration system implemented (Second Wind passive)
+- **NEW:** Weapons now use cooldown reduction and attack speed multipliers
+- **NEW:** All 22 passive item stats now properly apply to player
+- **NEW:** Visual damage feedback (flash effects) for player and enemies
+- **NEW:** Gold counter added to HUD
+- **NEW:** Improved HUD styling with health color indicators
 
 ---
 
@@ -311,7 +322,6 @@ All core gameplay systems have been implemented and are functional:
 - Placeholder sprites (colored shapes) - Need actual artwork
 - No sound effects or music yet
 - Weapon evolution not fully implemented (upgrades work but visual feedback limited)
-- Some passive item effects need implementation (dodge, lifesteal, critical hits, poison, burn)
 - UIKit focus warnings (suppressed but may still appear in logs - harmless)
 
 ## 🔧 Recent Fixes
@@ -321,6 +331,18 @@ All core gameplay systems have been implemented and are functional:
 - Fixed enemy death race condition
 - Suppressed UIKit focus warnings
 - Fixed compilation warnings (unused variables)
+- **NEW:** Added player invincibility frames after taking damage
+- **NEW:** Implemented health regeneration system (Second Wind passive now works)
+- **NEW:** Added cooldown reduction support to weapons
+- **NEW:** Fixed passive upgrade system to properly apply ALL stat bonuses
+- **NEW:** Added visual damage feedback (flash effects for both player and enemies)
+- **NEW:** Added gold display to HUD
+- **NEW:** Improved HUD styling with rounded corners and color indicators
+- **NEW:** Added comprehensive PlayerStats with dodge chance, lifesteal, crit chance, burn/poison chances
+- **NEW:** Each enemy type now has proper XP values
+- **NEW:** Fixed HUD alignment (left-aligned bars, proper spacing)
+- **NEW:** Fixed HUD position to avoid Dynamic Island/notch overlap
+- **NEW:** Improved Curved Dagger collision - now uses sweep detection to hit enemies inside orbit
 
 ---
 
@@ -344,25 +366,282 @@ Full game design specifications are available in `desert-survivors-game-prompt.m
 
 ---
 
+## 📋 Complete To-Do List
+
+### 🔫 Weapons (4/12 Complete)
+
+| Weapon | Type | Status | Description |
+|--------|------|--------|-------------|
+| Curved Dagger | Orbit | ✅ Done | Spinning blades orbit player |
+| Sand Bolt | Projectile | ✅ Done | Fires at nearest enemy |
+| Sun Ray | Beam | ✅ Done | Beam toward nearest enemy |
+| Dust Devil | Area | ✅ Done | Damaging whirlwinds |
+| Scorpion Tail | Whip | ⏳ TODO | Strikes in movement direction, poison |
+| Mirage Clone | Summon | ⏳ TODO | Creates attacking copies |
+| Oil Flask | Thrown | ⏳ TODO | Burning pool on impact |
+| Desert Eagle | Homing | ⏳ TODO | Falcon attacks enemies |
+| Sandstorm Shield | Defensive | ⏳ TODO | Barrier damages on contact |
+| Ancient Curse | Debuff | ⏳ TODO | Marks enemies for extra damage |
+| Quicksand | Trap | ⏳ TODO | Slows and damages enemies |
+| Djinn's Flame | Magic | ⏳ TODO | Blue flames seek enemies |
+
+### ⚔️ Weapon Evolution System
+- ⏳ 8 upgrade levels per weapon with scaling stats
+- ⏳ Awakened forms (final evolution with passive item combo)
+
+| Base Weapon | + Evolution Item | = Awakened Form |
+|-------------|------------------|-----------------|
+| Curved Dagger | Sandstorm Cloak | Whirlwind of Blades |
+| Sand Bolt | Djinn Lamp | Desert Storm |
+| Scorpion Tail | Venom Vial | Emperor Scorpion |
+| Sun Ray | Scarab Amulet | Wrath of the Sun |
+| Dust Devil | Sandstorm Cloak | Haboob |
+| Mirage Clone | Mirror of Truth | Army of Mirages |
+| Oil Flask | Djinn Lamp | Greek Fire |
+| Desert Eagle | Eagle Feather | Roc's Descendant |
+| Sandstorm Shield | Desert Rose | Eye of the Storm |
+| Ancient Curse | Canopic Jar | Pharaoh's Wrath |
+| Quicksand | Hourglass | Devouring Sands |
+| Djinn's Flame | Djinn Lamp + Venom Vial | Ifrit's Embrace |
+
+---
+
+### 👹 Enemies (4/20 Complete + 0/5 Bosses)
+
+#### Tier 1 - Common (✅ COMPLETE)
+| Enemy | HP | Speed | Status |
+|-------|-----|-------|--------|
+| Sand Scarab | 20 | 120 | ✅ Done |
+| Desert Rat | 10 | 180 | ✅ Done |
+| Scorpion | 30 | 80 | ✅ Done |
+| Dust Sprite | 15 | 100 | ✅ Done |
+
+#### Tier 2 - Uncommon (Spawn after 2:00)
+| Enemy | Description | Status |
+|-------|-------------|--------|
+| Mummified Wanderer | Slow but tanky | ⏳ TODO |
+| Sand Cobra | Fast, lunging attack | ⏳ TODO |
+| Desert Bandit | Throws daggers | ⏳ TODO |
+| Cursed Jackal | Howls to buff nearby enemies | ⏳ TODO |
+
+#### Tier 3 - Rare (Spawn after 5:00)
+| Enemy | Description | Status |
+|-------|-------------|--------|
+| Animated Statue | Very slow, high HP, heavy damage | ⏳ TODO |
+| Sand Elemental | Splits into smaller elementals | ⏳ TODO |
+| Tomb Guardian | Shield blocks frontal attacks | ⏳ TODO |
+| Ghoul | Heals from dealing damage | ⏳ TODO |
+
+#### Tier 4 - Elite (Spawn after 10:00)
+| Enemy | Description | Status |
+|-------|-------------|--------|
+| Mummy Lord | Summons scarabs, curse aura | ⏳ TODO |
+| Lamia | Charm ability (confuses movement) | ⏳ TODO |
+| Bone Colossus | Huge, area attacks, very high HP | ⏳ TODO |
+| Sandstorm Djinn | Teleports, ranged attacks | ⏳ TODO |
+
+#### Mini-Bosses (Spawn every 5 minutes)
+| Boss | Description | Status |
+|------|-------------|--------|
+| The Defiler | Giant scorpion, poison pools, burrow | ⏳ TODO |
+| Pharaoh's Shadow | Curse beams, summons servants | ⏳ TODO |
+| The Simoom | Living sandstorm, damage aura | ⏳ TODO |
+| Brass Automaton | Clockwork guardian, laser beam | ⏳ TODO |
+
+#### Final Boss (30:00)
+| Boss | Description | Status |
+|------|-------------|--------|
+| Apophis the Devourer | Giant serpent, 3 phases | ⏳ TODO |
+
+---
+
+### 🧙 Characters (0/8 Complete)
+
+| Character | Starting Weapon | Bonus | Status |
+|-----------|-----------------|-------|--------|
+| Tariq the Wanderer | Curved Dagger | +10% move speed, +1 revival | ⏳ TODO |
+| Layla the Sandmage | Sand Bolt | +15% area, sandstorm aura | ⏳ TODO |
+| Hassan the Trader | Coin Toss | +30% luck, +20% gold | ⏳ TODO |
+| Fatima the Healer | Purifying Light | +20% pickup radius, HP regen | ⏳ TODO |
+| Rashid the Warrior | Scimitar Slash | +20% damage, +10 armor | ⏳ TODO |
+| Nadia the Assassin | Throwing Knives | +25% cooldown reduction, 3x crit | ⏳ TODO |
+| Khalid the Djinn-Touched | Flame Wisp | +15% XP, fire immune | ⏳ TODO |
+| Mariam the Outcast | Cursed Eye | All stats +5%, 5 choices | ⏳ TODO (Secret) |
+
+---
+
+### 🎨 UI Scenes (1/5 Complete)
+
+| Scene | Description | Status |
+|-------|-------------|--------|
+| GameScene | Main gameplay | ✅ Done |
+| MainMenuScene | Start game, options | ⏳ TODO |
+| CharacterSelectScene | Choose character | ⏳ TODO |
+| PauseMenuScene | Pause during gameplay | ⏳ TODO |
+| GameOverScene | Death screen, stats | ⏳ TODO |
+
+---
+
+### 📦 Pickups (1/4 Complete)
+
+| Pickup | Description | Status |
+|--------|-------------|--------|
+| Experience Gem | Grants XP | ✅ Done |
+| Health Pickup | Restores HP | ⏳ TODO |
+| Gold Coin | Currency | ⏳ TODO |
+| Chest | Random rewards | ⏳ TODO |
+
+---
+
+### 💾 Systems (Phase 3)
+
+| System | Description | Status |
+|--------|-------------|--------|
+| Save/Load System | Persist progress | ⏳ TODO |
+| Meta Progression | Permanent upgrades | ⏳ TODO |
+| Unlock Manager | Track unlocks | ⏳ TODO |
+| Achievement System | Track achievements | ⏳ TODO |
+| Audio Manager | Music + SFX | ⏳ TODO |
+
+---
+
+### 🎵 Audio (0% Complete)
+
+#### Music Tracks Needed:
+- ⏳ Main menu theme (mysterious, Arabian)
+- ⏳ Gameplay track 1 (action, building intensity)
+- ⏳ Gameplay track 2 (alternative action)
+- ⏳ Boss theme (intense, dramatic)
+- ⏳ Victory fanfare
+- ⏳ Death/game over sting
+- ⏳ Level up jingle
+
+#### Sound Effects Needed:
+- ⏳ Player footsteps on sand
+- ⏳ Weapon attack sounds (12+ unique)
+- ⏳ Enemy hit/death sounds
+- ⏳ Pickup sounds (gem, gold, item)
+- ⏳ UI sounds (menu, level up)
+- ⏳ Environmental (wind, sandstorm)
+- ⏳ Boss attack sounds
+
+---
+
+### ✨ Visual Effects (Phase 3)
+
+| Effect | Description | Status |
+|--------|-------------|--------|
+| Particle Effects | Sand, fire, magic | ⏳ TODO |
+| Screen Shake | On big hits | ⏳ TODO |
+| Damage Numbers | Floating numbers | ⏳ TODO |
+| Death Effects | Enemy death animations | ✅ Basic |
+| Hit Flash | Damage feedback | ✅ Done |
+
+---
+
+### 🗺️ Stages (1/5 Complete)
+
+| Stage | Description | Status |
+|-------|-------------|--------|
+| Endless Desert | Default, procedural | ✅ Basic |
+| Tomb of Pharaohs | Indoor, traps | ⏳ TODO |
+| The Burning Wastes | Volcanic, lava | ⏳ TODO |
+| The Lost Oasis | Lush, water | ⏳ TODO |
+| The Void Between | Surreal, all enemies | ⏳ TODO |
+
+---
+
+### 🃏 Arcana System (Phase 4)
+
+| Arcana | Effect | Status |
+|--------|--------|--------|
+| Endless Sands | Continue past 30 min | ⏳ TODO |
+| Merchant's Blessing | Shop every 5 min | ⏳ TODO |
+| Djinn's Gambit | Double damage taken/dealt | ⏳ TODO |
+| Pharaoh's Curse | No healing, +50% damage | ⏳ TODO |
+| Oasis Dream | Start with evolved weapon | ⏳ TODO |
+| Desert Mirage | 20% enemy miss chance | ⏳ TODO |
+| Scorching Sun | All enemies 1 dmg/sec | ⏳ TODO |
+| Sandstorm's Eye | Pickup radius grows | ⏳ TODO |
+| Ancient Knowledge | Start at level 10 | ⏳ TODO |
+| Time Dilation | 1.5x speed and rewards | ⏳ TODO |
+
+---
+
+### 🌍 Map Features (Phase 4)
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Sand Dunes | Visual only | ⏳ TODO |
+| Rock Formations | Obstacles | ⏳ TODO |
+| Oases | Heal when standing | ⏳ TODO |
+| Ruins | Destructible, drop items | ⏳ TODO |
+| Quicksand Patches | Slow player | ⏳ TODO |
+
+---
+
+### 🌪️ Environmental Events (Phase 4)
+
+| Event | Effect | Status |
+|-------|--------|--------|
+| Sandstorm | Reduced visibility, enemies slower | ⏳ TODO |
+| Solar Eclipse | Undead enemies stronger | ⏳ TODO |
+| Mirage | Fake pickups and enemies | ⏳ TODO |
+
+---
+
+### ⚡ Performance Optimization (Phase 4)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| Object Pooling | Pool all spawned objects | ✅ Framework |
+| Spatial Hashing | Efficient collision | ✅ Done |
+| Texture Atlases | Batch sprites | ⏳ TODO |
+| Off-screen Culling | Don't render off-screen | ⏳ TODO |
+| 500+ Enemy Test | Maintain 60 FPS | ⏳ TODO |
+
+---
+
+## 📊 Overall Progress
+
+| Category | Done | Total | Progress |
+|----------|------|-------|----------|
+| Weapons | 4 | 12 | 33% |
+| Enemies | 4 | 20 | 20% |
+| Bosses | 0 | 5 | 0% |
+| Characters | 0 | 8 | 0% |
+| Passive Items | 22 | 22 | 100% |
+| UI Scenes | 1 | 5 | 20% |
+| Pickups | 1 | 4 | 25% |
+| Stages | 1 | 5 | 20% |
+| Arcana | 0 | 10 | 0% |
+
+**Estimated Overall Completion: ~35%**
+
+---
+
 ## 🔮 Roadmap
 
-### Short Term (Next Steps):
-1. Complete remaining 8 weapons
-2. Implement weapon evolution system
-3. Add more enemy tiers
-4. Create UI scenes (main menu, pause, game over)
+### 🎯 Short Term (Next Sprint):
+1. ⏳ Complete remaining 8 weapons
+2. ⏳ Implement weapon evolution system
+3. ⏳ Add Tier 2 enemies (4 types)
+4. ⏳ Create Main Menu and Game Over scenes
 
-### Medium Term:
-1. Character system with 8 playable characters
-2. Meta progression and save system
-3. Audio implementation
-4. Visual effects and polish
+### 📅 Medium Term:
+1. ⏳ Add Tier 3 & 4 enemies
+2. ⏳ Implement 8 playable characters
+3. ⏳ Add mini-bosses
+4. ⏳ Save system and meta progression
+5. ⏳ Audio implementation
 
-### Long Term:
-1. Additional stages
-2. Arcana system
-3. Performance optimization
-4. Full game balancing
+### 🚀 Long Term:
+1. ⏳ Final boss: Apophis
+2. ⏳ Additional stages (4 new maps)
+3. ⏳ Arcana system
+4. ⏳ Performance optimization
+5. ⏳ Full game balancing
+6. ⏳ Polish and release
 
 ---
 

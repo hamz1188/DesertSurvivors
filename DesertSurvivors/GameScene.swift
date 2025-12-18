@@ -152,26 +152,72 @@ class GameScene: SKScene {
             
         case .newPassive(let item):
             passiveItemManager.addPassive(item)
-            item.applyEffect(to: &player.stats)
+            applyAllPassiveEffects()
             
         case .passiveUpgrade(let item):
             passiveItemManager.upgradePassive(item)
-            // Reapply all passive effects
-            var baseStats = PlayerStats()
-            passiveItemManager.applyAllEffects(to: &baseStats)
-            // Merge with current stats (simplified - in real game would be more complex)
-            player.stats.damageMultiplier = baseStats.damageMultiplier
-            player.stats.cooldownReduction = baseStats.cooldownReduction
-            // ... apply other stat changes
+            applyAllPassiveEffects()
             
         case .gold(let amount):
-            gold += amount
+            gold += Int(Float(amount) * player.stats.goldMultiplier)
+            hud.updateGold(gold)
             
         case .healthRestore(let amount):
             player.heal(amount)
         }
         
+        // Update weapon manager with new stats
+        weaponManager.updatePlayerStats(player.stats)
+        
         isGamePaused = false
+    }
+    
+    /// Recalculates and applies all passive effects to player stats
+    private func applyAllPassiveEffects() {
+        // Save current health percentage to restore after stat changes
+        let healthPercent = player.stats.healthPercentage
+        let currentHP = player.stats.currentHealth
+        
+        // Reset stats that are affected by passives to base values
+        var newStats = PlayerStats()
+        
+        // Apply all passive effects
+        passiveItemManager.applyAllEffects(to: &newStats)
+        
+        // Update player stats
+        player.stats.damageMultiplier = newStats.damageMultiplier
+        player.stats.cooldownReduction = min(newStats.cooldownReduction, 0.9) // Cap at 90%
+        player.stats.projectileSpeed = newStats.projectileSpeed
+        player.stats.areaMultiplier = newStats.areaMultiplier
+        player.stats.duration = newStats.duration
+        player.stats.armor = newStats.armor
+        player.stats.moveSpeed = 200 + (newStats.moveSpeed - 200) // Base + bonus
+        player.stats.pickupRadius = 50 + (newStats.pickupRadius - 50) // Base + bonus
+        player.stats.luck = newStats.luck
+        player.stats.experienceMultiplier = newStats.experienceMultiplier
+        player.stats.goldMultiplier = newStats.goldMultiplier
+        player.stats.dodgeChance = min(newStats.dodgeChance, 0.75) // Cap at 75%
+        player.stats.burnChance = newStats.burnChance
+        player.stats.lifesteal = newStats.lifesteal
+        player.stats.poisonChance = newStats.poisonChance
+        player.stats.critChance = min(newStats.critChance, 1.0) // Cap at 100%
+        player.stats.attackSpeedMultiplier = newStats.attackSpeedMultiplier
+        player.stats.damageReduction = min(newStats.damageReduction, 0.75) // Cap at 75%
+        player.stats.healthRegenPerSecond = newStats.healthRegenPerSecond
+        
+        // Handle max health changes - keep current HP but allow max to increase
+        let oldMaxHealth = player.stats.maxHealth
+        player.stats.maxHealth = newStats.maxHealth
+        
+        // If max health increased, also increase current health by the same amount
+        if newStats.maxHealth > oldMaxHealth {
+            player.stats.currentHealth = min(currentHP + (newStats.maxHealth - oldMaxHealth), newStats.maxHealth)
+        } else {
+            player.stats.currentHealth = min(currentHP, newStats.maxHealth)
+        }
+        
+        // Update player's health regeneration
+        player.healthRegenPerSecond = player.stats.healthRegenPerSecond
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -265,8 +311,8 @@ class GameScene: SKScene {
     private func checkEnemyDeaths(_ enemies: [BaseEnemy]) {
         for enemy in enemies {
             if enemy.currentHealth <= 0 && enemy.parent != nil {
-                // Spawn experience gem before removing
-                pickupManager.spawnExperienceGem(at: enemy.position)
+                // Spawn experience gem before removing (using enemy's XP value)
+                pickupManager.spawnExperienceGem(at: enemy.position, xpValue: enemy.xpValue)
                 killCount += 1
                 hud.updateKillCount(killCount)
                 enemy.removeFromParent()
