@@ -26,6 +26,16 @@ class GameViewController: UIViewController {
             skView.showsNodeCount = true
         }
     }
+    
+    // Suppress UIKit focus warnings for SpriteKit views
+    // Focus system is primarily for tvOS/accessibility, not needed for iOS touch games
+    override var preferredFocusEnvironments: [UIFocusEnvironment] {
+        return []
+    }
+    
+    override func shouldUpdateFocus(in context: UIFocusUpdateContext) -> Bool {
+        return false
+    }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         if UIDevice.current.userInterfaceIdiom == .phone {

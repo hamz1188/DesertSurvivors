@@ -9,7 +9,7 @@ import SpriteKit
 
 class Projectile: SKNode {
     var damage: Float
-    var speed: CGFloat
+    var projectileSpeed: CGFloat
     var direction: CGPoint
     var lifetime: TimeInterval = 5.0
     private var elapsedTime: TimeInterval = 0
@@ -18,7 +18,7 @@ class Projectile: SKNode {
     
     init(damage: Float, speed: CGFloat, direction: CGPoint, color: SKColor = .yellow) {
         self.damage = damage
-        self.speed = speed
+        self.projectileSpeed = speed
         self.direction = direction.normalized()
         super.init()
         
@@ -54,7 +54,7 @@ class Projectile: SKNode {
         }
         
         // Move projectile
-        let movement = direction * speed * CGFloat(deltaTime)
+        let movement = direction * projectileSpeed * CGFloat(deltaTime)
         position = position + movement
     }
     
