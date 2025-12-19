@@ -41,7 +41,7 @@ class SandstormShield: BaseWeapon {
 
         // Create shield segments (rotating barrier pieces)
         let segmentCount = 6
-        for i in 0..<segmentCount {
+        for _ in 0..<segmentCount {
             let segment = SKShapeNode(rectOf: CGSize(width: 40, height: 15), cornerRadius: 5)
             segment.fillColor = SKColor.yellow.withAlphaComponent(0.6)
             segment.strokeColor = .orange

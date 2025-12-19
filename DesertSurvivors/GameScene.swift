@@ -178,7 +178,6 @@ class GameScene: SKScene {
     /// Recalculates and applies all passive effects to player stats
     private func applyAllPassiveEffects() {
         // Save current health percentage to restore after stat changes
-        let healthPercent = player.stats.healthPercentage
         let currentHP = player.stats.currentHealth
         
         // Reset stats that are affected by passives to base values
@@ -233,21 +232,17 @@ class GameScene: SKScene {
             let location = touch.location(in: self)
             let cameraLocation = touch.location(in: gameCamera)
             
-            // Handle level up UI
+            // Handle level up UI first
             if levelUpUI.isVisible {
                 if levelUpUI.handleTouch(at: cameraLocation) {
-                    continue // Handle other touches in set
+                    continue
                 }
             }
             
-            // Clear dead joystick touch if it exists
-            if let existingTouch = joystickTouch, existingTouch.phase == .ended || existingTouch.phase == .cancelled {
-                joystickTouch = nil
-                joystick.deactivate()
-            }
-            
-            // Re-assign or assign joystick
-            if joystickTouch == nil && location.x < size.width / 3 && !isGamePaused {
+            // If touch is in joystick area (left third of screen) and game is not paused
+            if location.x < size.width / 3 && !isGamePaused {
+                // Always accept new joystick touches, even if we think we have one
+                // This ensures we never get "stuck" with a dead touch reference
                 joystickTouch = touch
                 joystick.activate(at: cameraLocation)
             }
@@ -257,19 +252,18 @@ class GameScene: SKScene {
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let gameCamera = gameCamera else { return }
         
-        if let trackedTouch = joystickTouch {
-            // Check if our tracked touch is in this update set
-            if touches.contains(trackedTouch) {
-                let cameraLocation = trackedTouch.location(in: gameCamera)
-                joystick.updateStickPosition(cameraLocation)
-                player?.setMovementDirection(joystick.direction)
-            }
+        // Only update if we have a tracked touch and it's in the current set
+        if let trackedTouch = joystickTouch, touches.contains(trackedTouch) {
+            let cameraLocation = trackedTouch.location(in: gameCamera)
+            joystick.updateStickPosition(cameraLocation)
+            player?.setMovementDirection(joystick.direction)
         }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        // If ANY touch ends and we have a joystick touch, check if it's the one that ended
         if let trackedTouch = joystickTouch {
-            if touches.contains(trackedTouch) || trackedTouch.phase == .ended || trackedTouch.phase == .cancelled {
+            if touches.contains(trackedTouch) {
                 joystickTouch = nil
                 joystick.deactivate()
                 player?.setMovementDirection(.zero)
@@ -278,8 +272,9 @@ class GameScene: SKScene {
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        // Same logic as touchesEnded
         if let trackedTouch = joystickTouch {
-            if touches.contains(trackedTouch) || trackedTouch.phase == .ended || trackedTouch.phase == .cancelled {
+            if touches.contains(trackedTouch) {
                 joystickTouch = nil
                 joystick.deactivate()
                 player?.setMovementDirection(.zero)

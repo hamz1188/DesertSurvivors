@@ -105,7 +105,7 @@ class ScorpionTail: BaseWeapon {
 
                 // Check if enemy is in front (in whip direction)
                 if dotProduct > 0.5 { // 60 degree cone
-                    var damage = getDamage()
+                    let damage = getDamage()
                     enemy.takeDamage(damage)
 
                     // Apply poison effect
