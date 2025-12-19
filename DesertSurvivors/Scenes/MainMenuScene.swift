@@ -47,9 +47,18 @@ class MainMenuScene: SKScene {
         
         addChild(startButton)
         
+        // Shop Button
+        let shopButton = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        shopButton.name = "shopButton"
+        shopButton.text = "MERCHANT"
+        shopButton.fontSize = 28
+        shopButton.fontColor = .yellow
+        shopButton.position = CGPoint(x: size.width / 2, y: size.height * 0.3)
+        addChild(shopButton)
+        
         // Credits
         let creditsLabel = SKLabelNode(fontNamed: "AvenirNext-Italic")
-        creditsLabel.text = "v0.5 - Phase 2"
+        creditsLabel.text = "v0.6 - Phase 4"
         creditsLabel.fontSize = 14
         creditsLabel.fontColor = .gray
         creditsLabel.position = CGPoint(x: size.width / 2, y: 50)
@@ -64,6 +73,8 @@ class MainMenuScene: SKScene {
         for node in nodes {
             if node.name == "startButton" {
                 SceneManager.shared.presentCharacterSelection()
+            } else if node.name == "shopButton" {
+                SceneManager.shared.presentShop()
             }
         }
     }

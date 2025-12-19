@@ -91,6 +91,11 @@ class BaseEnemy: SKNode {
         // Visual feedback
         flashDamage()
         
+        // Audio feedback
+        if let scene = scene {
+            SoundManager.shared.playSFX(filename: "sfx_enemy_hit.wav", scene: scene)
+        }
+        
         if currentHealth <= 0 {
             die()
         }
@@ -115,6 +120,11 @@ class BaseEnemy: SKNode {
     func die() {
         // Death animation
         currentHealth = 0
+        
+        // Audio
+        if let scene = scene {
+            SoundManager.shared.playSFX(filename: "sfx_enemy_die.wav", scene: scene)
+        }
         
         // Notify game to spawn XP and count kill
         NotificationCenter.default.post(name: .enemyDied, object: nil, userInfo: ["position": position, "xp": xpValue])

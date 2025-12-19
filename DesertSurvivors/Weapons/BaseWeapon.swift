@@ -56,7 +56,19 @@ class BaseWeapon: SKNode, WeaponProtocol {
         
         if currentCooldown <= 0 {
             attack(playerPosition: playerPosition, enemies: enemies, deltaTime: deltaTime)
+            playAttackSound()
             currentCooldown = effectiveCooldown
+        }
+    }
+    
+    private func playAttackSound() {
+        // Sanitize name: "Curved Dagger" -> "curved_dagger"
+        let sanitizedName = weaponName.lowercased().replacingOccurrences(of: " ", with: "_")
+        let soundName = "sfx_attack_\(sanitizedName).wav"
+        
+        // Find scene to play sound
+        if let scene = scene {
+            SoundManager.shared.playSFX(filename: soundName, scene: scene)
         }
     }
     

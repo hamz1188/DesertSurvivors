@@ -97,6 +97,9 @@ class LevelUpUI: SKNode {
         background.isHidden = false
         titleLabel.isHidden = false
         
+        // Play Sound
+        SoundManager.shared.playSFX(filename: "sfx_level_up.wav", scene: scene)
+        
         // Clear old buttons
         for button in choiceButtons {
             button.removeFromParent()

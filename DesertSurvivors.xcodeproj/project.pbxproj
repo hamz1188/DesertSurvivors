@@ -39,22 +39,16 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		950616ED2EF4270B001FD761 /* DesertSurvivors */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = DesertSurvivors;
 			sourceTree = "<group>";
 		};
 		950617072EF4270C001FD761 /* DesertSurvivorsTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = DesertSurvivorsTests;
 			sourceTree = "<group>";
 		};
 		950617112EF4270C001FD761 /* DesertSurvivorsUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = DesertSurvivorsUITests;
 			sourceTree = "<group>";
 		};

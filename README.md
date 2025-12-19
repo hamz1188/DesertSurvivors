@@ -139,32 +139,33 @@ Expanding the game content with more enemies, weapons, and systems.
     - **Devouring Sands** (Quicksand + Hourglass)
     - **Ifrit's Embrace** (Djinn's Flame + Djinn Lamp)
 
-### 🎨 Phase 3: Visual & Audio Polish (IN PROGRESS)
+### ✅ Phase 3: Visual & Audio Polish (COMPLETED)
 
-**Status:** 50% Complete
+**Status:** 100% Complete
 
-Refining the visuals and adding audio to create a premium feel.
+Refined the visuals and added audio infrastructure to create a premium feel.
 
 #### Completed Features:
 - ✅ **Visual Overhaul**:
     - **Pixel Art Assets**: Generated and integrated 16-bit style assets for Player, Environment, and all Tier 1 & 2 Enemies.
     - **Asset System**: Implemented `Assets.xcassets` workflow.
+- ✅ **Audio System**:
+    - **SoundManager**: Robust singleton handling Music and SFX.
+    - **Triggers**: Hooks for attacks, damage, death, pickups, and UI.
+    - *Note*: Requires user-provided audio files.
 
-#### Planned Features:
-- [ ] **Sound Effects**: Attack, hit, level up, and UI sounds
-- [ ] **Background Music**: Dynamic desert-themed tracks
-- [ ] **VFX**: Particle systems for attacks, weather effects (sandstorms), and destruction
+### 🚧 Phase 4: Meta-Progression (IN PROGRESS)
 
-### 🚀 Phase 4: Meta-Progression (PLANNED)
-
-**Status:** 0% Complete
+**Status:** 50% Complete
 
 Adding persistent progression and polish.
 
+#### Completed Features:
+- ✅ **Save Data System** - Persists gold and upgrades between runs (`PersistenceManager`).
+- ✅ **Merchant Shop** - Main Menu accessible shop to buy permanent stat boosts.
+- ✅ **Upgrades** - 10 Global upgrades including Might, Armor, Speed, Luck, and Greed.
+
 #### Planned Features:
-- [ ] **Save Data System** - Persist gold, unlocked achievements, and characters
-- [ ] **Shop / Upgrades** - Spend gold to buy permanent stat boosts
 - [ ] **Achievements** - Unlock new weapons/characters by completing tasks
-- [ ] **Character Selection** - Choose from different characters with unique stats
-- [ ] **Sound & Music** - Sound effects for actions and background music
+- [ ] **Character Selection** - Unlock logic for new characters
 - [ ] **Settings Menu** - Toggle sound, music, and vibration

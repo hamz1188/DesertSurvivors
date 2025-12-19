@@ -49,6 +49,9 @@ class PickupManager {
     }
     
     private func collectGem(_ gem: ExperienceGem) {
+        // Audio
+        SoundManager.shared.playSFX(filename: "sfx_gem_collect.wav", scene: scene)
+        
         // Notify level up system
         NotificationCenter.default.post(name: .experienceCollected, object: nil, userInfo: ["xp": gem.xpValue])
         gem.removeFromParent()

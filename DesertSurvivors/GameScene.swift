@@ -43,7 +43,11 @@ class GameScene: SKScene {
         setupHUD()
         setupJoystick()
         setupLevelUpUI()
+        setupLevelUpUI()
         setupNotifications()
+        
+        // Start Music
+        SoundManager.shared.playBackgroundMusic(filename: "bgm_desert.mp3")
     }
     
     private func setupScene() {
@@ -229,6 +233,9 @@ class GameScene: SKScene {
         let minutes = Int(gameTime) / 60
         let seconds = Int(gameTime) % 60
         let timeString = String(format: "%02d:%02d", minutes, seconds)
+        
+        // Save Gold
+        PersistenceManager.shared.addGold(gold)
         
         SceneManager.shared.presentGameOver(finalLevel: levelUpSystem.currentLevel, kills: killCount, timeSurvived: timeString)
     }

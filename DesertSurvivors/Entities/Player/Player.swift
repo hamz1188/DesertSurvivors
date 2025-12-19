@@ -21,10 +21,13 @@ class Player: SKNode {
     
     // Health regeneration
     private var regenTimer: TimeInterval = 0
-    var healthRegenPerSecond: Float = 0 // Set by Second Wind passive
     
     init(stats: PlayerStats = PlayerStats()) {
         self.stats = stats
+        
+        // Apply permanent upgrades
+        ShopManager.shared.applyUpgrades(to: &self.stats)
+        
         super.init()
         
         setupSprite()
@@ -82,10 +85,10 @@ class Player: SKNode {
         }
         
         // Health regeneration
-        if healthRegenPerSecond > 0 && stats.currentHealth < stats.maxHealth {
+        if stats.healthRegenPerSecond > 0 && stats.currentHealth < stats.maxHealth {
             regenTimer += deltaTime
             if regenTimer >= 1.0 {
-                heal(healthRegenPerSecond)
+                heal(stats.healthRegenPerSecond)
                 regenTimer = 0
             }
         }

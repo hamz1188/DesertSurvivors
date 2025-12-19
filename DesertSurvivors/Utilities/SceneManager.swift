@@ -54,4 +54,12 @@ class SceneManager {
         let transition = SKTransition.push(with: .left, duration: 0.5)
         view.presentScene(scene, transition: transition)
     }
+    
+    func presentShop() {
+        guard let view = gameViewController?.view as? SKView else { return }
+        let scene = ShopScene(size: view.bounds.size)
+        scene.scaleMode = .aspectFill
+        let transition = SKTransition.push(with: .down, duration: 0.5)
+        view.presentScene(scene, transition: transition)
+    }
 }
