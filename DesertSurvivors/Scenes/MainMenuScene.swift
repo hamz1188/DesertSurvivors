@@ -56,8 +56,6 @@ class MainMenuScene: SKScene {
         shopButton.position = CGPoint(x: size.width / 2, y: size.height * 0.3)
         addChild(shopButton)
         
-        addChild(shopButton)
-        
         // Settings Button
         let settingsButton = SKLabelNode(fontNamed: "AvenirNext-Bold")
         settingsButton.name = "settingsButton"
