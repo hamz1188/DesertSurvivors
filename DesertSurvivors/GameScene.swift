@@ -22,6 +22,7 @@ class GameScene: SKScene {
     private var hud: HUD!
     private var joystick: VirtualJoystick!
     private var levelUpUI: LevelUpUI!
+    private var worldManager: WorldManager!
     
     var selectedCharacter: CharacterType = .tariq
     
@@ -62,27 +63,7 @@ class GameScene: SKScene {
     }
     
     private func setupScene() {
-        if let texture = SKTexture(imageNamed: "background_desert") as SKTexture? { 
-             // Create a large tiled node or just a large node with correct rect
-             // For simplicity, we'll create a massive node and use SKTexture's tiling if supported, 
-             // but SpriteKit Tiling usually requires shader or specific rect.
-             // Simplest approach: Create a large node with texture rect > 1
-             
-             let bg = SKSpriteNode(texture: texture)
-             bg.position = .zero
-             bg.zPosition = -100
-             
-             // Tile the texture 20x20 times
-             let coverage = CGRect(x: 0, y: 0, width: 40, height: 40)
-             bg.texture = SKTexture(rect: coverage, in: texture)
-             bg.size = CGSize(width: texture.size().width * 40, height: texture.size().height * 40)
-             // Use nearest neighbor for pixel art
-             texture.filteringMode = .nearest
-             
-             addChild(bg)
-        } else {
-            backgroundColor = Constants.Colors.desertSand
-        }
+        backgroundColor = Constants.Colors.desertSand
         
         physicsWorld.gravity = .zero
         physicsWorld.contactDelegate = self
@@ -111,6 +92,7 @@ class GameScene: SKScene {
         levelUpSystem = LevelUpSystem()
         passiveItemManager = PassiveItemManager()
         levelUpChoiceGenerator = LevelUpChoiceGenerator()
+        worldManager = WorldManager(scene: self, player: player)
         
         let startingWeapon = CurvedDagger()
         player.addChild(startingWeapon)
@@ -231,6 +213,7 @@ class GameScene: SKScene {
         player.setMovementDirection(joystick.direction) // Fixed: direction instead of velocity
         
         gameCamera.position = player.position
+        worldManager.update(playerPos: player.position)
         
         // Update spatial hash grid for this frame
         let activeEnemies = enemySpawner.getActiveEnemies()
