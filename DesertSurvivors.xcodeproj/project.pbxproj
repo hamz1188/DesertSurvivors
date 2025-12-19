@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		950617222EF42728001FD761 /* desert-survivors-game-prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = 950617212EF42728001FD761 /* desert-survivors-game-prompt.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,7 +30,6 @@
 		950616EB2EF4270B001FD761 /* DesertSurvivors.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesertSurvivors.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		950617042EF4270C001FD761 /* DesertSurvivorsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesertSurvivorsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9506170E2EF4270C001FD761 /* DesertSurvivorsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesertSurvivorsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		950617212EF42728001FD761 /* desert-survivors-game-prompt.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "desert-survivors-game-prompt.md"; sourceTree = "<group>"; };
 		960A6F4E7B3649BD8FE30417 /* CharacterSelectionScene.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CharacterSelectionScene.swift; path = DesertSurvivors/Scenes/CharacterSelectionScene.swift; sourceTree = "<group>"; };
 		978827F7C12D10968BF5C113 /* PauseMenuUI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PauseMenuUI.swift; path = DesertSurvivors/UI/PauseMenuUI.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -82,7 +80,6 @@
 		950616E22EF4270B001FD761 = {
 			isa = PBXGroup;
 			children = (
-				950617212EF42728001FD761 /* desert-survivors-game-prompt.md */,
 				950616ED2EF4270B001FD761 /* DesertSurvivors */,
 				950617072EF4270C001FD761 /* DesertSurvivorsTests */,
 				950617112EF4270C001FD761 /* DesertSurvivorsUITests */,
@@ -216,7 +213,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				950617222EF42728001FD761 /* desert-survivors-game-prompt.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
