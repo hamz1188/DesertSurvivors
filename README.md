@@ -62,6 +62,7 @@ DesertSurvivors/
 ├── UI/
 │   ├── HUD.swift
 │   ├── LevelUpUI.swift
+│   ├── PauseMenuUI.swift ✅
 │   └── VirtualJoystick.swift
 ├── Utilities/
 │   ├── Constants.swift
@@ -69,6 +70,7 @@ DesertSurvivors/
 │   └── Extensions.swift
 ├── Scenes/
 │   ├── MainMenuScene.swift ✅
+│   ├── CharacterSelectionScene.swift ✅
 │   └── GameOverScene.swift ✅
 └── GameScene.swift
 ```
@@ -104,26 +106,23 @@ All core gameplay systems have been implemented and are functional:
 
 **Game Loop:** Fully functional 60 FPS game loop with player movement, enemy spawning, weapon attacks, and XP collection.
 
-### 🚧 Phase 2: Content Expansion (IN PROGRESS)
+### ✅ Phase 2: Content Expansion (COMPLETED)
 
-**Status:** ~90% Complete
+**Status:** 100% Complete
 
 Expanding the game content with more enemies, weapons, and systems.
 
-#### In Progress / Completed Features:
+#### Completed Features:
 - ✅ **Tier 2 Enemies**
   - **Mummified Wanderer**: Slow, high HP tank
   - **Sand Cobra**: Fast, lunging attacker
   - **Desert Bandit**: Ranged/retreating behavior
   - **Cursed Jackal**: Pack buffer
-- ✅ **Scene Management**
-  - **SceneManager**: Handles transitions between scenes
-  - **Main Menu**: Start screen with title
-  - **Game Over**: Statistics display and restart flow
-- ✅ **UI Polish & Fixes**
-  - **HUD Alignment**: Safe area support for Dynamic Island/Notch
-  - **Input Robustness**: Improved joystick touch handling to prevent sticking
-  - **Clean**: Removed template artifacts ("Hello World") and debug stats
+- ✅ **UI Scenes**
+  - **Character Selection**: Scene flow allowing character choice (currently Tariq)
+  - **Pause Menu**: In-game overlay with Resume/Quit functionality
+  - **Scene Management**: Robust transition system (MainMenu -> CharSelect -> Game -> GameOver)
+  - **HUD Polish**: Dynamic Island support, Pause button, improved layout
 - ✅ **Weapon Awakening**
   - **System**: AwakeningManager handling evolution recipes (Level 8 Weapon + Max Passive)
   - **Implemented Evolutions (12/12)**:
@@ -140,7 +139,19 @@ Expanding the game content with more enemies, weapons, and systems.
     - **Devouring Sands** (Quicksand + Hourglass)
     - **Ifrit's Embrace** (Djinn's Flame + Djinn Lamp)
 
-### 🔮 Phase 3: Meta-Progression (PLANNED)
+### 🔮 Phase 3: Visual & Audio Polish (PLANNED)
+
+**Status:** 0% Complete
+
+Refining the visuals and adding audio to create a premium feel.
+
+#### Planned Features:
+- [ ] **Visual Overhaul**: Replace placeholder geometry with pixel art or enhanced shader-based assets
+- [ ] **Sound Effects**: Attack, hit, level up, and UI sounds
+- [ ] **Background Music**: Dynamic desert-themed tracks
+- [ ] **VFX**: Particle systems for attacks, weather effects (sandstorms), and destruction
+
+### 🚀 Phase 4: Meta-Progression (PLANNED)
 
 **Status:** 0% Complete
 

@@ -11,7 +11,6 @@ import GameplayKit
 class GameScene: SKScene {
     
     // Core game objects
-    // Core game objects
     var player: Player!
     private var weaponManager: WeaponManager!
     private var enemySpawner: EnemySpawner!
@@ -31,8 +30,11 @@ class GameScene: SKScene {
     private var isGamePaused: Bool = false
     private var gold: Int = 0
     
-    // Camera (non-optional after setup)
+    // Camera
     private var gameCamera: SKCameraNode!
+    
+    // Touch handling
+    private var joystickTouch: UITouch?
     
     override func didMove(to view: SKView) {
         setupScene()
@@ -45,14 +47,20 @@ class GameScene: SKScene {
     }
     
     private func setupScene() {
-        backgroundColor = Constants.Colors.desertSand
+        if let texture = SKTexture(imageNamed: "desert_sand_bg") as SKTexture? { 
+             let bg = SKSpriteNode(texture: texture)
+             bg.zPosition = -100
+             addChild(bg)
+        } else {
+            backgroundColor = Constants.Colors.desertSand
+        }
+        
         physicsWorld.gravity = .zero
         physicsWorld.contactDelegate = self
         
-        // Explicitly remove any template nodes that might be present
+        // Ensure clean state
         removeAllChildren()
         
-        // Set camera to follow player (will be set up after player is created)
         gameCamera = SKCameraNode()
         camera = gameCamera
         addChild(gameCamera)
@@ -60,7 +68,7 @@ class GameScene: SKScene {
     
     private func setupPlayer() {
         player = Player()
-        player.position = CGPoint(x: 0, y: 0)
+        player.position = .zero
         addChild(player)
     }
     
@@ -75,9 +83,8 @@ class GameScene: SKScene {
         passiveItemManager = PassiveItemManager()
         levelUpChoiceGenerator = LevelUpChoiceGenerator()
         
-        // Give player starting weapon (after weaponManager is initialized)
         let startingWeapon = CurvedDagger()
-        player.addChild(startingWeapon) // Add weapon as child of player so it follows
+        player.addChild(startingWeapon)
         weaponManager.addWeapon(startingWeapon)
     }
     
@@ -96,274 +103,201 @@ class GameScene: SKScene {
     private func setupLevelUpUI() {
         levelUpUI = LevelUpUI()
         gameCamera.addChild(levelUpUI)
-        levelUpUI.position = CGPoint(x: 0, y: 0)
+        levelUpUI.position = .zero
         
         levelUpUI.onChoiceSelected = { [weak self] choice in
-            self?.handleLevelUpChoice(choice)
+            self?.handleLevelUpSelection(choice)
         }
     }
     
     private func setupNotifications() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleExperienceCollected),
-            name: .experienceCollected,
-            object: nil
-        )
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleLevelUp),
-            name: .playerLevelUp,
-            object: nil
-        )
+         NotificationCenter.default.addObserver(
+             self,
+             selector: #selector(handleLevelUpNotification),
+             name: .playerLevelUp,
+             object: nil
+         )
     }
     
-    @objc private func handleExperienceCollected(_ notification: Notification) {
-        if let xp = notification.userInfo?["xp"] as? Float {
-            levelUpSystem.addXP(xp, multiplier: player.stats.experienceMultiplier)
-        }
-    }
-    
-    @objc private func handleLevelUp(_ notification: Notification) {
+    @objc private func handleLevelUpNotification(_ notification: Notification) {
         if let level = notification.userInfo?["level"] as? Int {
             hud.updateLevel(level)
-            showLevelUpChoices()
+            levelUp()
         }
     }
     
-    private func showLevelUpChoices() {
-        isGamePaused = true
-        
-        let choices = levelUpChoiceGenerator.generateChoices(
-            currentLevel: levelUpSystem.currentLevel,
-            currentWeapons: weaponManager.getWeapons(),
-            currentPassives: passiveItemManager.getPassives(),
-            playerStats: player.stats
-        )
-        
-        levelUpUI.showChoices(choices, in: self)
-    }
-    
-    private func handleLevelUpChoice(_ choice: LevelUpChoice) {
-        switch choice {
-        case .newWeapon(let weapon):
-            player.addChild(weapon)
-            weaponManager.addWeapon(weapon)
-            
-        case .weaponUpgrade(let weapon):
-            weapon.upgrade()
-            
-        case .newPassive(let item):
-            passiveItemManager.addPassive(item)
-            applyAllPassiveEffects()
-            
-        case .passiveUpgrade(let item):
-            passiveItemManager.upgradePassive(item)
-            applyAllPassiveEffects()
-            
-        case .gold(let amount):
-            gold += Int(Float(amount) * player.stats.goldMultiplier)
-            hud.updateGold(gold)
-            
-        case .healthRestore(let amount):
-            player.heal(amount)
-        }
-        
-        // Update weapon manager with new stats
-        weaponManager.updatePlayerStats(player.stats)
-        
-        isGamePaused = false
-    }
-    
-    /// Recalculates and applies all passive effects to player stats
-    private func applyAllPassiveEffects() {
-        // Save current health percentage to restore after stat changes
-        let currentHP = player.stats.currentHealth
-        
-        // Reset stats that are affected by passives to base values
-        var newStats = PlayerStats()
-        
-        // Apply all passive effects
-        passiveItemManager.applyAllEffects(to: &newStats)
-        
-        // Update player stats
-        player.stats.damageMultiplier = newStats.damageMultiplier
-        player.stats.cooldownReduction = min(newStats.cooldownReduction, 0.9) // Cap at 90%
-        player.stats.projectileSpeed = newStats.projectileSpeed
-        player.stats.areaMultiplier = newStats.areaMultiplier
-        player.stats.duration = newStats.duration
-        player.stats.armor = newStats.armor
-        player.stats.moveSpeed = 200 + (newStats.moveSpeed - 200) // Base + bonus
-        player.stats.pickupRadius = 50 + (newStats.pickupRadius - 50) // Base + bonus
-        player.stats.luck = newStats.luck
-        player.stats.experienceMultiplier = newStats.experienceMultiplier
-        player.stats.goldMultiplier = newStats.goldMultiplier
-        player.stats.dodgeChance = min(newStats.dodgeChance, 0.75) // Cap at 75%
-        player.stats.burnChance = newStats.burnChance
-        player.stats.lifesteal = newStats.lifesteal
-        player.stats.poisonChance = newStats.poisonChance
-        player.stats.critChance = min(newStats.critChance, 1.0) // Cap at 100%
-        player.stats.attackSpeedMultiplier = newStats.attackSpeedMultiplier
-        player.stats.damageReduction = min(newStats.damageReduction, 0.75) // Cap at 75%
-        player.stats.healthRegenPerSecond = newStats.healthRegenPerSecond
-        
-        // Handle max health changes - keep current HP but allow max to increase
-        let oldMaxHealth = player.stats.maxHealth
-        player.stats.maxHealth = newStats.maxHealth
-        
-        // If max health increased, also increase current health by the same amount
-        if newStats.maxHealth > oldMaxHealth {
-            player.stats.currentHealth = min(currentHP + (newStats.maxHealth - oldMaxHealth), newStats.maxHealth)
-        } else {
-            player.stats.currentHealth = min(currentHP, newStats.maxHealth)
-        }
-        
-        // Update player's health regeneration
-        player.healthRegenPerSecond = player.stats.healthRegenPerSecond
-    }
-    
-    // Touch handling
-    private var joystickTouch: UITouch?
-    
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let gameCamera = gameCamera else { return }
-        
-        for touch in touches {
-            let location = touch.location(in: self)
-            let cameraLocation = touch.location(in: gameCamera)
-            
-            // Handle level up UI first
-            if levelUpUI.isVisible {
-                if levelUpUI.handleTouch(at: cameraLocation) {
-                    continue
-                }
-            }
-            
-            // If touch is in joystick area (left third of screen) and game is not paused
-            if location.x < size.width / 3 && !isGamePaused {
-                // Always accept new joystick touches, even if we think we have one
-                // This ensures we never get "stuck" with a dead touch reference
-                joystickTouch = touch
-                joystick.activate(at: cameraLocation)
-            }
-        }
-    }
-    
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let gameCamera = gameCamera else { return }
-        
-        // Only update if we have a tracked touch and it's in the current set
-        if let trackedTouch = joystickTouch, touches.contains(trackedTouch) {
-            let cameraLocation = trackedTouch.location(in: gameCamera)
-            joystick.updateStickPosition(cameraLocation)
-            player?.setMovementDirection(joystick.direction)
-        }
-    }
-    
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        // If ANY touch ends and we have a joystick touch, check if it's the one that ended
-        if let trackedTouch = joystickTouch {
-            if touches.contains(trackedTouch) {
-                joystickTouch = nil
-                joystick.deactivate()
-                player?.setMovementDirection(.zero)
-            }
-        }
-    }
-    
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        // Same logic as touchesEnded
-        if let trackedTouch = joystickTouch {
-            if touches.contains(trackedTouch) {
-                joystickTouch = nil
-                joystick.deactivate()
-                player?.setMovementDirection(.zero)
-            }
-        }
-    }
+    // MARK: - Game Loop
     
     override func update(_ currentTime: TimeInterval) {
-        // Initialize lastUpdateTime
+        if isGamePaused { return }
+        
         if lastUpdateTime == 0 {
             lastUpdateTime = currentTime
         }
         
-        guard !isGamePaused else { return }
-        guard let player = player, let weaponManager = weaponManager, 
-              let enemySpawner = enemySpawner, let pickupManager = pickupManager,
-              let collisionManager = collisionManager, let levelUpSystem = levelUpSystem,
-              let hud = hud, let gameCamera = gameCamera else { return }
-        
-        let deltaTime = currentTime - lastUpdateTime
+        var deltaTime = currentTime - lastUpdateTime
         lastUpdateTime = currentTime
         
-        // Update game time
+        if deltaTime > 0.1 { deltaTime = 0.1 }
+        
         gameTime += deltaTime
-        hud.updateTimer(gameTime)
         
-        // Update player
+        // Logic
         player.update(deltaTime: deltaTime)
+        player.setMovementDirection(joystick.direction) // Fixed: direction instead of velocity
         
-        // Update camera to follow player
         gameCamera.position = player.position
         
-        // Update enemies
-        enemySpawner.update(deltaTime: deltaTime)
-        let enemies = enemySpawner.getActiveEnemies()
+        // System updates
+        weaponManager.update(deltaTime: deltaTime, playerPosition: player.position, enemies: enemySpawner.getActiveEnemies()) // Fixed: getActiveEnemies()
+        enemySpawner.update(deltaTime: deltaTime) // Fixed: removed playerPosition
+        // LevelUpSystem and Generator do not have update() methods
         
-        // Update weapons
-        weaponManager.update(deltaTime: deltaTime, playerPosition: player.position, enemies: enemies)
-        
-        // Update pickups
         pickupManager.update(deltaTime: deltaTime)
         
-        // Check collisions
-        collisionManager.checkCollisions(player: player, enemies: enemies, pickups: [])
+        // Collisions
+        // Pickups handling is done in pickupManager.update()
+        collisionManager.checkCollisions(player: player, enemies: enemySpawner.getActiveEnemies(), pickups: [])
         
-        // Update HUD
-        hud.updateHealth(player.stats.healthPercentage)
-        hud.updateXP(levelUpSystem.xpProgress)
+        // HUD
+        hud.updateTimer(gameTime)
+        hud.updateHealth(player.stats.currentHealth / player.stats.maxHealth)
+        hud.updateXP(levelUpSystem.currentXP / levelUpSystem.xpForNextLevel) // Fixed: xpForNextLevel
+        hud.updateKillCount(killCount)
+        hud.updateGold(gold)
         
-        // Check for enemy deaths and spawn experience gems
-        checkEnemyDeaths(enemies)
+        hud.positionHUD(in: self)
+        joystick.position = CGPoint(x: -size.width/2 + 80, y: -size.height/2 + 80)
         
-        // Check game over
         if !player.stats.isAlive {
             gameOver()
         }
     }
     
-    private func checkEnemyDeaths(_ enemies: [BaseEnemy]) {
-        for enemy in enemies {
-            if enemy.currentHealth <= 0 && enemy.parent != nil {
-                // Spawn experience gem before removing (using enemy's XP value)
-                pickupManager.spawnExperienceGem(at: enemy.position, xpValue: enemy.xpValue)
-                killCount += 1
-                hud.updateKillCount(killCount)
-                enemy.removeFromParent()
-            }
-        }
+    // MARK: - Generic Logic
+    
+    func addKill() {
+        killCount += 1
     }
     
-    private func gameOver() {
-        isGamePaused = true
-        
+    func gameOver() {
+        // Format time string manually
         let minutes = Int(gameTime) / 60
         let seconds = Int(gameTime) % 60
         let timeString = String(format: "%02d:%02d", minutes, seconds)
         
-        SceneManager.shared.presentGameOver(
-            finalLevel: levelUpSystem.currentLevel,
-            kills: killCount,
-            timeSurvived: timeString
+        SceneManager.shared.presentGameOver(finalLevel: levelUpSystem.currentLevel, kills: killCount, timeSurvived: timeString)
+    }
+    
+    // MARK: - Pause & UI Logic
+    
+    func togglePause() {
+        isGamePaused.toggle()
+        
+        if isGamePaused {
+            let pauseMenu = PauseMenuUI()
+            pauseMenu.name = "pauseMenu"
+            pauseMenu.resumeAction = { [weak self] in
+                self?.togglePause()
+            }
+            pauseMenu.quitAction = {
+                SceneManager.shared.presentMainMenu()
+            }
+            gameCamera.addChild(pauseMenu)
+            
+            physicsWorld.speed = 0
+            joystick.isUserInteractionEnabled = false
+        } else {
+            gameCamera.childNode(withName: "pauseMenu")?.removeFromParent()
+            physicsWorld.speed = 1.0
+            lastUpdateTime = 0
+            joystick.isUserInteractionEnabled = true
+        }
+    }
+    
+    func levelUp() {
+        isGamePaused = true
+        physicsWorld.speed = 0
+        
+        let choices = levelUpChoiceGenerator.generateChoices(
+            currentLevel: levelUpSystem.currentLevel, // Fixed: Added currentLevel
+            currentWeapons: weaponManager.getWeapons(), // Fixed: getWeapons()
+            currentPassives: passiveItemManager.getPassives(), // Fixed: getPassives()
+            playerStats: player.stats
         )
+        
+        levelUpUI.showChoices(choices, in: self) // Fixed: showChoices
+    }
+    
+    func handleLevelUpSelection(_ choice: LevelUpChoice) {
+        switch choice {
+        case .newWeapon(let weapon):
+            weaponManager.addWeapon(weapon)
+            player.addChild(weapon)
+        case .weaponUpgrade(let weapon): // Fixed: weaponUpgrade
+            weapon.upgrade()
+        case .newPassive(let item):
+            passiveItemManager.addPassive(item) // Fixed: addPassive
+            item.applyEffect(to: &player.stats)
+            weaponManager.updatePlayerStats(player.stats)
+        case .passiveUpgrade(let item): // Fixed: passiveUpgrade
+            item.upgrade()
+            item.applyEffect(to: &player.stats)
+            weaponManager.updatePlayerStats(player.stats)
+        case .healthRestore: // Fixed: healthRestore
+            player.heal(30)
+        case .gold:
+            gold += 50
+        }
+        
+        // Resume
+        levelUpUI.hide()
+        isGamePaused = false
+        physicsWorld.speed = 1.0
+        lastUpdateTime = 0
+    }
+    
+    // MARK: - Input
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+         guard let gameCamera = gameCamera else { return }
+         
+         for touch in touches {
+             let location = touch.location(in: gameCamera)
+             
+             if levelUpUI.isVisible {
+                 if levelUpUI.handleTouch(at: location) { return }
+             }
+             
+             let nodes = gameCamera.nodes(at: location)
+             for node in nodes {
+                 if node.name == "pauseButton" || node.parent?.name == "pauseButton" {
+                     togglePause()
+                     return
+                 }
+             }
+         }
+        
+        guard !isGamePaused else { return }
+        joystick.touchesBegan(touches, with: event)
+    }
+    
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard !isGamePaused else { return }
+        joystick.touchesMoved(touches, with: event)
+    }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        joystick.touchesEnded(touches, with: event)
+    }
+    
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        joystick.touchesCancelled(touches, with: event)
     }
 }
 
-// MARK: - SKPhysicsContactDelegate
 extension GameScene: SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
-        // Handle collisions if needed
+        // collisionManager.handleContact(contact, in: self) // removed as handleContact doesnt exist and checkCollisions handles logic
     }
 }

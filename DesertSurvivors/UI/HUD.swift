@@ -131,6 +131,23 @@ class HUD: SKNode {
         goldLabel.position = CGPoint(x: healthBarWidth + 30, y: -38)
         goldLabel.text = "0"
         addChild(goldLabel)
+        
+        // Pause Button
+        let pauseBtn = SKSpriteNode(color: .white, size: CGSize(width: 30, height: 30)) // Placeholder icon
+        pauseBtn.name = "pauseButton"
+        // Position relative to top-right
+        pauseBtn.position = CGPoint(x: healthBarWidth + 100, y: 0) // Will be adjusted in positionHUD
+        addChild(pauseBtn)
+        
+        // Simple pause icon lines
+        let l1 = SKShapeNode(rectOf: CGSize(width: 6, height: 16))
+        l1.fillColor = .black
+        l1.position = CGPoint(x: -5, y: 0)
+        pauseBtn.addChild(l1)
+        let l2 = SKShapeNode(rectOf: CGSize(width: 6, height: 16))
+        l2.fillColor = .black
+        l2.position = CGPoint(x: 5, y: 0)
+        pauseBtn.addChild(l2)
     }
     
     func updateHealth(_ percentage: Float) {
@@ -211,6 +228,12 @@ class HUD: SKNode {
         let yPos = visibleHeight/2 - topMargin
         
         position = CGPoint(x: xPos, y: yPos)
+        
+        // Reposition Pause Button to far right
+        if let pauseBtn = childNode(withName: "pauseButton") {
+            let rightLimit = visibleWidth - leftMargin * 2 - levelLabelSpace
+            pauseBtn.position = CGPoint(x: rightLimit - 20, y: 0)
+        }
     }
 }
 

@@ -63,7 +63,7 @@ class MainMenuScene: SKScene {
         
         for node in nodes {
             if node.name == "startButton" {
-                SceneManager.shared.presentGameScene()
+                SceneManager.shared.presentCharacterSelection()
             }
         }
     }

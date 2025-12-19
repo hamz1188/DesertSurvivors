@@ -46,4 +46,12 @@ class SceneManager {
         let transition = SKTransition.fade(with: .black, duration: 1.0)
         view.presentScene(scene, transition: transition)
     }
+    
+    func presentCharacterSelection() {
+        guard let view = gameViewController?.view as? SKView else { return }
+        let scene = CharacterSelectionScene(size: view.bounds.size)
+        scene.scaleMode = .aspectFill
+        let transition = SKTransition.push(with: .left, duration: 0.5)
+        view.presentScene(scene, transition: transition)
+    }
 }

@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3FBAC5B89510C47016E5391D /* PauseMenuUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 978827F7C12D10968BF5C113 /* PauseMenuUI.swift */; };
 		950617222EF42728001FD761 /* desert-survivors-game-prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = 950617212EF42728001FD761 /* desert-survivors-game-prompt.md */; };
+		E9EF4169C0835D0DD66D4324 /* CharacterSelectionScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 960A6F4E7B3649BD8FE30417 /* CharacterSelectionScene.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,21 +34,29 @@
 		950617042EF4270C001FD761 /* DesertSurvivorsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesertSurvivorsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9506170E2EF4270C001FD761 /* DesertSurvivorsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesertSurvivorsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		950617212EF42728001FD761 /* desert-survivors-game-prompt.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "desert-survivors-game-prompt.md"; sourceTree = "<group>"; };
+		960A6F4E7B3649BD8FE30417 /* CharacterSelectionScene.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CharacterSelectionScene.swift; path = DesertSurvivors/Scenes/CharacterSelectionScene.swift; sourceTree = "<group>"; };
+		978827F7C12D10968BF5C113 /* PauseMenuUI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PauseMenuUI.swift; path = DesertSurvivors/UI/PauseMenuUI.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		950616ED2EF4270B001FD761 /* DesertSurvivors */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = DesertSurvivors;
 			sourceTree = "<group>";
 		};
 		950617072EF4270C001FD761 /* DesertSurvivorsTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = DesertSurvivorsTests;
 			sourceTree = "<group>";
 		};
 		950617112EF4270C001FD761 /* DesertSurvivorsUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = DesertSurvivorsUITests;
 			sourceTree = "<group>";
 		};
@@ -85,6 +95,8 @@
 				950617072EF4270C001FD761 /* DesertSurvivorsTests */,
 				950617112EF4270C001FD761 /* DesertSurvivorsUITests */,
 				950616EC2EF4270B001FD761 /* Products */,
+				978827F7C12D10968BF5C113 /* PauseMenuUI.swift */,
+				960A6F4E7B3649BD8FE30417 /* CharacterSelectionScene.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -117,8 +129,6 @@
 				950616ED2EF4270B001FD761 /* DesertSurvivors */,
 			);
 			name = DesertSurvivors;
-			packageProductDependencies = (
-			);
 			productName = DesertSurvivors;
 			productReference = 950616EB2EF4270B001FD761 /* DesertSurvivors.app */;
 			productType = "com.apple.product-type.application";
@@ -140,8 +150,6 @@
 				950617072EF4270C001FD761 /* DesertSurvivorsTests */,
 			);
 			name = DesertSurvivorsTests;
-			packageProductDependencies = (
-			);
 			productName = DesertSurvivorsTests;
 			productReference = 950617042EF4270C001FD761 /* DesertSurvivorsTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -163,8 +171,6 @@
 				950617112EF4270C001FD761 /* DesertSurvivorsUITests */,
 			);
 			name = DesertSurvivorsUITests;
-			packageProductDependencies = (
-			);
 			productName = DesertSurvivorsUITests;
 			productReference = 9506170E2EF4270C001FD761 /* DesertSurvivorsUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -243,6 +249,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3FBAC5B89510C47016E5391D /* PauseMenuUI.swift in Sources */,
+				E9EF4169C0835D0DD66D4324 /* CharacterSelectionScene.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
