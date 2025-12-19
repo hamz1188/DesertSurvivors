@@ -34,15 +34,16 @@ class PharaohsWrath: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
         
-        // Find unsealed enemies nearby
-        let candidates = enemies.filter { enemy in
+        // Find unsealed enemies nearby using spatial hash
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: sealRadius)
+        let candidates = nearbyNodes.compactMap { $0 as? BaseEnemy }.filter { enemy in
             enemy.isAlive && !isSealed(enemy) && playerPosition.distance(to: enemy.position) < sealRadius
         }
         
-        // Sort by health (prefer stronger enemies to seal?) or just distance
+        // Sort by health
         let sorted = candidates.sorted { $0.maxHealth > $1.maxHealth }
         
         let countToSeal = max(0, maxSealedEnemies - activeSeals.count)
@@ -54,12 +55,11 @@ class PharaohsWrath: BaseWeapon {
     }
     
     private func applySeal(to enemy: BaseEnemy, scene: SKScene) {
-        // Visual Marker - Ankh or Hieroglyph
+        // Visual Marker
         let marker = SKNode()
         marker.position = CGPoint(x: 0, y: 30)
         marker.zPosition = 100
         
-        // Gold glowing Ankh shape (simplified)
         let circle = SKShapeNode(circleOfRadius: 6)
         circle.strokeColor = .yellow
         circle.lineWidth = 2
@@ -90,8 +90,8 @@ class PharaohsWrath: BaseWeapon {
         return activeSeals.contains { $0.enemy === enemy }
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
         activeSeals = activeSeals.compactMap { seal in
             var activeSeal = seal
@@ -100,8 +100,8 @@ class PharaohsWrath: BaseWeapon {
             let enemy = seal.enemy
             
             if !enemy.isAlive {
-                // Explode!
-                explode(at: enemy.position)
+                // Explode using spatial hash
+                explode(at: enemy.position, spatialHash: spatialHash)
                 seal.marker.removeFromParent()
                 return nil
             }
@@ -113,18 +113,16 @@ class PharaohsWrath: BaseWeapon {
             }
             
             // Drain Health Logic
-            // Every 1 second roughly
             if Int(activeSeal.duration * 60) % 60 == 0 {
                 // Damage enemy
                 enemy.takeDamage(getDamage())
                 
-                // Heal Player (Need access to PlayerStats via GameScene)
+                // Heal Player
                 if let gameScene = scene as? GameScene {
                    gameScene.player.stats.currentHealth = min(
                        gameScene.player.stats.currentHealth + self.healAmount,
                        gameScene.player.stats.maxHealth
                    )
-                   // Visual heal text could go here
                 }
             }
             
@@ -132,7 +130,7 @@ class PharaohsWrath: BaseWeapon {
         }
     }
     
-    private func explode(at position: CGPoint) {
+    private func explode(at position: CGPoint, spatialHash: SpatialHash) {
         guard let scene = scene else { return }
         
         // Visual
@@ -149,14 +147,10 @@ class PharaohsWrath: BaseWeapon {
             SKAction.removeFromParent()
         ]))
         
-        // Damage Area
-        // Access enemies from GameScene or pass them? 
-        // We lack direct enemy list access here inside explode unless we pass it or query scene
-        // Simpler to just assume we catch them next frame or query scene nodes.
-        // Let's query scene nodes for simplicity in this decoupled method
-        
-        let nearby = scene.children.compactMap { $0 as? BaseEnemy }
-        for enemy in nearby where enemy.isAlive {
+        // Damage Area using spatial hash
+        let nearbyNodes = spatialHash.query(near: position, radius: 100)
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             if enemy.position.distance(to: position) < 100 {
                 enemy.takeDamage(explosionDamage)
             }

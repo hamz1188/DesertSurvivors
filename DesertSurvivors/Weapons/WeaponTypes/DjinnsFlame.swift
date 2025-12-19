@@ -28,12 +28,12 @@ class DjinnsFlame: BaseWeapon {
             self.maxHits = maxHits
         }
 
-        func update(deltaTime: TimeInterval, enemies: [BaseEnemy]) {
+        func update(deltaTime: TimeInterval, spatialHash: SpatialHash) {
             lifetime -= deltaTime
 
-            // Find target if needed
+            // Find target if needed using spatial hash
             if target == nil || target?.isAlive == false || hasHitTarget(target!) {
-                target = findNearestUnhitEnemy(enemies: enemies)
+                target = findNearestUnhitEnemy(spatialHash: spatialHash)
             }
 
             // Move toward target or drift
@@ -76,16 +76,16 @@ class DjinnsFlame: BaseWeapon {
             return hasHitTargets.contains(ObjectIdentifier(enemy))
         }
 
-        private func findNearestUnhitEnemy(enemies: [BaseEnemy]) -> BaseEnemy? {
+        private func findNearestUnhitEnemy(spatialHash: SpatialHash) -> BaseEnemy? {
+            let nearbyNodes = spatialHash.query(near: node.position, radius: seekRadius)
+            
             var nearest: BaseEnemy?
             var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
 
-            for enemy in enemies where enemy.isAlive {
-                if hasHitTarget(enemy) {
-                    continue
-                }
+            for node in nearbyNodes {
+                guard let enemy = node as? BaseEnemy, enemy.isAlive, !hasHitTarget(enemy) else { continue }
 
-                let distance = node.position.distance(to: enemy.position)
+                let distance = self.node.position.distance(to: enemy.position)
                 if distance < nearestDistance && distance < seekRadius {
                     nearestDistance = distance
                     nearest = enemy
@@ -111,7 +111,7 @@ class DjinnsFlame: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
 
         // Spawn multiple flames in a spread pattern
@@ -132,61 +132,40 @@ class DjinnsFlame: BaseWeapon {
     }
 
     private func createFlame(at position: CGPoint) -> Flame {
-        let flameNode = SKNode()
-        flameNode.position = position
-        flameNode.zPosition = Constants.ZPosition.projectile
-
-        // Create flame visual - blue mystical fire
-        let flameShape = SKShapeNode(circleOfRadius: 12)
-        flameShape.fillColor = SKColor(red: 0.2, green: 0.4, blue: 1.0, alpha: 0.8)
-        flameShape.strokeColor = SKColor(red: 0.5, green: 0.7, blue: 1.0, alpha: 1.0)
-        flameShape.lineWidth = 2
-        flameShape.glowWidth = 5.0
-        flameNode.addChild(flameShape)
-
-        // Inner glow
-        let innerGlow = SKShapeNode(circleOfRadius: 6)
-        innerGlow.fillColor = SKColor(red: 0.6, green: 0.8, blue: 1.0, alpha: 0.9)
-        innerGlow.strokeColor = .clear
-        flameNode.addChild(innerGlow)
-
-        // Flickering animation
+        let container = SKNode()
+        container.position = position
+        container.zPosition = Constants.ZPosition.weapon
+        
+        // Visual representation - flickering flame
+        let flame = SKShapeNode(circleOfRadius: 15)
+        flame.fillColor = .orange
+        flame.strokeColor = .yellow
+        flame.lineWidth = 2
+        container.addChild(flame)
+        
+        // Simple flicker animation
         let flicker = SKAction.repeatForever(SKAction.sequence([
-            SKAction.scale(to: 1.2, duration: 0.2),
-            SKAction.scale(to: 0.9, duration: 0.2),
-            SKAction.scale(to: 1.0, duration: 0.2)
+            SKAction.scale(to: 1.2, duration: 0.1),
+            SKAction.scale(to: 1.0, duration: 0.1)
         ]))
-        flameShape.run(flicker)
-
-        // Rotation animation
-        let rotate = SKAction.repeatForever(SKAction.rotate(byAngle: .pi * 2, duration: 1.5))
-        innerGlow.run(rotate)
-
-        // Spawn animation
-        flameNode.setScale(0.3)
-        flameNode.alpha = 0.3
-        flameNode.run(SKAction.group([
-            SKAction.scale(to: 1.0, duration: 0.3),
-            SKAction.fadeAlpha(to: 1.0, duration: 0.3)
-        ]))
-
-        let flame = Flame(
-            node: flameNode,
+        flame.run(flicker)
+        
+        return Flame(
+            node: container,
             damage: getDamage(),
             speed: flameSpeed,
             seekRadius: seekRadius,
             lifetime: flameLifetime,
             maxHits: maxHitsPerFlame
         )
-        return flame
     }
-
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
 
         // Update all active flames
         activeFlames = activeFlames.filter { flame in
-            flame.update(deltaTime: deltaTime, enemies: enemies)
+            flame.update(deltaTime: deltaTime, spatialHash: spatialHash)
 
             // Remove if expired or max hits reached
             if flame.lifetime <= 0 || flame.currentHits >= flame.maxHits {

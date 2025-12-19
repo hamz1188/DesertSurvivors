@@ -20,8 +20,8 @@ class DesertStorm: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
-        guard let scene = scene, let enemy = findNearestEnemy(from: playerPosition, enemies: enemies) else { return }
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
+        guard let scene = scene, let enemy = findNearestEnemy(from: playerPosition, spatialHash: spatialHash) else { return }
         
         // Fire bolt
         let bolt = createBolt()
@@ -42,15 +42,12 @@ class DesertStorm: BaseWeapon {
         
         bolt.run(SKAction.sequence([moveAction, doneAction]))
         
-        // Check for hits (Projectile logic handled here for simplicity or via collision manager)
-        // Since we don't have a centralized ProjectileManager yet, we do simple distance check or physics body.
-        // For reliability without physics engine overhead, let's use a repeating action to check overlap.
-        
+        // Check for hits
         let checkHitAction = SKAction.repeatForever(SKAction.sequence([
             SKAction.wait(forDuration: 0.05),
             SKAction.run { [weak self, weak bolt] in
                 guard let self = self, let bolt = bolt else { return }
-                self.checkBoltCollision(bolt: bolt, enemies: enemies)
+                self.checkBoltCollision(bolt: bolt, spatialHash: spatialHash)
             }
         ]))
         
@@ -67,11 +64,13 @@ class DesertStorm: BaseWeapon {
         return bolt
     }
     
-    private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+    private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+        let nearbyNodes = spatialHash.query(near: position, radius: 400)
         var nearest: BaseEnemy?
         var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
         
-        for enemy in enemies where enemy.isAlive {
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let distance = position.distance(to: enemy.position)
             if distance < nearestDistance {
                 nearestDistance = distance
@@ -81,8 +80,10 @@ class DesertStorm: BaseWeapon {
         return nearest
     }
     
-    private func checkBoltCollision(bolt: SKNode, enemies: [BaseEnemy]) {
-        for enemy in enemies where enemy.isAlive {
+    private func checkBoltCollision(bolt: SKNode, spatialHash: SpatialHash) {
+        let nearbyNodes = spatialHash.query(near: bolt.position, radius: 40)
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             if bolt.position.distance(to: enemy.position) < 30 {
                 // Hit!
                 // Create explosion
@@ -91,8 +92,8 @@ class DesertStorm: BaseWeapon {
                 // Damage enemy (direct)
                 enemy.takeDamage(getDamage())
                 
-                // Area Damage
-                applyAreaDamage(at: bolt.position, radius: 100, damage: getDamage() * 0.5, enemies: enemies)
+                // Area Damage using spatial hash
+                applyAreaDamage(at: bolt.position, radius: 100, damage: getDamage() * 0.5, spatialHash: spatialHash)
                 
                 // Remove bolt
                 bolt.removeAllActions()
@@ -102,8 +103,10 @@ class DesertStorm: BaseWeapon {
         }
     }
     
-    private func applyAreaDamage(at position: CGPoint, radius: CGFloat, damage: Float, enemies: [BaseEnemy]) {
-        for enemy in enemies where enemy.isAlive {
+    private func applyAreaDamage(at position: CGPoint, radius: CGFloat, damage: Float, spatialHash: SpatialHash) {
+        let nearbyNodes = spatialHash.query(near: position, radius: radius)
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             if enemy.position.distance(to: position) < radius {
                 enemy.takeDamage(damage)
             }

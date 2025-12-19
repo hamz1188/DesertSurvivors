@@ -28,6 +28,35 @@ class HUD: SKNode {
     override init() {
         super.init()
         setupHUD()
+        setupAccessibility()
+    }
+    
+    private func setupAccessibility() {
+        isAccessibilityElement = false // Container is not an element, its children are
+        
+        healthBarBackground.isAccessibilityElement = true
+        healthBarBackground.accessibilityLabel = "Health Bar"
+        
+        xpBarBackground.isAccessibilityElement = true
+        xpBarBackground.accessibilityLabel = "Experience Bar"
+        
+        levelLabel.isAccessibilityElement = true
+        levelLabel.accessibilityLabel = "Player Level"
+        
+        timerLabel.isAccessibilityElement = true
+        timerLabel.accessibilityLabel = "Game Timer"
+        
+        killCountLabel.isAccessibilityElement = true
+        killCountLabel.accessibilityLabel = "Kills"
+        
+        goldLabel.isAccessibilityElement = true
+        goldLabel.accessibilityLabel = "Gold"
+        
+        if let pauseBtn = childNode(withName: "pauseButton") {
+            pauseBtn.isAccessibilityElement = true
+            pauseBtn.accessibilityLabel = "Pause Game"
+            pauseBtn.accessibilityHint = "Double tap to pause or resume the game"
+        }
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -156,6 +185,9 @@ class HUD: SKNode {
         let rect = CGRect(x: 0, y: -healthBarHeight/2, width: width, height: healthBarHeight)
         healthBar.path = CGPath(roundedRect: rect, cornerWidth: 4, cornerHeight: 4, transform: nil)
         
+        // Accessibility
+        healthBarBackground.accessibilityValue = "\(Int(percentage * 100)) percent health"
+        
         // Change color based on health
         if percentage < 0.25 {
             healthBar.fillColor = SKColor(red: 0.9, green: 0.1, blue: 0.1, alpha: 1.0)
@@ -170,15 +202,20 @@ class HUD: SKNode {
         let clampedPercent = CGFloat(percentage.clamped(min: 0, max: 1))
         if clampedPercent <= 0 {
             xpBar.path = nil
+            xpBarBackground.accessibilityValue = "0 percent experience"
             return
         }
         let width = xpBarWidth * clampedPercent
         let rect = CGRect(x: 0, y: -xpBarHeight/2, width: width, height: xpBarHeight)
         xpBar.path = CGPath(roundedRect: rect, cornerWidth: 2, cornerHeight: 2, transform: nil)
+        
+        // Accessibility
+        xpBarBackground.accessibilityValue = "\(Int(percentage * 100)) percent experience"
     }
     
     func updateLevel(_ level: Int) {
         levelLabel.text = "Lv.\(level)"
+        levelLabel.accessibilityValue = "Level \(level)"
         
         // Flash effect on level up
         let scaleUp = SKAction.scale(to: 1.3, duration: 0.1)
@@ -189,15 +226,19 @@ class HUD: SKNode {
     func updateTimer(_ time: TimeInterval) {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
-        timerLabel.text = String(format: "%02d:%02d", minutes, seconds)
+        let timeStr = String(format: "%02d:%02d", minutes, seconds)
+        timerLabel.text = timeStr
+        timerLabel.accessibilityValue = "\(minutes) minutes \(seconds) seconds"
     }
     
     func updateKillCount(_ kills: Int) {
         killCountLabel.text = "Kills: \(kills)"
+        killCountLabel.accessibilityValue = "\(kills) kills"
     }
     
     func updateGold(_ gold: Int) {
         goldLabel.text = "\(gold)"
+        goldLabel.accessibilityValue = "\(gold) gold"
         
         // Small pop effect when gold changes
         let scaleUp = SKAction.scale(to: 1.2, duration: 0.05)

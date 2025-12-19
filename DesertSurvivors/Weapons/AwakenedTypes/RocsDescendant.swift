@@ -26,7 +26,7 @@ class RocsDescendant: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         if rocNode == nil {
             summonRoc(scene: scene, playerPos: playerPosition)
         }
@@ -35,13 +35,13 @@ class RocsDescendant: BaseWeapon {
     private func summonRoc(scene: SKScene?, playerPos: CGPoint) {
         guard let scene = scene else { return }
         
-        let roc = SKSpriteNode(color: .brown, size: CGSize(width: 60, height: 40)) // Much bigger
-        roc.zPosition = Constants.ZPosition.projectile + 10 // High up
+        // Large roc visual (simplified)
+        let roc = SKSpriteNode(color: .brown, size: CGSize(width: 60, height: 40)) 
+        roc.zPosition = Constants.ZPosition.projectile + 10 
         roc.position = CGPoint(x: playerPos.x + radius, y: playerPos.y)
         scene.addChild(roc)
         rocNode = roc
         
-        // Wings
         let wingL = SKSpriteNode(color: .brown, size: CGSize(width: 40, height: 15))
         wingL.position = CGPoint(x: -20, y: 10)
         roc.addChild(wingL)
@@ -50,8 +50,8 @@ class RocsDescendant: BaseWeapon {
         roc.addChild(wingR)
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
         guard let roc = rocNode else { return }
         
@@ -68,11 +68,11 @@ class RocsDescendant: BaseWeapon {
         diveTimer += deltaTime
         if diveTimer >= diveInterval {
             diveTimer = 0
-            performShockwave(at: roc.position, enemies: enemies, scene: roc.scene)
+            performShockwave(at: roc.position, spatialHash: spatialHash, scene: roc.scene)
         }
     }
     
-    private func performShockwave(at position: CGPoint, enemies: [BaseEnemy], scene: SKNode?) {
+    private func performShockwave(at position: CGPoint, spatialHash: SpatialHash, scene: SKNode?) {
         guard let scene = scene else { return }
         
         let wave = SKShapeNode(circleOfRadius: 10)
@@ -86,9 +86,11 @@ class RocsDescendant: BaseWeapon {
             SKAction.removeFromParent()
         ]))
         
-        // Shockwave Damage
+        // Shockwave Damage using spatial hash
         let waveRadius: CGFloat = 100
-        for enemy in enemies where enemy.isAlive {
+        let nearbyNodes = spatialHash.query(near: position, radius: waveRadius)
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             if enemy.position.distance(to: position) < waveRadius {
                 enemy.takeDamage(getDamage())
                 

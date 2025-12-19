@@ -24,7 +24,7 @@ class SandstormShield: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         // Shield is always active, created once
         if shieldNode == nil {
             createShield()
@@ -33,29 +33,30 @@ class SandstormShield: BaseWeapon {
 
     private func createShield() {
         guard let scene = scene else { return }
-
-        let container = SKNode()
-        container.zPosition = Constants.ZPosition.weapon
-        scene.addChild(container)
-        shieldNode = container
-
-        // Create shield segments (rotating barrier pieces)
-        let segmentCount = 6
-        for _ in 0..<segmentCount {
+        
+        let node = SKNode()
+        node.zPosition = Constants.ZPosition.weapon
+        shieldNode = node
+        
+        // Create initial segments
+        let segmentCount = 6 + (level - 1)
+        for i in 0..<segmentCount {
             let segment = SKShapeNode(rectOf: CGSize(width: 40, height: 15), cornerRadius: 5)
             segment.fillColor = SKColor.yellow.withAlphaComponent(0.6)
             segment.strokeColor = .orange
             segment.lineWidth = 2
             segment.zPosition = Constants.ZPosition.weapon
-
+            
             shieldSegments.append(segment)
-            container.addChild(segment)
+            node.addChild(segment)
         }
-
-        addChild(container)
+        
+        // Add to player/scene (usually added as child of player in WeaponManager)
+        // If it's a child of the weapon, it will rotate with the player if the weapon does.
+        addChild(node)
     }
-
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
+    
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
         // Don't call super.update - shield is always active
         currentAngle += orbitSpeed * CGFloat(deltaTime)
 
@@ -75,8 +76,8 @@ class SandstormShield: BaseWeapon {
             segment.zRotation = segmentAngle + .pi / 2
         }
 
-        // Check collisions with enemies
-        checkShieldCollisions(playerPosition: playerPosition, enemies: enemies)
+        // Check collisions with enemies using spatial hash
+        checkShieldCollisions(playerPosition: playerPosition, spatialHash: spatialHash)
     }
 
     private func updateHitCooldowns(deltaTime: TimeInterval) {
@@ -90,8 +91,11 @@ class SandstormShield: BaseWeapon {
         }
     }
 
-    private func checkShieldCollisions(playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        for enemy in enemies where enemy.isAlive {
+    private func checkShieldCollisions(playerPosition: CGPoint, spatialHash: SpatialHash) {
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: shieldRadius + 30)
+        
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let enemyId = ObjectIdentifier(enemy)
 
             // Skip if enemy was hit recently

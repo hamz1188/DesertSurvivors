@@ -39,7 +39,7 @@ class CurvedDagger: BaseWeapon {
         addChild(dagger)
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
         // Don't call super.update for orbiting weapons - they work continuously
         previousAngle = currentAngle
         currentAngle += orbitSpeed * CGFloat(deltaTime)
@@ -47,12 +47,10 @@ class CurvedDagger: BaseWeapon {
         // Update hit cooldowns
         updateHitCooldowns(deltaTime: deltaTime)
         
-        // Pre-filter enemies to only those within orbit range (performance optimization)
-        // Only check enemies within orbit radius + margin (50 units)
+        // Pre-filter enemies using spatial hash grid (performance optimization)
         let maxCheckDistance = orbitRadius + 50
-        let nearbyEnemies = enemies.filter { enemy in
-            enemy.isAlive && enemy.position.distance(to: playerPosition) < maxCheckDistance
-        }
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: maxCheckDistance)
+        let nearbyEnemies = nearbyNodes.compactMap { $0 as? BaseEnemy }.filter { $0.isAlive }
         
         // Update dagger positions and check collisions
         let daggerCount = daggers.count
@@ -70,7 +68,7 @@ class CurvedDagger: BaseWeapon {
                 daggerAngle: daggerAngle,
                 previousAngle: previousDaggerAngle,
                 playerPosition: playerPosition,
-                enemies: nearbyEnemies  // Only check nearby enemies
+                enemies: nearbyEnemies
             )
         }
     }
@@ -200,7 +198,7 @@ class CurvedDagger: BaseWeapon {
         }
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         // Daggers orbit continuously, collision is checked in update
     }
 }

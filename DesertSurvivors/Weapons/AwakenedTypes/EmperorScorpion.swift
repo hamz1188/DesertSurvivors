@@ -26,16 +26,12 @@ class EmperorScorpion: BaseWeapon {
         // No levels for now
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
         
         // Determine facing
-        // We need player velocity or last input. Since BaseWeapon doesn't accept velocity in attack(),
-        // we might assume BaseWeapon's update() stores it if we modify BaseWeapon, OR we infer it.
-        // For now, let's just target nearest enemy to determine "forward".
-        
         var forwardVec = lastDirection
-        if let nearest = findNearestEnemy(from: playerPosition, enemies: enemies) {
+        if let nearest = findNearestEnemy(from: playerPosition, spatialHash: spatialHash) {
             forwardVec = (nearest.position - playerPosition).toVector().normalized()
             lastDirection = forwardVec
         }
@@ -56,31 +52,15 @@ class EmperorScorpion: BaseWeapon {
         scene.addChild(whip2)
         animateWhip(whip2)
         
-        // Damage Logic (Cone Area)
-        checkConeDamage(origin: playerPosition, direction: forwardVec, angleWidth: .pi / 1.5, length: 250, enemies: enemies)
+        // Damage Logic (Cone Area) using spatial hash
+        checkConeDamage(origin: playerPosition, direction: forwardVec, angleWidth: .pi / 1.5, length: 250, spatialHash: spatialHash)
     }
     
     private func createWhip(color: SKColor) -> SKShapeNode {
         let length: CGFloat = 250
         let path = CGMutablePath()
         path.move(to: .zero)
-        path.addLine(to: CGPoint(x: length, y: 0)) // Simple straight line visual for now, or curve
-        
-        // Let's make it look like a stinger
-        // ... (simplified visual)
-        
-        // NOTE: SKShapeNode is drawn relative to its origin, so anchorPoint is effectively (0,0) by default logic
-        
-        let node = SKShapeNode(rectOf: CGSize(width: length, height: 20))
-        node.fillColor = color
-        node.strokeColor = .black
-        // node.anchorPoint = CGPoint(x: 0, y: 0.5) // REMOVED: SKShapeNode doesn't have anchorPoint per se.
-        // To pivot from player (0,0), we need to ensure the geometry is offset correctly OR set the position.
-        // Actually, rectOf: creates a centered rect. To pivot at end, we need a custom path or offset.
-        // For now, let's just stick to the centered rect but we might need to offset the position.
-        // Alternatively, use path-based shape which we defined but didn't use!
-        // The previous code created 'path' but didn't use it for SKShapeNode init.
-        // Let's use the path which starts at 0,0.
+        path.addLine(to: CGPoint(x: length, y: 0)) 
         
         let shape = SKShapeNode(path: path)
         shape.strokeColor = color
@@ -98,10 +78,12 @@ class EmperorScorpion: BaseWeapon {
         ]))
     }
     
-    private func checkConeDamage(origin: CGPoint, direction: CGVector, angleWidth: CGFloat, length: CGFloat, enemies: [BaseEnemy]) {
+    private func checkConeDamage(origin: CGPoint, direction: CGVector, angleWidth: CGFloat, length: CGFloat, spatialHash: SpatialHash) {
         let facingAngle = atan2(direction.dy, direction.dx)
         
-        for enemy in enemies where enemy.isAlive {
+        let nearbyNodes = spatialHash.query(near: origin, radius: length)
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let toEnemy = enemy.position - origin
             let dist = toEnemy.length()
             
@@ -138,11 +120,13 @@ class EmperorScorpion: BaseWeapon {
         enemy.run(SKAction.repeat(poisonTick, count: 10))
     }
     
-    private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+    private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+        let nearbyNodes = spatialHash.query(near: position, radius: 400)
         var nearest: BaseEnemy?
         var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
         
-        for enemy in enemies where enemy.isAlive {
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let distance = position.distance(to: enemy.position)
             if distance < nearestDistance {
                 nearestDistance = distance

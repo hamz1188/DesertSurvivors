@@ -29,12 +29,14 @@ class AncientCurse: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
 
-        // Find enemies to curse (not already cursed)
-        let uncursedEnemies = enemies.filter { enemy in
-            enemy.isAlive && !isCursed(enemy) && playerPosition.distance(to: enemy.position) < curseRadius
+        // Find enemies to curse (not already cursed) using spatial hash query
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: curseRadius)
+        let uncursedEnemies = nearbyNodes.compactMap { node -> BaseEnemy? in
+            guard let enemy = node as? BaseEnemy, enemy.isAlive, !isCursed(enemy) else { return nil }
+            return enemy
         }
 
         // Sort by distance and curse nearest enemies
@@ -136,8 +138,8 @@ class AncientCurse: BaseWeapon {
         return cursedEnemies.contains { $0.enemy === enemy }
     }
 
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
 
         // Update cursed enemies
         cursedEnemies = cursedEnemies.compactMap { curse in

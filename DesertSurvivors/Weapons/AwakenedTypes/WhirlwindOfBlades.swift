@@ -27,7 +27,7 @@ class WhirlwindOfBlades: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         // Initialize if needed
         if projectileNode == nil {
             createWhirlwind()
@@ -68,7 +68,7 @@ class WhirlwindOfBlades: BaseWeapon {
         return blade
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
         // Continuous update
         guard let container = projectileNode else { return }
         container.position = playerPosition
@@ -95,34 +95,24 @@ class WhirlwindOfBlades: BaseWeapon {
             blade.zRotation = angle - .pi / 2 // Point outward
         }
         
-        // Dealing damage (Optimized: check collisions manually since it's an area effect)
-        checkCollisions(playerPosition: playerPosition, enemies: enemies)
+        // Dealing damage using spatial hash
+        checkCollisions(playerPosition: playerPosition, spatialHash: spatialHash)
     }
     
-    private func checkCollisions(playerPosition: CGPoint, enemies: [BaseEnemy]) {
+    private func checkCollisions(playerPosition: CGPoint, spatialHash: SpatialHash) {
         // Optimization: Use squared distance locally
-        let hitRadiusSq = (radius + 20) * (radius + 20)
-        let innerRadiusSq = (radius - 20) * (radius - 20)
+        let hitRadiusSq = (radius + 30) * (radius + 30)
+        let innerRadiusSq = (radius - 30) * (radius - 30)
         
-        for enemy in enemies where enemy.isAlive {
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: radius + 40)
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let dx = enemy.position.x - playerPosition.x
             let dy = enemy.position.y - playerPosition.y
             let distSq = dx*dx + dy*dy
             
             // Check if enemy is in the ring of death
             if distSq <= hitRadiusSq && distSq >= innerRadiusSq {
-                // Apply damage!
-                // Since this runs every frame, we need a cooldown PER ENEMY to avoid 60 hits/sec
-                // However, BaseWeapon cooldown logic handles the "attack" trigger.
-                // But specifically for this continuous area weapon, we need internal throttling.
-                // We'll trust the GameScene/WeaponManager loop calls update(), but we really strictly want 
-                // to damage based on our internal cooldown or just damage very slightly every frame.
-                // Let's go with "damage every X seconds" per enemy.
-                // For simplicity in this iteration: direct damage but low amount? No, that kills too fast.
-                // Let's rely on standard "projectile" logic or add a hit tracker.
-                
-                // Let's add a dynamic property to enemies for hit tracking? No, can't modify BaseEnemy easily dynamically.
-                // Best approach: Use a local dictionary for hit timestamps.
                 if canHit(enemy) {
                     enemy.takeDamage(getDamage())
                     recordHit(enemy)
@@ -131,7 +121,6 @@ class WhirlwindOfBlades: BaseWeapon {
         }
     }
     
-    // Simple hit tracking integration
     private var enemyHitTimes: [ObjectIdentifier: TimeInterval] = [:]
     private let hitInterval: TimeInterval = 0.2
     

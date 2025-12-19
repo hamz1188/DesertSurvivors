@@ -24,15 +24,15 @@ class ScorpionTail: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
 
         // Determine attack direction based on player movement or default to nearest enemy
         var direction = CGPoint(x: lastPlayerVelocity.dx, y: lastPlayerVelocity.dy)
 
-        // If player not moving, attack nearest enemy
+        // If player not moving, attack nearest enemy using spatial hash
         if direction.length() < 0.1 {
-            if let nearestEnemy = findNearestEnemy(from: playerPosition, enemies: enemies) {
+            if let nearestEnemy = findNearestEnemy(from: playerPosition, spatialHash: spatialHash) {
                 direction = (nearestEnemy.position - playerPosition).normalized()
             } else {
                 direction = CGPoint(x: 1, y: 0) // Default right
@@ -48,8 +48,8 @@ class ScorpionTail: BaseWeapon {
         whip.position = playerPosition
         scene.addChild(whip)
 
-        // Damage enemies in whip path
-        damageEnemiesInWhip(playerPosition: playerPosition, direction: direction, enemies: enemies)
+        // Damage enemies in whip path using spatial hash
+        damageEnemiesInWhip(playerPosition: playerPosition, direction: direction, spatialHash: spatialHash)
 
         // Animate whip
         whip.run(SKAction.sequence([
@@ -93,8 +93,11 @@ class ScorpionTail: BaseWeapon {
         return whip
     }
 
-    private func damageEnemiesInWhip(playerPosition: CGPoint, direction: CGPoint, enemies: [BaseEnemy]) {
-        for enemy in enemies {
+    private func damageEnemiesInWhip(playerPosition: CGPoint, direction: CGPoint, spatialHash: SpatialHash) {
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: whipLength)
+        
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let toEnemy = enemy.position - playerPosition
             let distance = toEnemy.length()
 
@@ -119,8 +122,6 @@ class ScorpionTail: BaseWeapon {
 
     private func applyPoison(to enemy: BaseEnemy) {
         // Apply poison damage over time
-        // Note: This is a simplified version. In a full implementation,
-        // you'd want to track poison effects per enemy
         let poisonAction = SKAction.repeat(
             SKAction.sequence([
                 SKAction.wait(forDuration: 0.5),
@@ -132,12 +133,14 @@ class ScorpionTail: BaseWeapon {
         )
         enemy.run(poisonAction)
     }
-
-    private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+    
+    private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+        let nearbyNodes = spatialHash.query(near: position, radius: 400)
         var nearest: BaseEnemy?
         var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
 
-        for enemy in enemies {
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let distance = position.distance(to: enemy.position)
             if distance < nearestDistance {
                 nearestDistance = distance

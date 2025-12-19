@@ -20,7 +20,7 @@ class PickupManager {
     func spawnExperienceGem(at position: CGPoint, xpValue: Float = 10) {
         guard let scene = scene else { return }
         
-        let gem = ExperienceGem(xpValue: xpValue)
+        let gem = ExperienceGem(xpValue: xpValue, player: player)
         gem.position = position
         scene.addChild(gem)
         activePickups.append(gem)
@@ -34,12 +34,10 @@ class PickupManager {
                 return true
             }
             
-            gem.update(deltaTime: deltaTime, 
-                      playerPosition: player.position, 
-                      pickupRadius: CGFloat(player.stats.pickupRadius))
+            gem.update(deltaTime: deltaTime)
             
             // Check if collected
-            if gem.position.distance(to: player.position) < 10 {
+            if gem.position.distance(to: player.position) < 15 {
                 collectGem(gem)
                 return true
             }

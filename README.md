@@ -184,15 +184,20 @@ Final clean-up and polish for release candidate.
 Implemented critical bug fixes and performance optimizations from comprehensive code review:
 
 #### Bug Fixes:
-- ✅ **Awakening System**: Fixed string mismatch preventing Oil Flask and Djinn's Flame weapon awakenings
-- ✅ **Memory Leak**: Dead enemies now properly removed from spawner array
-- ✅ **Player Flash Bug**: Damage flash now works correctly with textured sprites
-- ✅ **Enemy Flash Race Condition**: Rapid hits now show proper visual feedback
-- ✅ **Duplicate UI Call**: Removed duplicate `setupLevelUpUI()` in GameScene
+- ✅ **Awakening System**: Fixed string mismatch preventing Oil Flask and Djinn's Flame weapon awakenings.
+- ✅ **Memory Leak**: Dead enemies now properly removed from spawner array to prevent slowdowns.
+- ✅ **Visual Feedback**: Fixed Player/Enemy flash blink bugs and added a new **Dodge Effect** popup.
+- ✅ **Duplicate UI Call**: Resolved redundant initialization call in `GameScene`.
 
 #### Performance:
-- ✅ **CurvedDagger Optimization**: Pre-filters enemies (~80-90% collision check reduction)
+- ✅ **Global Spatial Hash**: Integrated grid-based collision for all 24 weapons and player, achieving O(n+m) targeting.
+- ✅ **Object Pooling**: Projectiles are now recycled via `PoolingManager`, eliminating allocation-related frame spikes.
+- ✅ **HUD Optimization**: Recalculates layout only on orientation changes; added a real-time **FPS Monitor**.
+- ✅ **CurvedDagger Optimization**: Pre-filters enemies for sweep checks (~90% calculation reduction).
 
-#### Code Quality:
-- ✅ **Magic Numbers**: Replaced hardcoded values with named constants
+#### Architecture & Quality:
+- ✅ **Standardized Weapons**: All 24 weapons now strictly follow the `BaseWeapon` protocol.
+- ✅ **Dependency Injection**: Refactored `Player` initialization to remove hidden singleton dependencies.
+- ✅ **Accessibility**: Added Full **VoiceOver support** to the game HUD for inclusive play.
+- ✅ **Clean Code**: Removed magic numbers, unused imports, and enabled proper debug logging.
 

@@ -23,12 +23,14 @@ class Player: SKNode {
     // Health regeneration
     private var regenTimer: TimeInterval = 0
     
-    init(character: CharacterType = .tariq, stats: PlayerStats = PlayerStats()) {
+    init(character: CharacterType = .tariq, stats: PlayerStats = PlayerStats(), applyShopUpgrades: Bool = true) {
         self.character = character
         self.stats = stats
         
-        // Apply permanent upgrades
-        ShopManager.shared.applyUpgrades(to: &self.stats)
+        // Apply permanent upgrades if requested
+        if applyShopUpgrades {
+            ShopManager.shared.applyUpgrades(to: &self.stats)
+        }
         
         // Apply character specific stats
         character.applyBaseStats(to: &self.stats)
@@ -109,14 +111,38 @@ class Player: SKNode {
         // Don't take damage if invincible
         guard !isInvincible else { return }
         
-        stats.takeDamage(amount)
+        let wasDamaged = stats.takeDamage(amount)
         
-        // Activate invincibility frames
-        isInvincible = true
-        invincibilityTimer = invincibilityDuration
+        if wasDamaged {
+            // Activate invincibility frames
+            isInvincible = true
+            invincibilityTimer = invincibilityDuration
+            
+            // Visual feedback - flash red
+            flashDamage()
+        } else {
+            // Dodged!
+            showDodgeEffect()
+        }
+    }
+    
+    private func showDodgeEffect() {
+        let dodgeLabel = SKLabelNode(fontNamed: "Arial-BoldMT")
+        dodgeLabel.text = "DODGE"
+        dodgeLabel.fontSize = 14
+        dodgeLabel.fontColor = .cyan
+        dodgeLabel.position = CGPoint(x: 0, y: 30)
+        dodgeLabel.zPosition = Constants.ZPosition.ui
+        addChild(dodgeLabel)
         
-        // Visual feedback - flash red
-        flashDamage()
+        let moveUp = SKAction.moveBy(x: 0, y: 30, duration: 0.5)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.5)
+        let remove = SKAction.removeFromParent()
+        
+        dodgeLabel.run(SKAction.sequence([
+            SKAction.group([moveUp, fadeOut]),
+            remove
+        ]))
     }
     
     func heal(_ amount: Float) {

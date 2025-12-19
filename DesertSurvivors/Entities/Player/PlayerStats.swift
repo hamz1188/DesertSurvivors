@@ -38,11 +38,11 @@ struct PlayerStats {
     var attackSpeedMultiplier: Float = 1.0 // attack speed multiplier
     var damageReduction: Float = 0 // flat damage reduction percentage (0.0 - 1.0)
     
-    mutating func takeDamage(_ amount: Float) {
+    mutating func takeDamage(_ amount: Float) -> Bool {
         // Check dodge chance first
         if dodgeChance > 0 && Float.random(in: 0...1) < dodgeChance {
             // Dodged! Take no damage
-            return
+            return false
         }
         
         // Apply armor reduction
@@ -52,6 +52,7 @@ struct PlayerStats {
         let finalDamage = damageAfterArmor * (1.0 - damageReduction)
         
         currentHealth = max(0, currentHealth - finalDamage)
+        return true
     }
     
     mutating func heal(_ amount: Float) {

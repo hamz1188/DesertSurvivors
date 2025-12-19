@@ -26,14 +26,16 @@ class GreekFire: BaseWeapon {
             self.lifetime = lifetime
         }
         
-        func update(deltaTime: TimeInterval, enemies: [BaseEnemy]) {
+        func update(deltaTime: TimeInterval, spatialHash: SpatialHash) {
             lifetime -= deltaTime
             damageTimer -= deltaTime
             
             if damageTimer <= 0 {
-                // Intense damage
-                for enemy in enemies where enemy.isAlive {
-                    if node.position.distance(to: enemy.position) < radius {
+                // Intense damage using spatial hash
+                let nearbyNodes = spatialHash.query(near: node.position, radius: radius)
+                for node in nearbyNodes {
+                    guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
+                    if self.node.position.distance(to: enemy.position) < radius {
                         enemy.takeDamage(damage)
                     }
                 }
@@ -54,7 +56,7 @@ class GreekFire: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
         
         // Throw 3 flasks in random directions
@@ -117,11 +119,11 @@ class GreekFire: BaseWeapon {
         ]))
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
         activePools = activePools.filter { pool in
-            pool.update(deltaTime: deltaTime, enemies: enemies)
+            pool.update(deltaTime: deltaTime, spatialHash: spatialHash)
             return pool.lifetime > 0
         }
     }

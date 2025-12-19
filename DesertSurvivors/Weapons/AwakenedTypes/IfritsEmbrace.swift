@@ -26,7 +26,7 @@ class IfritsEmbrace: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         if fireRing == nil {
             createFireRing(scene: scene)
         }
@@ -59,18 +59,19 @@ class IfritsEmbrace: BaseWeapon {
         container.run(SKAction.repeatForever(SKAction.rotate(byAngle: 3, duration: 1.0)))
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
         guard let ring = fireRing else { return }
         ring.position = playerPosition
         
-        // Ring Damage (Contact)
-        for enemy in enemies where enemy.isAlive {
+        // Ring Damage (Contact) using spatial hash
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: ringRadius + 40)
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let dist = enemy.position.distance(to: playerPosition)
             if abs(dist - ringRadius) < 30 {
                  enemy.takeDamage(getDamage() * 0.5) // Rapid low damage
-                 // Maybe burn logic if we had it exposed
             }
         }
         
@@ -81,8 +82,8 @@ class IfritsEmbrace: BaseWeapon {
             spawnSpirit(at: playerPosition, scene: ring.scene)
         }
         
-        // Update Spirits
-        updateSpirits(deltaTime: deltaTime, enemies: enemies)
+        // Update Spirits using spatial hash
+        updateSpirits(deltaTime: deltaTime, spatialHash: spatialHash)
     }
     
     private func spawnSpirit(at position: CGPoint, scene: SKNode?) {
@@ -98,10 +99,10 @@ class IfritsEmbrace: BaseWeapon {
         spirits.append(spirit)
     }
     
-    private func updateSpirits(deltaTime: TimeInterval, enemies: [BaseEnemy]) {
+    private func updateSpirits(deltaTime: TimeInterval, spatialHash: SpatialHash) {
         for (index, spirit) in spirits.enumerated().reversed() {
-            // Find target
-            if let target = findNearestEnemy(from: spirit.position, enemies: enemies) {
+            // Find target using spatial hash
+            if let target = findNearestEnemy(from: spirit.position, spatialHash: spatialHash) {
                 let dir = (target.position - spirit.position).normalized()
                 let speed: CGFloat = 400
                 spirit.position = spirit.position + (dir * speed * CGFloat(deltaTime))
@@ -124,10 +125,12 @@ class IfritsEmbrace: BaseWeapon {
         }
     }
     
-    private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+    private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+        let nearbyNodes = spatialHash.query(near: position, radius: 400)
         var nearest: BaseEnemy?
         var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
-        for enemy in enemies where enemy.isAlive {
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let d = position.distance(to: enemy.position)
             if d < nearestDistance {
                 nearestDistance = d

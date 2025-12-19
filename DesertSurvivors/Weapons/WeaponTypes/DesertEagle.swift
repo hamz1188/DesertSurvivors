@@ -25,12 +25,12 @@ class DesertEagle: BaseWeapon {
             self.lifetime = lifetime
         }
 
-        func update(deltaTime: TimeInterval, enemies: [BaseEnemy]) {
+        func update(deltaTime: TimeInterval, spatialHash: SpatialHash) {
             lifetime -= deltaTime
 
-            // Find or update target
+            // Find or update target using spatial hash
             if target == nil || target?.isAlive == false || hasHit {
-                target = findNearestEnemy(from: node.position, enemies: enemies)
+                target = findNearestEnemy(from: node.position, spatialHash: spatialHash)
                 hasHit = false
             }
 
@@ -89,11 +89,14 @@ class DesertEagle: BaseWeapon {
             )
         }
 
-        private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+        private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+            let nearbyNodes = spatialHash.query(near: position, radius: 400)
+            
             var nearest: BaseEnemy?
             var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
 
-            for enemy in enemies where enemy.isAlive {
+            for node in nearbyNodes {
+                guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
                 let distance = position.distance(to: enemy.position)
                 if distance < nearestDistance {
                     nearestDistance = distance
@@ -118,7 +121,7 @@ class DesertEagle: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
 
         // Only spawn if under max falcons
@@ -128,54 +131,26 @@ class DesertEagle: BaseWeapon {
             activeFalcons.append(falcon)
         }
     }
-
+    
     private func createFalcon(at position: CGPoint) -> Falcon {
-        // Create falcon sprite (bird-like shape)
-        let falconNode = SKSpriteNode(color: .brown, size: CGSize(width: 25, height: 20))
-        falconNode.position = position
-        falconNode.zPosition = Constants.ZPosition.projectile
-
-        // Add wing effect
-        let wing1 = SKSpriteNode(color: SKColor.brown.withAlphaComponent(0.7), size: CGSize(width: 15, height: 8))
-        wing1.position = CGPoint(x: -8, y: 0)
-        wing1.zRotation = 0.3
-        falconNode.addChild(wing1)
-
-        let wing2 = SKSpriteNode(color: SKColor.brown.withAlphaComponent(0.7), size: CGSize(width: 15, height: 8))
-        wing2.position = CGPoint(x: 8, y: 0)
-        wing2.zRotation = -0.3
-        falconNode.addChild(wing2)
-
-        // Flap animation
-        let flapUp = SKAction.sequence([
-            SKAction.moveBy(x: 0, y: 3, duration: 0.15),
-            SKAction.moveBy(x: 0, y: -3, duration: 0.15)
-        ])
-        falconNode.run(SKAction.repeatForever(flapUp))
-
-        // Spawn animation
-        falconNode.setScale(0.5)
-        falconNode.alpha = 0.5
-        falconNode.run(SKAction.group([
-            SKAction.scale(to: 1.0, duration: 0.2),
-            SKAction.fadeAlpha(to: 1.0, duration: 0.2)
-        ]))
-
-        let falcon = Falcon(
-            node: falconNode,
-            damage: getDamage(),
-            speed: falconSpeed,
-            lifetime: falconLifetime
-        )
-        return falcon
+        let node = SKSpriteNode(color: .brown, size: CGSize(width: 30, height: 20))
+        node.position = position
+        node.zPosition = Constants.ZPosition.projectile
+        
+        // Add "Eagle" details - yellow beak
+        let beak = SKSpriteNode(color: .yellow, size: CGSize(width: 5, height: 5))
+        beak.position = CGPoint(x: 15, y: 0)
+        node.addChild(beak)
+        
+        return Falcon(node: node, damage: getDamage(), speed: falconSpeed, lifetime: falconLifetime)
     }
+    
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
 
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
-
-        // Update all active falcons
+        // Update all active falcons using spatial hash
         activeFalcons = activeFalcons.filter { falcon in
-            falcon.update(deltaTime: deltaTime, enemies: enemies)
+            falcon.update(deltaTime: deltaTime, spatialHash: spatialHash)
 
             if falcon.lifetime <= 0 {
                 // Fade out and remove

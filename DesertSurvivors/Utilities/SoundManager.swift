@@ -83,15 +83,14 @@ class SoundManager {
         
         // Note: filename should include extension, e.g. "hit.wav"
         
-        // We verify existence to avoid log spam
         if Bundle.main.url(forResource: filename, withExtension: nil) == nil {
-            // print("SoundManager: SFX file \(filename) not found.") // Commented out to avoid spamming console
+            #if DEBUG
+            print("SoundManager: SFX file \(filename) not found.") 
+            #endif
             return
         }
         
-        if let scene = scene {
-            scene.run(SKAction.playSoundFileNamed(filename, waitForCompletion: false))
-        }
+        scene?.run(SKAction.playSoundFileNamed(filename, waitForCompletion: false))
     }
     
     func toggleSFX() -> Bool {

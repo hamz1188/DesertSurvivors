@@ -19,11 +19,11 @@ class SandBolt: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
 
-        // Find nearest enemy
-        guard let nearestEnemy = findNearestEnemy(from: playerPosition, enemies: enemies) else {
+        // Find nearest enemy using spatial hash
+        guard let nearestEnemy = findNearestEnemy(from: playerPosition, spatialHash: spatialHash) else {
             return
         }
 
@@ -38,7 +38,11 @@ class SandBolt: BaseWeapon {
                 y: direction.x * sin(spreadAngle) + direction.y * cos(spreadAngle)
             )
 
-            let projectile = Projectile(
+            let projectile = PoolingManager.shared.spawnProjectile(weaponName: "SandBolt") {
+                Projectile(damage: 0, speed: 0, direction: .zero)
+            }
+            
+            projectile.configure(
                 damage: getDamage(),
                 speed: projectileSpeed,
                 direction: rotatedDirection,
@@ -46,25 +50,29 @@ class SandBolt: BaseWeapon {
             )
 
             projectile.position = playerPosition
-            scene.addChild(projectile)
+            if projectile.parent == nil {
+                scene.addChild(projectile)
+            }
             activeProjectiles.append(projectile)
         }
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
-        
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
+
         // Update active projectiles
         activeProjectiles.removeAll { projectile in
-            projectile.update(deltaTime: deltaTime)
+            projectile.update(deltaTime: deltaTime) {
+                PoolingManager.shared.despawnProjectile(projectile, weaponName: "SandBolt")
+            }
             
-            // Check collision
-            if projectile.checkCollision(with: enemies) != nil {
-                projectile.removeFromParent()
+            // Check collision using spatial hash
+            if projectile.checkCollision(spatialHash: spatialHash) != nil {
+                PoolingManager.shared.despawnProjectile(projectile, weaponName: "SandBolt")
                 return true
             }
             
-            // Remove if out of bounds or lifetime expired
+            // Remove if parent cleared (despawned)
             if projectile.parent == nil {
                 return true
             }
@@ -73,11 +81,14 @@ class SandBolt: BaseWeapon {
         }
     }
     
-    private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+    private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+        let nearbyNodes = spatialHash.query(near: position, radius: 500)
+        
         var nearest: BaseEnemy?
         var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
         
-        for enemy in enemies {
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let distance = position.distance(to: enemy.position)
             if distance < nearestDistance {
                 nearestDistance = distance

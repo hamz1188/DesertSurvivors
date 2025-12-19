@@ -26,7 +26,7 @@ class WrathOfTheSun: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         // Initialize beams if not present
         if beamContainer == nil {
             createBeams()
@@ -52,10 +52,9 @@ class WrathOfTheSun: BaseWeapon {
     
     private func createBeam() -> SKShapeNode {
         // Beam originating from center, extending outwards
-        // Using a path to define the shape so it rotates around the origin (player) properly
         let path = CGMutablePath()
         path.move(to: .zero)
-        path.addLine(to: CGPoint(x: beamLength, y: -beamWidth/2)) // Slight cone? or Rect?
+        path.addLine(to: CGPoint(x: beamLength, y: -beamWidth/2)) 
         path.addLine(to: CGPoint(x: beamLength, y: beamWidth/2))
         path.closeSubpath()
         
@@ -66,7 +65,6 @@ class WrathOfTheSun: BaseWeapon {
         node.glowWidth = 10
         node.alpha = 0.8
         
-        // Add core (white hot center)
         let corePath = CGMutablePath()
         corePath.move(to: .zero)
         corePath.addLine(to: CGPoint(x: beamLength, y: 0))
@@ -78,69 +76,41 @@ class WrathOfTheSun: BaseWeapon {
         return node
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
         // Ensure container follows player
-        guard let container = beamContainer else { 
-            // If not created yet, do nothing (attack() will trigger creation)
-            return 
-        }
+        guard let container = beamContainer else { return }
         
         container.position = playerPosition
         container.zRotation += rotationSpeed * CGFloat(deltaTime)
         
-        // Check collisions manually since it's a "sweeping" area hazard
-        checkCollisions(playerPosition: playerPosition, enemies: enemies)
+        // Check collisions using spatial hash
+        checkCollisions(playerPosition: playerPosition, spatialHash: spatialHash)
     }
     
-    private func checkCollisions(playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        // We know the container rotation and the individual beam offsets.
-        // Actually, container rotates. Beams are fixed at 0, 120, 240 degrees inside container.
-        
+    private func checkCollisions(playerPosition: CGPoint, spatialHash: SpatialHash) {
         let containerRotation = beamContainer!.zRotation
         
-        for enemy in enemies where enemy.isAlive {
-            // Check if enemy is hit by any beam
+        // Use a conservative radius for query (beam length)
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: beamLength)
+        
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
+            
             let toEnemy = enemy.position - playerPosition
             let dist = toEnemy.length()
             
-            if dist > beamLength { continue } // Too far
-            
-            _ = atan2(toEnemy.y, toEnemy.x) // Kept for reference but unused, actually just delete logic
-            // Unused logic removed
-            
-            // Normalize enemy angle relative to container rotation
-            // Beam 1 is at 0 relative to container.
-            // Beam 2 is at 2pi/3.
-            // Beam 3 is at 4pi/3.
-            
-            // The world angle of Beam 0 is containerRotation.
-            // World angle of enemy is enemyAngle.
-            // Difference needs to be small (within beam width angularly).
-            
-            // Angular width approx: width / dist (small angle approximation)
-            // But close to player, angle is large.
-            // Let's use distance to line segment check for accuracy?
-            // "Distance from point to line" is better.
+            if dist > beamLength { continue }
             
             // Rotate enemy point into container's local space
             let localPoint = toEnemy.rotated(by: -containerRotation)
             
             for beam in beams {
-                 // Each beam is at a fixed rotation in local space
-                // Beam 0: 0 deg. Line is along +X axis.
-                // Beam 1: 120 deg.
-                // Beam 2: 240 deg.
-                 
                 let beamRotation = beam.zRotation
-                // Rotate local point to be relative to THIS beam (so beam is +X)
                 let beamLocalPoint = localPoint.rotated(by: -beamRotation)
                 
                 // Now check if beamLocalPoint is inside the beam rect (which extends along +X)
-                // X: [0, beamLength]
-                // Y: [-beamWidth/2, beamWidth/2]
-                
                 if beamLocalPoint.x >= 0 && beamLocalPoint.x <= beamLength &&
-                   abs(beamLocalPoint.y) <= beamWidth/2 + 20 { // +20 for enemy radius checks roughly
+                   abs(beamLocalPoint.y) <= beamWidth/2 + 20 { 
                     
                     if canHit(enemy) {
                         enemy.takeDamage(getDamage())

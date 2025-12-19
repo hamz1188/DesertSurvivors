@@ -52,7 +52,33 @@ class ObjectPool<T: SKNode> {
 }
 
 class PoolingManager {
-    // Will be used for projectiles, pickups, damage numbers, etc.
-    // For now, enemies are managed by EnemySpawner
+    static let shared = PoolingManager()
+    
+    private var projectilePools: [String: ObjectPool<Projectile>] = [:]
+    
+    private init() {}
+    
+    func spawnProjectile(weaponName: String, factory: @escaping () -> Projectile) -> Projectile {
+        if projectilePools[weaponName] == nil {
+            projectilePools[weaponName] = ObjectPool<Projectile>(initialSize: 20, factory: factory)
+        }
+        
+        let projectile = projectilePools[weaponName]!.spawn()
+        projectile.isHidden = false
+        projectile.isPaused = false
+        return projectile
+    }
+    
+    func despawnProjectile(_ projectile: Projectile, weaponName: String) {
+        projectile.removeFromParent()
+        projectilePools[weaponName]?.despawn(projectile)
+    }
+    
+    func clearAll() {
+        for pool in projectilePools.values {
+            pool.clear()
+        }
+        projectilePools.removeAll()
+    }
 }
 

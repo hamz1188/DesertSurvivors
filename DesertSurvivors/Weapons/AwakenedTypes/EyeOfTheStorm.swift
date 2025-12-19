@@ -26,7 +26,7 @@ class EyeOfTheStorm: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         if shieldNode == nil {
             createShield(scene: scene)
         }
@@ -48,24 +48,25 @@ class EyeOfTheStorm: BaseWeapon {
         let cloud = SKShapeNode(circleOfRadius: shieldRadius * 0.9)
         cloud.strokeColor = .white
         cloud.lineWidth = 2
-        // SKShapeNode dash pattern issue workaround: just solid line or transparent
         cloud.alpha = 0.5
         node.addChild(cloud)
         
         cloud.run(SKAction.repeatForever(SKAction.rotate(byAngle: 5, duration: 1.0)))
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
         guard let shield = shieldNode else { return }
         shield.position = playerPosition
         
-        // Rapid damage area
+        // Rapid damage area using spatial hash
         hitTimer += deltaTime
         if hitTimer >= hitInterval {
             hitTimer = 0
-            for enemy in enemies where enemy.isAlive {
+            let nearbyNodes = spatialHash.query(near: playerPosition, radius: shieldRadius + 20)
+            for node in nearbyNodes {
+                guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
                 if enemy.position.distance(to: playerPosition) < shieldRadius {
                     enemy.takeDamage(getDamage())
                     
@@ -80,15 +81,16 @@ class EyeOfTheStorm: BaseWeapon {
         arcTimer += deltaTime
         if arcTimer >= 0.5 {
             arcTimer = 0
-            fireLightningArc(from: playerPosition, enemies: enemies, scene: shield.parent)
+            fireLightningArc(from: playerPosition, spatialHash: spatialHash, scene: shield.parent)
         }
     }
     
-    private func fireLightningArc(from origin: CGPoint, enemies: [BaseEnemy], scene: SKNode?) {
+    private func fireLightningArc(from origin: CGPoint, spatialHash: SpatialHash, scene: SKNode?) {
         guard let scene = scene else { return }
         
-        // Find random enemy outside shield but close
-        let closeEnemies = enemies.filter {
+        // Find random enemy outside shield but close using spatial hash
+        let nearbyNodes = spatialHash.query(near: origin, radius: shieldRadius * 3)
+        let closeEnemies = nearbyNodes.compactMap { $0 as? BaseEnemy }.filter {
             let d = $0.position.distance(to: origin)
             return d > shieldRadius && d < shieldRadius * 3 && $0.isAlive
         }

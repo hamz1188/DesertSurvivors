@@ -9,11 +9,13 @@ import SpriteKit
 
 class ExperienceGem: SKNode {
     var xpValue: Float = 10
+    weak var player: Player?
     private var spriteNode: SKSpriteNode!
     private var magnetSpeed: CGFloat = 200 // speed when being attracted to player
     
-    init(xpValue: Float = 10) {
+    init(xpValue: Float = 10, player: Player?) {
         self.xpValue = xpValue
+        self.player = player
         super.init()
         setupSprite()
         setupPhysics()
@@ -38,7 +40,11 @@ class ExperienceGem: SKNode {
         physicsBody?.isDynamic = false
     }
     
-    func update(deltaTime: TimeInterval, playerPosition: CGPoint, pickupRadius: CGFloat) {
+    func update(deltaTime: TimeInterval) {
+        guard let player = player else { return }
+        
+        let playerPosition = player.position
+        let pickupRadius = CGFloat(player.stats.pickupRadius)
         let distance = position.distance(to: playerPosition)
         
         // If within pickup radius, move toward player
@@ -46,11 +52,6 @@ class ExperienceGem: SKNode {
             let direction = (playerPosition - position).normalized()
             let movement = direction * magnetSpeed * CGFloat(deltaTime)
             position = position + movement
-            
-            // If very close, consider it collected
-            if distance < 10 {
-                collect()
-            }
         }
     }
     

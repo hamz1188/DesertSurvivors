@@ -33,9 +33,9 @@ class WeaponManager {
         }
     }
     
-    func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
+    func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
         for weapon in weapons {
-            weapon.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+            weapon.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         }
     }
     

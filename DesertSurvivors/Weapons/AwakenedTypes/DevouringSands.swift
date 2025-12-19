@@ -32,14 +32,14 @@ class DevouringSands: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
         
         // Spawn up to 2 large sinkholes
         if activeSinkholes.count < 2 {
             // Find cluster or random
             var pos = playerPosition
-            if let nearest = findNearestEnemy(from: playerPosition, enemies: enemies) {
+            if let nearest = findNearestEnemy(from: playerPosition, spatialHash: spatialHash) {
                 pos = nearest.position
             } else {
                  let angle = CGFloat.random(in: 0...2 * .pi)
@@ -65,7 +65,6 @@ class DevouringSands: BaseWeapon {
         let spiral = SKShapeNode(circleOfRadius: holeRadius * 0.9)
         spiral.strokeColor = SKColor(red: 0.6, green: 0.5, blue: 0.3, alpha: 0.5)
         spiral.lineWidth = 5
-        // solid line as fallback since no dash pattern support
         hole.addChild(spiral)
         
         spiral.run(SKAction.repeatForever(SKAction.rotate(byAngle: -5, duration: 2.0)))
@@ -78,8 +77,8 @@ class DevouringSands: BaseWeapon {
         activeSinkholes.append(Sinkhole(node: container, visual: hole, lifetime: holeDuration))
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
         // Clean up
         activeSinkholes = activeSinkholes.filter { $0.node.parent != nil }
@@ -97,8 +96,10 @@ class DevouringSands: BaseWeapon {
             
             let center = activeSinkholes[index].node.position
             
-            // Process enemies
-            for enemy in enemies where enemy.isAlive {
+            // Process enemies using spatial hash
+            let nearbyNodes = spatialHash.query(near: center, radius: holeRadius + 60)
+            for node in nearbyNodes {
+                guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
                 let dist = enemy.position.distance(to: center)
                 if dist < holeRadius + 50 {
                     // Pull
@@ -107,13 +108,11 @@ class DevouringSands: BaseWeapon {
                     
                     if dist < holeRadius {
                         // Damage
-                        // Throttle damage? Let's rely on simple update tick for now ~60dps equivalent
                         if Int(activeSinkholes[index].lifetime * 60) % 10 == 0 {
                              enemy.takeDamage(getDamage())
                         }
                         
-                        // Execute Check (if not Boss - assuming we can tell, or just apply to all for now)
-                        // Assuming bosses have huge HP, maybe threshold works fine. 
+                        // Execute Check
                         let hpPercent = enemy.currentHealth / enemy.maxHealth
                         if hpPercent < executeThreshold {
                             // EXECUTE
@@ -134,10 +133,12 @@ class DevouringSands: BaseWeapon {
         activeSinkholes.removeAll { $0.lifetime <= 0 }
     }
     
-    private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+    private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+        let nearbyNodes = spatialHash.query(near: position, radius: 400)
         var nearest: BaseEnemy?
         var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
-        for enemy in enemies where enemy.isAlive {
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let d = position.distance(to: enemy.position)
             if d < nearestDistance {
                 nearestDistance = d

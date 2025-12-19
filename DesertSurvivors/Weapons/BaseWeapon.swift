@@ -14,7 +14,7 @@ protocol WeaponProtocol {
     var level: Int { get set }
     var maxLevel: Int { get }
     
-    func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval)
+    func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval)
     func upgrade()
 }
 
@@ -51,11 +51,11 @@ class BaseWeapon: SKNode, WeaponProtocol {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
+    func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
         currentCooldown -= deltaTime
         
         if currentCooldown <= 0 {
-            attack(playerPosition: playerPosition, enemies: enemies, deltaTime: deltaTime)
+            attack(playerPosition: playerPosition, spatialHash: spatialHash, deltaTime: deltaTime)
             playAttackSound()
             currentCooldown = effectiveCooldown
         }
@@ -72,7 +72,7 @@ class BaseWeapon: SKNode, WeaponProtocol {
         }
     }
     
-    func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         // Override in subclasses
     }
     

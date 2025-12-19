@@ -23,13 +23,13 @@ class MirageClone: BaseWeapon {
             self.lifetime = lifetime
         }
 
-        func update(deltaTime: TimeInterval, enemies: [BaseEnemy]) {
+        func update(deltaTime: TimeInterval, spatialHash: SpatialHash) {
             lifetime -= deltaTime
             currentAttackCooldown -= deltaTime
 
-            // Find or update target
+            // Find or update target using spatial hash
             if target == nil || target?.isAlive == false {
-                target = findNearestEnemy(from: node.position, enemies: enemies)
+                target = findNearestEnemy(from: node.position, spatialHash: spatialHash)
             }
 
             // Move toward target
@@ -53,11 +53,14 @@ class MirageClone: BaseWeapon {
             }
         }
 
-        private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+        private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+            let nearbyNodes = spatialHash.query(near: position, radius: 400)
+            
             var nearest: BaseEnemy?
             var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
 
-            for enemy in enemies where enemy.isAlive {
+            for node in nearbyNodes {
+                guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
                 let distance = position.distance(to: enemy.position)
                 if distance < nearestDistance {
                     nearestDistance = distance
@@ -81,7 +84,7 @@ class MirageClone: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
 
         // Remove expired clones
@@ -121,13 +124,13 @@ class MirageClone: BaseWeapon {
         let clone = Clone(node: cloneNode, damage: getDamage(), lifetime: cloneDuration)
         return clone
     }
+    
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
 
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
-
-        // Update all active clones
+        // Update all active clones using spatial hash
         activeClones = activeClones.filter { clone in
-            clone.update(deltaTime: deltaTime, enemies: enemies)
+            clone.update(deltaTime: deltaTime, spatialHash: spatialHash)
 
             if clone.lifetime <= 0 {
                 // Fade out and remove

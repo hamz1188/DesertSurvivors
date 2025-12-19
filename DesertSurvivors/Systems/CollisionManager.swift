@@ -49,7 +49,7 @@ class SpatialHash {
 }
 
 class CollisionManager {
-    private var spatialHash: SpatialHash
+    private(set) var spatialHash: SpatialHash
     
     init() {
         spatialHash = SpatialHash()
@@ -62,9 +62,12 @@ class CollisionManager {
         }
     }
     
-    func checkCollisions(player: Player, enemies: [BaseEnemy], pickups: [SKNode]) {
-        // Player-enemy collision
-        for enemy in enemies {
+    func checkCollisions(player: Player, activeEnemies: [BaseEnemy], pickups: [SKNode]) {
+        // Player-enemy collision using spatial hash
+        let nearbyNodes = spatialHash.query(near: player.position, radius: 40)
+        
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             if player.position.distance(to: enemy.position) < 30 {
                 player.takeDamage(Float(enemy.damage))
             }

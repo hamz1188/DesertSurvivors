@@ -45,11 +45,22 @@ class Projectile: SKNode {
         physicsBody?.affectedByGravity = false
     }
     
-    func update(deltaTime: TimeInterval) {
+    func configure(damage: Float, speed: CGFloat, direction: CGPoint, color: SKColor = .yellow) {
+        self.damage = damage
+        self.projectileSpeed = speed
+        self.direction = direction.normalized()
+        self.elapsedTime = 0
+        self.hasHit = false
+        self.spriteNode.color = color
+        self.spriteNode.colorBlendFactor = 1.0
+        self.isHidden = false
+    }
+    
+    func update(deltaTime: TimeInterval, onExpired: () -> Void) {
         elapsedTime += deltaTime
         
         if elapsedTime >= lifetime {
-            removeFromParent()
+            onExpired()
             return
         }
         
@@ -58,9 +69,16 @@ class Projectile: SKNode {
         position = position + movement
     }
     
-    func checkCollision(with enemies: [BaseEnemy]) -> BaseEnemy? {
-        for enemy in enemies {
-            if position.distance(to: enemy.position) < 20 && !hasHit {
+    func checkCollision(spatialHash: SpatialHash) -> BaseEnemy? {
+        guard !hasHit else { return nil }
+        
+        // Query spatial hash for nearby enemies (using a radius slightly larger than collision distance)
+        let nearbyNodes = spatialHash.query(near: position, radius: 25)
+        
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
+            
+            if position.distance(to: enemy.position) < 20 {
                 hasHit = true
                 enemy.takeDamage(damage)
                 return enemy

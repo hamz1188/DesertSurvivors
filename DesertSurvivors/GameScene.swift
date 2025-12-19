@@ -35,6 +35,13 @@ class GameScene: SKScene {
     // Camera
     private var gameCamera: SKCameraNode!
     
+    // Performance Monitoring
+    #if DEBUG
+    private var frameCounter = 0
+    private var fpsTimer: TimeInterval = 0
+    private var fpsLabel: SKLabelNode!
+    #endif
+    
     // Touch handling
     private var joystickTouch: UITouch?
     
@@ -46,6 +53,9 @@ class GameScene: SKScene {
         setupJoystick()
         setupLevelUpUI()
         setupNotifications()
+        
+        // Initial HUD positioning
+        hud.positionHUD(in: self)
         
         // Start Music
         SoundManager.shared.playBackgroundMusic(filename: "bgm_desert.mp3")
@@ -110,7 +120,14 @@ class GameScene: SKScene {
     private func setupHUD() {
         hud = HUD()
         gameCamera.addChild(hud)
-        hud.positionHUD(in: self)
+        
+        #if DEBUG
+        fpsLabel = SKLabelNode(fontNamed: "Arial")
+        fpsLabel.fontSize = 14
+        fpsLabel.fontColor = .green
+        fpsLabel.zPosition = 1000
+        gameCamera.addChild(fpsLabel)
+        #endif
     }
     
     private func setupJoystick() {
@@ -146,10 +163,27 @@ class GameScene: SKScene {
          
          NotificationCenter.default.addObserver(
              self,
+             selector: #selector(deviceRotated),
+             name: UIDevice.orientationDidChangeNotification,
+             object: nil
+         )
+         
+         NotificationCenter.default.addObserver(
+             self,
              selector: #selector(handleExperienceCollection),
              name: .experienceCollected,
              object: nil
          )
+    }
+    
+    @objc private func deviceRotated() {
+        hud.positionHUD(in: self)
+        
+        #if DEBUG
+        if let fpsLabel = fpsLabel {
+            fpsLabel.position = CGPoint(x: -size.width/2 + 50, y: size.height/2 - 100)
+        }
+        #endif
     }
     
     @objc private func handleLevelUpNotification(_ notification: Notification) {
@@ -198,29 +232,43 @@ class GameScene: SKScene {
         
         gameCamera.position = player.position
         
+        // Update spatial hash grid for this frame
+        let activeEnemies = enemySpawner.getActiveEnemies()
+        collisionManager.update(nodes: activeEnemies)
+        
         // System updates
-        weaponManager.update(deltaTime: deltaTime, playerPosition: player.position, enemies: enemySpawner.getActiveEnemies()) // Fixed: getActiveEnemies()
-        enemySpawner.update(deltaTime: deltaTime) // Fixed: removed playerPosition
+        weaponManager.update(deltaTime: deltaTime, playerPosition: player.position, spatialHash: collisionManager.spatialHash)
+        enemySpawner.update(deltaTime: deltaTime)
         // LevelUpSystem and Generator do not have update() methods
         
         pickupManager.update(deltaTime: deltaTime)
         
         // Collisions
         // Pickups handling is done in pickupManager.update()
-        collisionManager.checkCollisions(player: player, enemies: enemySpawner.getActiveEnemies(), pickups: [])
+        collisionManager.checkCollisions(player: player, activeEnemies: activeEnemies, pickups: [])
         
         // HUD
         hud.updateTimer(gameTime)
         hud.updateHealth(player.stats.currentHealth / player.stats.maxHealth)
-        hud.updateXP(levelUpSystem.currentXP / levelUpSystem.xpForNextLevel) // Fixed: xpForNextLevel
+        hud.updateXP(levelUpSystem.currentXP / levelUpSystem.xpForNextLevel)
         hud.updateKillCount(killCount)
         hud.updateGold(gold)
         
-        hud.positionHUD(in: self)
+        // hud.positionHUD removed from here - now handled by rotation notification
         
         if !player.stats.isAlive {
             gameOver()
         }
+        
+        #if DEBUG
+        frameCounter += 1
+        fpsTimer += deltaTime
+        if fpsTimer >= 1.0 {
+            fpsLabel.text = "FPS: \(frameCounter)"
+            frameCounter = 0
+            fpsTimer = 0
+        }
+        #endif
     }
     
     // MARK: - Generic Logic
@@ -346,6 +394,9 @@ class GameScene: SKScene {
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         joystick.touchesCancelled(touches, with: event)
+    }
+    func getCollisionManager() -> CollisionManager {
+        return collisionManager
     }
 }
 

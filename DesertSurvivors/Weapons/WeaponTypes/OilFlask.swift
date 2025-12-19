@@ -47,15 +47,16 @@ class OilFlask: BaseWeapon {
             self.lifetime = lifetime
         }
 
-        func update(deltaTime: TimeInterval, enemies: [BaseEnemy]) {
+        func update(deltaTime: TimeInterval, spatialHash: SpatialHash) {
             lifetime -= deltaTime
             damageTimer -= deltaTime
 
             if damageTimer <= 0 {
-                // Damage enemies in pool
-                for enemy in enemies where enemy.isAlive {
-                    let distance = node.position.distance(to: enemy.position)
-                    if distance < radius {
+                // Damage enemies in pool using spatial hash query
+                let nearbyNodes = spatialHash.query(near: node.position, radius: radius)
+                for node in nearbyNodes {
+                    guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
+                    if self.node.position.distance(to: enemy.position) < radius {
                         enemy.takeDamage(damage)
                     }
                 }
@@ -79,12 +80,12 @@ class OilFlask: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
-        guard let scene = scene else { return }
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
+        guard let scene = scene as? GameScene else { return }
 
-        // Find target location (nearest enemy or random direction)
+        // Find target location using helper that queries collision manager
         var targetDirection: CGPoint
-        if let nearestEnemy = findNearestEnemy(from: playerPosition, enemies: enemies) {
+        if let nearestEnemy = findNearestEnemy(from: playerPosition, spatialHash: spatialHash) {
             targetDirection = (nearestEnemy.position - playerPosition).normalized()
         } else {
             let angle = Double.random(in: 0..<2 * .pi)
@@ -106,18 +107,20 @@ class OilFlask: BaseWeapon {
         activeFlasks.append(flask)
     }
 
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
 
         // Update flasks
         activeFlasks = activeFlasks.filter { flask in
             flask.update(deltaTime: deltaTime)
 
-            // Check if flask hit enemy or expired
+            // Check if flask hit enemy using spatial hash query
             var shouldExplode = flask.lifetime <= 0
 
             if !shouldExplode {
-                for enemy in enemies where enemy.isAlive {
+                let nearbyNodes = spatialHash.query(near: flask.projectile.position, radius: 25)
+                for node in nearbyNodes {
+                    guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
                     if flask.projectile.position.distance(to: enemy.position) < 20 {
                         enemy.takeDamage(flask.damage * 0.5) // Initial impact damage
                         shouldExplode = true
@@ -137,7 +140,7 @@ class OilFlask: BaseWeapon {
 
         // Update burning pools
         activePools = activePools.filter { pool in
-            pool.update(deltaTime: deltaTime, enemies: enemies)
+            pool.update(deltaTime: deltaTime, spatialHash: spatialHash)
 
             if pool.lifetime <= 0 {
                 pool.node.run(SKAction.sequence([
@@ -187,11 +190,13 @@ class OilFlask: BaseWeapon {
         activePools.append(pool)
     }
 
-    private func findNearestEnemy(from position: CGPoint, enemies: [BaseEnemy]) -> BaseEnemy? {
+    private func findNearestEnemy(from position: CGPoint, spatialHash: SpatialHash) -> BaseEnemy? {
+        let nearbyNodes = spatialHash.query(near: position, radius: 400)
         var nearest: BaseEnemy?
         var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
 
-        for enemy in enemies where enemy.isAlive {
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
             let distance = position.distance(to: enemy.position)
             if distance < nearestDistance {
                 nearestDistance = distance

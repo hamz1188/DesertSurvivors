@@ -21,13 +21,24 @@ class SunRay: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
         
-        // Find nearest enemy
-        guard let nearestEnemy = findNearestEnemy(from: playerPosition, enemies: enemies) else {
-            return
+        // Find nearest enemy using spatial hash query
+        let nearbyNodes = spatialHash.query(near: playerPosition, radius: 500)
+        var nearest: BaseEnemy?
+        var nearestDistance: CGFloat = CGFloat.greatestFiniteMagnitude
+        
+        for node in nearbyNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
+            let distance = playerPosition.distance(to: enemy.position)
+            if distance < nearestDistance {
+                nearestDistance = distance
+                nearest = enemy
+            }
         }
+        
+        guard let nearestEnemy = nearest else { return }
         
         // Create beam
         let direction = (nearestEnemy.position - playerPosition).normalized()
@@ -45,8 +56,8 @@ class SunRay: BaseWeapon {
         scene.addChild(beam)
         activeBeams.append(beam)
         
-        // Damage enemies in beam path
-        damageEnemiesInBeam(beam: beam, enemies: enemies, playerPosition: playerPosition, direction: direction)
+        // Damage enemies in beam path using spatial hash
+        damageEnemiesInBeam(playerPosition: playerPosition, direction: direction, spatialHash: spatialHash)
         
         // Remove beam after duration
         beam.run(SKAction.sequence([
@@ -56,15 +67,20 @@ class SunRay: BaseWeapon {
         ]))
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
         // Clean up removed beams
         activeBeams.removeAll { $0.parent == nil }
     }
     
-    private func damageEnemiesInBeam(beam: SKShapeNode, enemies: [BaseEnemy], playerPosition: CGPoint, direction: CGPoint) {
-        for enemy in enemies {
+    private func damageEnemiesInBeam(playerPosition: CGPoint, direction: CGPoint, spatialHash: SpatialHash) {
+        // Query enemies along the beam length
+        let beamNodes = spatialHash.query(near: playerPosition, radius: beamLength)
+        
+        for node in beamNodes {
+            guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
+            
             let toEnemy = (enemy.position - playerPosition).normalized()
             let dotProduct = direction.x * toEnemy.x + direction.y * toEnemy.y
             

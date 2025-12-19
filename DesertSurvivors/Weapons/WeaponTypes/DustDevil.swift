@@ -27,7 +27,7 @@ class DustDevil: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         guard let scene = scene else { return }
         
         // Create whirlwind at random location near player
@@ -66,12 +66,12 @@ class DustDevil: BaseWeapon {
         return container
     }
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
         gameTime += deltaTime
         
-        // Update active devils and damage enemies
+        // Update active devils and damage enemies using spatial hash
         activeDevils = activeDevils.compactMap { devilData in
             if devilData.node.parent == nil {
                 return nil
@@ -79,7 +79,10 @@ class DustDevil: BaseWeapon {
             
             // Damage enemies in range at intervals
             if gameTime - devilData.lastDamageTime >= damageInterval {
-                for enemy in enemies {
+                let nearbyNodes = spatialHash.query(near: devilData.node.position, radius: devilRadius)
+                
+                for node in nearbyNodes {
+                    guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
                     if devilData.node.position.distance(to: enemy.position) < devilRadius {
                         enemy.takeDamage(getDamage())
                     }

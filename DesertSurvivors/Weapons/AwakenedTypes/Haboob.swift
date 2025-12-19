@@ -32,7 +32,7 @@ class Haboob: BaseWeapon {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func attack(playerPosition: CGPoint, enemies: [BaseEnemy], deltaTime: TimeInterval) {
+    override func attack(playerPosition: CGPoint, spatialHash: SpatialHash, deltaTime: TimeInterval) {
         // Spawn a massive storm near the player
         guard let scene = scene else { return }
         
@@ -51,10 +51,6 @@ class Haboob: BaseWeapon {
             visual.run(SKAction.repeatForever(SKAction.rotate(byAngle: -5, duration: 1.0)))
         }
         
-        // Add to tracking
-        // Note: We need to recreate the struct to store it properly since we just made the node
-        // Actually createStorm returns the node, let's look inside
-        
         activeStorms.append(StormData(node: storm, visualNode: storm, lifetime: 8.0))
         
         // Fade out at end
@@ -71,46 +67,40 @@ class Haboob: BaseWeapon {
         node.strokeColor = .clear
         node.zPosition = Constants.ZPosition.weapon
         
-        // Add inner details (particles or swirling dust lines)
+        // Add inner details
         let dust = SKShapeNode(circleOfRadius: stormRadius * 0.8)
         dust.strokeColor = SKColor(red: 0.6, green: 0.5, blue: 0.3, alpha: 0.5)
         dust.lineWidth = 4
-        // SKShapeNode doesn't support lineDashPattern directly like CAShapeLayer without underlying access
-        // We will just use transparency for effect or multiple rings
         node.addChild(dust)
         
-        // Store visual ref in userData if needed, or just rotate the whole node
         node.userData = ["visual": dust]
         
         return node
     }
     
-    // Hit tracking per storm per enemy is complex.
-    // Let's use a global (per weapon instance) hit tracker map like the others.
     private var enemyHitTimes: [ObjectIdentifier: TimeInterval] = [:]
     
-    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, enemies: [BaseEnemy]) {
-        super.update(deltaTime: deltaTime, playerPosition: playerPosition, enemies: enemies)
+    override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
+        super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         gameTime += deltaTime
         
         // Filter out dead storms
         activeStorms = activeStorms.filter { $0.node.parent != nil }
         
-        // Effect logic
+        // Effect logic using spatial hash
         for storm in activeStorms {
             let center = storm.node.position
             
-            // Vacuum and Damage
-            for enemy in enemies where enemy.isAlive {
+            // Vacuum and Damage using spatial hash
+            let nearbyNodes = spatialHash.query(near: center, radius: stormRadius + 60)
+            for node in nearbyNodes {
+                guard let enemy = node as? BaseEnemy, enemy.isAlive else { continue }
                 let toCenter = center - enemy.position
                 let dist = toCenter.length()
                 
                 if dist < stormRadius + 50 { // Slightly larger pull range
                     // Pull effect
                     let pullDir = toCenter.normalized()
-                    // Apply displacement
-                    // Stronger pull when closer? Or constant?
-                    // Let's do constant pull
                     enemy.position = enemy.position + (pullDir * vacuumStrength)
                     
                     // Damage if inside actual radius
@@ -128,12 +118,12 @@ class Haboob: BaseWeapon {
     private func canHit(_ enemy: BaseEnemy) -> Bool {
         let id = ObjectIdentifier(enemy)
         if let lastHit = enemyHitTimes[id] {
-            return CACurrentMediaTime() - lastHit > hitInterval
+            return gameTime - lastHit > hitInterval
         }
         return true
     }
     
     private func recordHit(_ enemy: BaseEnemy) {
-        enemyHitTimes[ObjectIdentifier(enemy)] = CACurrentMediaTime()
+        enemyHitTimes[ObjectIdentifier(enemy)] = gameTime
     }
 }
