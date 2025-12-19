@@ -106,7 +106,7 @@ All core gameplay systems have been implemented and are functional:
 
 ### 🚧 Phase 2: Content Expansion (IN PROGRESS)
 
-**Status:** ~60% Complete
+**Status:** ~90% Complete
 
 Expanding the game content with more enemies, weapons, and systems.
 
@@ -124,9 +124,21 @@ Expanding the game content with more enemies, weapons, and systems.
   - **HUD Alignment**: Safe area support for Dynamic Island/Notch
   - **Input Robustness**: Improved joystick touch handling to prevent sticking
   - **Clean**: Removed template artifacts ("Hello World") and debug stats
-- ⏳ **Weapon Awakening** (Next)
-  - Evolution recipes (Weapon + Passive)
-  - 3 initial awakened forms: Whirlwind of Blades, Desert Storm, Emperor Scorpion
+- ✅ **Weapon Awakening**
+  - **System**: AwakeningManager handling evolution recipes (Level 8 Weapon + Max Passive)
+  - **Implemented Evolutions (12/12)**:
+    - **Whirlwind of Blades** (Curved Dagger + Sandstorm Cloak)
+    - **Desert Storm** (Sand Bolt + Djinn Lamp)
+    - **Emperor Scorpion** (Scorpion Tail + Venom Vial)
+    - **Wrath of the Sun** (Sun Ray + Scarab Amulet)
+    - **Haboob** (Dust Devil + Sandstorm Cloak)
+    - **Army of Mirages** (Mirage Clone + Mirror of Truth)
+    - **Greek Fire** (Oil Flask + Djinn Lamp)
+    - **Roc's Descendant** (Desert Eagle + Eagle Feather)
+    - **Eye of the Storm** (Sandstorm Shield + Desert Rose)
+    - **Pharaoh's Wrath** (Ancient Curse + Canopic Jar)
+    - **Devouring Sands** (Quicksand + Hourglass)
+    - **Ifrit's Embrace** (Djinn's Flame + Djinn Lamp)
 
 ### 🔮 Phase 3: Meta-Progression (PLANNED)
 
