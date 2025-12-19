@@ -381,6 +381,10 @@ class GameScene: SKScene {
     func getCollisionManager() -> CollisionManager {
         return collisionManager
     }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
 }
 
 extension GameScene: SKPhysicsContactDelegate {

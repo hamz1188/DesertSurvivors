@@ -101,5 +101,25 @@ class BaseWeapon: SKNode, WeaponProtocol {
         critChance = playerStats.critChance
         critMultiplier = playerStats.critMultiplier
     }
+    // Projectile pooling support
+    private var pooledProjectiles: [Projectile] = []
+    
+    /// Spawn a pooled projectile
+    func spawnProjectile(damage: Float, speed: CGFloat, direction: CGPoint, color: SKColor = .yellow) -> Projectile {
+        let projectile = PoolingManager.shared.spawnProjectile(weaponName: weaponName) {
+            Projectile(damage: 0, speed: 0, direction: .zero)
+        }
+        projectile.configure(damage: damage, speed: speed, direction: direction, color: color)
+        pooledProjectiles.append(projectile)
+        return projectile
+    }
+    
+    /// Despawn a projectile back to the pool
+    func despawnProjectile(_ projectile: Projectile) {
+        if let index = pooledProjectiles.firstIndex(of: projectile) {
+            pooledProjectiles.remove(at: index)
+        }
+        PoolingManager.shared.despawnProjectile(projectile, weaponName: weaponName)
+    }
 }
 

@@ -72,8 +72,6 @@ class Projectile: SKNode {
             shard.fillColor = color
         }
         
-        self.isHidden = false
-        
         // Face movement direction
         spriteNode.zRotation = atan2(direction.y, direction.x) - .pi/2
     }

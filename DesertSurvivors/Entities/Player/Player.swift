@@ -108,8 +108,9 @@ class Player: SKNode {
     private let walkActionKey = "player_animation_walk"
     
     // Track previous movement state to detect transitions
+    private var isVisualDirty: Bool = true
     private var wasMoving: Bool = false
-    
+
     func update(deltaTime: TimeInterval) {
         // Update movement
         if isMoving && movementDirection.length() > 0 {
@@ -121,17 +122,30 @@ class Player: SKNode {
             let leanAngle: CGFloat = movementDirection.x > 0 ? -0.15 : 0.15
             let targetXScale: CGFloat = movementDirection.x > 0 ? 1.0 : -1.0
             
+            isVisualDirty = true
             // Smoothly lerp scale and rotation for "alive" feel
             visualContainer.xScale = visualContainer.xScale + (targetXScale - visualContainer.xScale) * 0.2
             visualContainer.zRotation = visualContainer.zRotation + (leanAngle - visualContainer.zRotation) * 0.1
         } else {
-            // Gradually reset rotation when stopping
-            visualContainer.zRotation = visualContainer.zRotation * 0.8
-            visualContainer.xScale = visualContainer.xScale > 0 ? 1.0 : -1.0
+            // Only reset rotation if it's not already zeroed
+            if abs(visualContainer.zRotation) > 0.01 {
+                visualContainer.zRotation = visualContainer.zRotation * 0.8
+                isVisualDirty = true
+            } else {
+                visualContainer.zRotation = 0
+            }
+            
+            if visualContainer.xScale != 1.0 && visualContainer.xScale != -1.0 {
+                visualContainer.xScale = visualContainer.xScale > 0 ? 1.0 : -1.0
+                isVisualDirty = true
+            }
         }
         
         // Update animations
-        updateAnimations()
+        if isVisualDirty || isMoving != wasMoving {
+            updateAnimations()
+            isVisualDirty = false
+        }
         
         // Update invincibility timer
         if isInvincible {

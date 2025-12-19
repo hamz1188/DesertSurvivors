@@ -61,6 +61,11 @@ class SoundManager {
         backgroundMusicPlayer?.stop()
     }
     
+    func cleanup() {
+        backgroundMusicPlayer?.stop()
+        backgroundMusicPlayer = nil
+    }
+    
     func toggleMusic() -> Bool {
         isMusicEnabled.toggle()
         if isMusicEnabled {

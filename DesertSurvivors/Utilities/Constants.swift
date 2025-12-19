@@ -13,6 +13,17 @@ struct Constants {
     static let targetFPS: Int = 60
     static let maxEnemiesOnScreen: Int = 500
     
+    // Debug Configuration
+    #if DEBUG
+    static let showFPSCounter: Bool = true
+    static let showCollisionDebug: Bool = false
+    static let enableProfiling: Bool = true
+    #else
+    static let showFPSCounter: Bool = false
+    static let showCollisionDebug: Bool = false
+    static let enableProfiling: Bool = false
+    #endif
+    
     // Player Defaults
     static let playerDefaultSpeed: CGFloat = 200 // points per second
     static let playerDefaultHealth: Float = 100

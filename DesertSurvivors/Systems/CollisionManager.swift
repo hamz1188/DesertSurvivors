@@ -28,9 +28,14 @@ class SpatialHash {
     func query(near position: CGPoint, radius: CGFloat) -> [SKNode] {
         var result: [SKNode] = []
         let cellsToCheck = Int(ceil(radius / cellSize))
+        let radiusSquared = radius * radius
         
         for dx in -cellsToCheck...cellsToCheck {
             for dy in -cellsToCheck...cellsToCheck {
+                // Skip corner cells outside circular radius
+                let cellDistSquared = CGFloat(dx * dx + dy * dy) * cellSize * cellSize
+                if cellDistSquared > radiusSquared * 2.0 { continue } // *2.0 offers a safe buffer
+                
                 let checkPos = CGPoint(
                     x: position.x + CGFloat(dx) * cellSize,
                     y: position.y + CGFloat(dy) * cellSize
