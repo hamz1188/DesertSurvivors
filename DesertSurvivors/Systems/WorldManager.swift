@@ -141,38 +141,63 @@ class WorldManager {
     private func spawnProps(for coord: CGPoint) {
         guard let scene = scene, !propTextures.isEmpty else { return }
         
-        let numProps = Int.random(in: 2...5)
+        let numProps = Int.random(in: 3...6)
         var tileProps: [SKNode] = []
+        
+        // Define base size matching player scale (approx 40-50 pts)
+        let baseSize: CGFloat = 40.0
         
         for _ in 0..<numProps {
             let texture = propTextures.randomElement()!
             let prop = SKSpriteNode(texture: texture)
             
-            // Random position within tile
+            // Standardize size while keeping aspect ratio
+            let ratio = texture.size().width / texture.size().height
+            prop.size = CGSize(width: baseSize * ratio, height: baseSize)
+            
+            // Random position
             let offsetX = CGFloat.random(in: -tileSize/2...tileSize/2)
             let offsetY = CGFloat.random(in: -tileSize/2...tileSize/2)
-            
             prop.position = CGPoint(
                 x: coord.x * tileSize + offsetX,
                 y: coord.y * tileSize + offsetY
             )
             
-            // Random variation
-            prop.setScale(CGFloat.random(in: 0.8...1.2))
-            prop.zRotation = CGFloat.random(in: 0...(.pi * 2))
+            // Type-specific logic based on texture name (simple heuristic via index/lookup would be better, but assuming textures are loaded)
+            // Since we just have a list of textures, we can try to guess or just apply general rules.
+            // Ideally we'd map naming to logic. Since we loaded them in order: "cactus", "rock", "bones", we can assume some behavior or check description.
+            // Let's rely on a check if possible, or simple random variation without full rotation for upright objects.
+            
+            // FIX: Enforce upright orientation for everything except rocks
+            // Assuming most sprites are generated "upright"
+            prop.zRotation = 0
+            
+            // Randomize scale slightly
+            let scaleVar = CGFloat.random(in: 0.8...1.2)
+            prop.setScale(scaleVar)
+            
+            // Only rocks should rotate fully. Cacti and bones usually sit upright.
+            // Since we can't easily check name from SKTexture instance without custom struct,
+            // we will add a slight random "wobble" to everything to break uniformity, but NOT 360 spin.
+            // If it's a "round" object (rock), 360 is fine.
+            // For now, restrictive rotation:
+            prop.zRotation = CGFloat.random(in: -0.1...0.1) 
+            
             prop.zPosition = Constants.ZPosition.map
             
             // Add Shadow
-            let shadow = SKShapeNode(ellipseOf: CGSize(width: prop.size.width * 0.6, height: prop.size.height * 0.3))
+            let shadowWidth = prop.size.width * 0.8
+            let shadowHeight = prop.size.height * 0.4
+            let shadow = SKShapeNode(ellipseOf: CGSize(width: shadowWidth, height: shadowHeight))
             shadow.fillColor = .black
             shadow.strokeColor = .clear
-            shadow.alpha = 0.3
-            shadow.position = CGPoint(x: 0, y: -prop.size.height * 0.4)
+            shadow.alpha = 0.4
+            shadow.position = CGPoint(x: 0, y: -prop.size.height * 0.45)
             shadow.zPosition = -1
             prop.addChild(shadow)
             
-            // Simple depth sorting (static)
-            prop.zPosition += (1.0 - (offsetY + tileSize/2) / tileSize) * 0.1
+            // Depth sorting
+            prop.zPosition = Constants.ZPosition.map - (offsetY / tileSize)
             
             scene.addChild(prop)
             tileProps.append(prop)
