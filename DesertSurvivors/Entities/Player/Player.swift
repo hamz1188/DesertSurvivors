@@ -36,9 +36,18 @@ class Player: SKNode {
     }
     
     private func setupSprite() {
-        // Create a simple colored circle as placeholder sprite
-        let size = CGSize(width: 30, height: 30)
-        spriteNode = SKSpriteNode(color: .blue, size: size)
+        // Load pixel art sprite
+        spriteNode = SKSpriteNode(imageNamed: "player_tariq")
+        
+        // If asset not found, fallback to color
+        if spriteNode.texture == nil {
+            spriteNode = SKSpriteNode(color: .blue, size: CGSize(width: 30, height: 30))
+        } else {
+            // Scale if needed (16px art might be too small or big depending on export)
+            // Assuming standard size approx 40x40
+            spriteNode.scale(to: CGSize(width: 40, height: 40))
+        }
+        
         spriteNode.zPosition = Constants.ZPosition.player
         addChild(spriteNode)
     }

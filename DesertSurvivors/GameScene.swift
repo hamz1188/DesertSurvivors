@@ -47,9 +47,23 @@ class GameScene: SKScene {
     }
     
     private func setupScene() {
-        if let texture = SKTexture(imageNamed: "desert_sand_bg") as SKTexture? { 
+        if let texture = SKTexture(imageNamed: "background_desert") as SKTexture? { 
+             // Create a large tiled node or just a large node with correct rect
+             // For simplicity, we'll create a massive node and use SKTexture's tiling if supported, 
+             // but SpriteKit Tiling usually requires shader or specific rect.
+             // Simplest approach: Create a large node with texture rect > 1
+             
              let bg = SKSpriteNode(texture: texture)
+             bg.position = .zero
              bg.zPosition = -100
+             
+             // Tile the texture 20x20 times
+             let coverage = CGRect(x: 0, y: 0, width: 40, height: 40)
+             bg.texture = SKTexture(rect: coverage, in: texture)
+             bg.size = CGSize(width: texture.size().width * 40, height: texture.size().height * 40)
+             // Use nearest neighbor for pixel art
+             texture.filteringMode = .nearest
+             
              addChild(bg)
         } else {
             backgroundColor = Constants.Colors.desertSand

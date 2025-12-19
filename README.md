@@ -139,14 +139,18 @@ Expanding the game content with more enemies, weapons, and systems.
     - **Devouring Sands** (Quicksand + Hourglass)
     - **Ifrit's Embrace** (Djinn's Flame + Djinn Lamp)
 
-### 🔮 Phase 3: Visual & Audio Polish (PLANNED)
+### 🎨 Phase 3: Visual & Audio Polish (IN PROGRESS)
 
-**Status:** 0% Complete
+**Status:** 50% Complete
 
 Refining the visuals and adding audio to create a premium feel.
 
+#### Completed Features:
+- ✅ **Visual Overhaul**:
+    - **Pixel Art Assets**: Generated and integrated 16-bit style assets for Player, Environment, and all Tier 1 & 2 Enemies.
+    - **Asset System**: Implemented `Assets.xcassets` workflow.
+
 #### Planned Features:
-- [ ] **Visual Overhaul**: Replace placeholder geometry with pixel art or enhanced shader-based assets
 - [ ] **Sound Effects**: Attack, hit, level up, and UI sounds
 - [ ] **Background Music**: Dynamic desert-themed tracks
 - [ ] **VFX**: Particle systems for attacks, weather effects (sandstorms), and destruction

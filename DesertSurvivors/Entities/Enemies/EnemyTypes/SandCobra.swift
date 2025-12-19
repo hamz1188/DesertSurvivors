@@ -15,7 +15,7 @@ class SandCobra: BaseEnemy {
     private var isLunging = false
     
     init() {
-        super.init(name: "Sand Cobra", maxHealth: 25, moveSpeed: 160, damage: 8, xpValue: 12)
+        super.init(name: "Sand Cobra", maxHealth: 25, moveSpeed: 160, damage: 8, xpValue: 12, textureName: "enemy_sand_cobra")
         setColor(.green)
     }
     

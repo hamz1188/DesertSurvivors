@@ -21,13 +21,16 @@ class BaseEnemy: SKNode {
     private var originalColor: SKColor = .red
     private var isFlashing: Bool = false
     
-    init(name: String, maxHealth: Float, moveSpeed: CGFloat, damage: Float, xpValue: Float = 10) {
+    var textureName: String? // Added property
+    
+    init(name: String, maxHealth: Float, moveSpeed: CGFloat, damage: Float, xpValue: Float = 10, textureName: String? = nil) {
         self.enemyName = name
         self.maxHealth = maxHealth
         self.currentHealth = maxHealth
         self.moveSpeed = moveSpeed
         self.damage = damage
         self.xpValue = xpValue
+        self.textureName = textureName
         super.init()
         
         // Set SKNode's name property (inherited, optional String)
@@ -42,9 +45,18 @@ class BaseEnemy: SKNode {
     }
     
     private func setupSprite() {
-        // Placeholder sprite - colored circle
-        let size = CGSize(width: 25, height: 25)
-        spriteNode = SKSpriteNode(color: originalColor, size: size)
+        if let textureName = textureName {
+            spriteNode = SKSpriteNode(imageNamed: textureName)
+            if spriteNode.texture == nil {
+               spriteNode = SKSpriteNode(color: originalColor, size: CGSize(width: 30, height: 30))
+            } else {
+               spriteNode.scale(to: CGSize(width: 35, height: 35))
+            }
+        } else {
+            // Placeholder sprite - colored circle
+            let size = CGSize(width: 25, height: 25)
+            spriteNode = SKSpriteNode(color: originalColor, size: size)
+        }
         spriteNode.zPosition = Constants.ZPosition.enemy
         addChild(spriteNode)
     }
