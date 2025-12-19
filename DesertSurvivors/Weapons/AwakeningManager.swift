@@ -70,7 +70,7 @@ class AwakeningManager {
             ),
             AwakeningRecipe(
                 baseWeaponName: "Oil Flask",
-                passiveItemName: "Djinn Lamp",
+                passiveItemName: "Djinn's Lamp",
                 factory: { GreekFire() },
                 awakenedName: "Greek Fire",
                 description: "Evolved Oil Flask. Intense spreading poison fire."
@@ -105,7 +105,7 @@ class AwakeningManager {
             ),
             AwakeningRecipe(
                 baseWeaponName: "Djinn's Flame",
-                passiveItemName: "Djinn Lamp",
+                passiveItemName: "Djinn's Lamp",
                 factory: { IfritsEmbrace() },
                 awakenedName: "Ifrit's Embrace",
                 description: "Evolved Djinn's Flame. Ring of living fire and seeking spirits."

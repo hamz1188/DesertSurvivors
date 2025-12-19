@@ -124,14 +124,15 @@ class Player: SKNode {
     }
     
     private func flashDamage() {
-        let flashRed = SKAction.run { [weak self] in
-            self?.spriteNode.color = .red
-        }
+        let originalBlend = spriteNode.colorBlendFactor
+        spriteNode.color = .red
+        spriteNode.colorBlendFactor = 0.5
+        
         let wait = SKAction.wait(forDuration: 0.1)
-        let resetColor = SKAction.run { [weak self] in
-            self?.spriteNode.color = .blue
+        let reset = SKAction.run { [weak self] in
+            self?.spriteNode.colorBlendFactor = originalBlend
         }
-        spriteNode.run(SKAction.sequence([flashRed, wait, resetColor]))
+        spriteNode.run(SKAction.sequence([wait, reset]))
     }
     
     var canTakeDamage: Bool {

@@ -33,14 +33,14 @@ class EnemySpawner {
             spawnTimer = 0
         }
         
-        // Update all enemies and remove those that have been removed from scene
+        // Update all enemies and remove those that have been removed from scene or are dead
         activeEnemies.removeAll { enemy in
-            // If enemy was removed from parent (by GameScene), remove from array
-            if enemy.parent == nil {
+            // If enemy was removed from parent (by GameScene) or is dead, remove from array
+            if enemy.parent == nil || !enemy.isAlive {
                 return true
             }
-            // Only update alive enemies
-            if enemy.isAlive, let playerPos = player?.position {
+            // Update alive enemies
+            if let playerPos = player?.position {
                 enemy.update(deltaTime: deltaTime, playerPosition: playerPos)
             }
             return false

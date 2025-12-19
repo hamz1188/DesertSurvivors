@@ -45,7 +45,6 @@ class GameScene: SKScene {
         setupHUD()
         setupJoystick()
         setupLevelUpUI()
-        setupLevelUpUI()
         setupNotifications()
         
         // Start Music

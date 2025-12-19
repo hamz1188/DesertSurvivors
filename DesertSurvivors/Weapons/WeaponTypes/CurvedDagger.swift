@@ -47,6 +47,13 @@ class CurvedDagger: BaseWeapon {
         // Update hit cooldowns
         updateHitCooldowns(deltaTime: deltaTime)
         
+        // Pre-filter enemies to only those within orbit range (performance optimization)
+        // Only check enemies within orbit radius + margin (50 units)
+        let maxCheckDistance = orbitRadius + 50
+        let nearbyEnemies = enemies.filter { enemy in
+            enemy.isAlive && enemy.position.distance(to: playerPosition) < maxCheckDistance
+        }
+        
         // Update dagger positions and check collisions
         let daggerCount = daggers.count
         for (index, dagger) in daggers.enumerated() {
@@ -58,12 +65,12 @@ class CurvedDagger: BaseWeapon {
             dagger.position = CGPoint(x: x, y: y)
             dagger.zRotation = daggerAngle + .pi / 2
             
-            // Check collision with enemies using sweep detection
+            // Check collision with nearby enemies using sweep detection
             checkDaggerSweepCollision(
                 daggerAngle: daggerAngle,
                 previousAngle: previousDaggerAngle,
                 playerPosition: playerPosition,
-                enemies: enemies
+                enemies: nearbyEnemies  // Only check nearby enemies
             )
         }
     }

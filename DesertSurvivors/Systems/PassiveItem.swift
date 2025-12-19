@@ -44,6 +44,10 @@ class PassiveItem {
     var level: Int = 1
     let maxLevel: Int = 5
     
+    // Base values for calculations (matching PlayerStats defaults)
+    private static let baseMoveSpeed: Float = 200
+    private static let basePickupRadius: Float = 50
+    
     var name: String {
         return type.rawValue
     }
@@ -126,9 +130,9 @@ class PassiveItem {
         case .secondWind:
             stats.healthRegenPerSecond += Float(level) * 0.5
         case .mirageStep:
-            stats.moveSpeed += Float(level) * 0.1 * 200 // 10% of base speed
+            stats.moveSpeed += Float(level) * 0.1 * Self.baseMoveSpeed // 10% of base speed
         case .magneticCharm:
-            stats.pickupRadius += Float(level) * 0.2 * 50 // 20% of base radius
+            stats.pickupRadius += Float(level) * 0.2 * Self.basePickupRadius // 20% of base radius
         case .fortunesFavor:
             stats.luck += Float(level) * 0.1
         case .scholarsMind:

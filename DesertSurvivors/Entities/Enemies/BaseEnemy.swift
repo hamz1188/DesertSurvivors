@@ -19,7 +19,6 @@ class BaseEnemy: SKNode {
     weak var target: Player?
     
     private var originalColor: SKColor = .red
-    private var isFlashing: Bool = false
     
     var textureName: String? // Added property
     
@@ -102,8 +101,8 @@ class BaseEnemy: SKNode {
     }
     
     private func flashDamage() {
-        guard !isFlashing else { return }
-        isFlashing = true
+        // Cancel any previous flash animation
+        spriteNode.removeAction(forKey: "flash")
         
         let flashWhite = SKAction.run { [weak self] in
             self?.spriteNode.color = .white
@@ -112,9 +111,8 @@ class BaseEnemy: SKNode {
         let resetColor = SKAction.run { [weak self] in
             guard let self = self else { return }
             self.spriteNode.color = self.originalColor
-            self.isFlashing = false
         }
-        spriteNode.run(SKAction.sequence([flashWhite, wait, resetColor]))
+        spriteNode.run(SKAction.sequence([flashWhite, wait, resetColor]), withKey: "flash")
     }
     
     func die() {
