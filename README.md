@@ -201,4 +201,8 @@ Implemented critical bug fixes and performance optimizations from comprehensive 
 - ✅ **Procedural Weapons**: Core weapons now look like their namesakes through custom `CGPath` drawing.
 - ✅ **Dynamic Animation**: Added flickering beams, swirling vortices, rotatonal alignment, and particle trails.
 - ✅ **Hit Indicators**: Improved combat readability with new visual effects on dodge and hit.
+- ✅ **Dynamic World**: Implemented infinite scrolling desert with correct tile chunking.
+- ✅ **Procedural Environment**: Added scattered Cacti, Rocks, and Bones with authentic shadows and organic orientation.
+- ✅ **Atmosphere**: Implemented parallax sandstorm effects for depth.
+- ✅ **Polished Pickups**: Replaced static XP gems with procedural, pulsing crystal geometry.
 
