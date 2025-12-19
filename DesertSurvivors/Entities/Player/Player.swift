@@ -13,7 +13,9 @@ class Player: SKNode {
     var movementDirection: CGPoint = .zero
     var isMoving: Bool = false
     
+    private var visualContainer: SKNode!
     private var spriteNode: SKSpriteNode!
+    private var dustTrail: SKEmitterNode?
     
     // Invincibility frames system
     private var isInvincible: Bool = false
@@ -45,9 +47,12 @@ class Player: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private var dustTrail: SKEmitterNode?
     
     private func setupSprite() {
+        // Container for all visual elements (sprite, trails, etc.)
+        visualContainer = SKNode()
+        addChild(visualContainer)
+        
         // Load pixel art sprite
         let textureName = "player_\(character.rawValue)"
         spriteNode = SKSpriteNode(imageNamed: textureName)
@@ -56,36 +61,36 @@ class Player: SKNode {
         if spriteNode.texture == nil {
             spriteNode = SKSpriteNode(color: .blue, size: CGSize(width: 30, height: 30))
         } else {
-            // Scale if needed (16px art might be too small or big depending on export)
-            // Assuming standard size approx 40x40
+            // Scale to gameplay size (assuming base texture might vary)
             spriteNode.scale(to: CGSize(width: 40, height: 40))
         }
         
         spriteNode.zPosition = Constants.ZPosition.player
-        addChild(spriteNode)
+        visualContainer.addChild(spriteNode)
         
-        // Setup dust trail
+        // Setup dust trail (attached to visual container but behind sprite)
         setupDustTrail()
     }
     
     private func setupDustTrail() {
         let trail = SKEmitterNode()
-        trail.particleBirthRate = 0 // Start off
+        trail.particleBirthRate = 0
         trail.particleLifetime = 0.4
-        trail.particlePositionRange = CGVector(dx: 10, dy: 5)
-        trail.particleSpeed = 20
+        trail.particlePositionRange = CGVector(dx: 15, dy: 5)
+        trail.particleSpeed = 30
         trail.particleSpeedRange = 10
-        trail.emissionAngle = .pi * 1.5 // Downwards
-        trail.emissionAngleRange = 0.4
-        trail.particleAlpha = 0.4
-        trail.particleAlphaSpeed = -1.0
-        trail.particleScale = 0.05
-        trail.particleScaleSpeed = 0.2
-        trail.particleColor = SKColor(red: 0.96, green: 0.87, blue: 0.70, alpha: 1.0) // Sand color
+        trail.emissionAngle = .pi * 1.5
+        trail.emissionAngleRange = 0.6
+        trail.particleAlpha = 0.5
+        trail.particleAlphaSpeed = -1.2
+        trail.particleScale = 0.08
+        trail.particleScaleSpeed = 0.1
+        trail.particleColor = SKColor(red: 0.96, green: 0.87, blue: 0.70, alpha: 1.0)
         trail.particleColorBlendFactor = 1.0
-        trail.zPosition = -1 // Behind player
+        trail.zPosition = -1
+        trail.position = CGPoint(x: 0, y: -15)
         
-        addChild(trail)
+        visualContainer.addChild(trail)
         self.dustTrail = trail
     }
     
@@ -99,8 +104,8 @@ class Player: SKNode {
     }
     
     // Animation actions
-    private let idleActionKey = "player_idle"
-    private let walkActionKey = "player_walk"
+    private let idleActionKey = "player_animation_idle"
+    private let walkActionKey = "player_animation_walk"
     
     // Track previous movement state to detect transitions
     private var wasMoving: Bool = false
@@ -112,12 +117,17 @@ class Player: SKNode {
             let movement = movementDirection.normalized() * speed
             position = position + movement
             
-            // Flip sprite based on direction
-            if movementDirection.x > 0 {
-                spriteNode.xScale = abs(spriteNode.xScale)
-            } else if movementDirection.x < 0 {
-                spriteNode.xScale = -abs(spriteNode.xScale)
-            }
+            // Flip and Lean based on direction
+            let leanAngle: CGFloat = movementDirection.x > 0 ? -0.15 : 0.15
+            let targetXScale: CGFloat = movementDirection.x > 0 ? 1.0 : -1.0
+            
+            // Smoothly lerp scale and rotation for "alive" feel
+            visualContainer.xScale = visualContainer.xScale + (targetXScale - visualContainer.xScale) * 0.2
+            visualContainer.zRotation = visualContainer.zRotation + (leanAngle - visualContainer.zRotation) * 0.1
+        } else {
+            // Gradually reset rotation when stopping
+            visualContainer.zRotation = visualContainer.zRotation * 0.8
+            visualContainer.xScale = visualContainer.xScale > 0 ? 1.0 : -1.0
         }
         
         // Update animations
@@ -130,7 +140,6 @@ class Player: SKNode {
                 isInvincible = false
                 spriteNode.alpha = 1.0
             } else {
-                // Flash effect during invincibility
                 spriteNode.alpha = sin(invincibilityTimer * 20) > 0 ? 1.0 : 0.3
             }
         }
@@ -148,14 +157,14 @@ class Player: SKNode {
     private func updateAnimations() {
         if isMoving && !wasMoving {
             startWalkAnimation()
-            dustTrail?.particleBirthRate = 30
+            dustTrail?.particleBirthRate = 40
         } else if !isMoving && wasMoving {
             startIdleAnimation()
             dustTrail?.particleBirthRate = 0
         }
         
-        // If first run, start idle
-        if spriteNode.action(forKey: idleActionKey) == nil && spriteNode.action(forKey: walkActionKey) == nil {
+        // Initial state
+        if visualContainer.action(forKey: idleActionKey) == nil && visualContainer.action(forKey: walkActionKey) == nil {
             startIdleAnimation()
         }
         
@@ -163,47 +172,52 @@ class Player: SKNode {
     }
     
     private func startIdleAnimation() {
-        spriteNode.removeAction(forKey: walkActionKey)
+        visualContainer.removeAction(forKey: walkActionKey)
         
-        let bobUp = SKAction.moveBy(x: 0, y: 2, duration: 0.6)
-        let bobDown = SKAction.moveBy(x: 0, y: -2, duration: 0.6)
-        bobUp.timingMode = .easeInEaseOut
-        bobDown.timingMode = .easeInEaseOut
-        
-        let scaleLarge = SKAction.scaleY(to: 1.02, duration: 0.6)
-        let scaleSmall = SKAction.scaleY(to: 0.98, duration: 0.6)
-        scaleLarge.timingMode = .easeInEaseOut
-        scaleSmall.timingMode = .easeInEaseOut
-        
-        let bobGroup = SKAction.group([
-            SKAction.sequence([bobUp, bobDown]),
-            SKAction.sequence([scaleSmall, scaleLarge])
+        // Breathing effect: subtle scale and lift
+        let breatheUp = SKAction.group([
+            SKAction.moveBy(x: 0, y: 3, duration: 0.8),
+            SKAction.scaleY(to: 1.05, duration: 0.8)
+        ])
+        let breatheDown = SKAction.group([
+            SKAction.moveBy(x: 0, y: -3, duration: 0.8),
+            SKAction.scaleY(to: 1.0, duration: 0.8)
         ])
         
-        spriteNode.run(SKAction.repeatForever(bobGroup), withKey: idleActionKey)
+        breatheUp.timingMode = .easeInEaseOut
+        breatheDown.timingMode = .easeInEaseOut
         
-        // Reset rotation and position offset gradually
-        spriteNode.run(SKAction.rotate(toAngle: 0, duration: 0.2))
+        let idleCycle = SKAction.repeatForever(SKAction.sequence([breatheUp, breatheDown]))
+        visualContainer.run(idleCycle, withKey: idleActionKey)
     }
     
     private func startWalkAnimation() {
-        spriteNode.removeAction(forKey: idleActionKey)
+        visualContainer.removeAction(forKey: idleActionKey)
         
-        // Bouncy walk
-        let bounceUp = SKAction.moveBy(x: 0, y: 4, duration: 0.15)
-        let bounceDown = SKAction.moveBy(x: 0, y: -4, duration: 0.15)
-        bounceUp.timingMode = .easeOut
-        bounceDown.timingMode = .easeIn
+        // Bouncy walk with "jump" and "squash" feel
+        // Part 1: Jump up
+        let jump = SKAction.group([
+            SKAction.moveBy(x: 0, y: 8, duration: 0.12),
+            SKAction.scaleY(to: 1.15, duration: 0.12),
+            SKAction.scaleX(to: 0.9, duration: 0.12)
+        ])
+        jump.timingMode = .easeOut
         
-        let tiltRight = SKAction.rotate(toAngle: -0.1, duration: 0.15)
-        let tiltLeft = SKAction.rotate(toAngle: 0.1, duration: 0.15)
+        // Part 2: Fall and squash
+        let land = SKAction.group([
+            SKAction.moveBy(x: 0, y: -8, duration: 0.12),
+            SKAction.scaleY(to: 0.85, duration: 0.12),
+            SKAction.scaleX(to: 1.15, duration: 0.12)
+        ])
+        land.timingMode = .easeIn
         
-        let walkStep = SKAction.sequence([
-            SKAction.group([bounceUp, tiltRight]),
-            SKAction.group([bounceDown, tiltLeft])
+        // Part 3: Reset to neutral
+        let reset = SKAction.group([
+            SKAction.scale(to: 1.0, duration: 0.1)
         ])
         
-        spriteNode.run(SKAction.repeatForever(walkStep), withKey: walkActionKey)
+        let walkCycle = SKAction.repeatForever(SKAction.sequence([jump, land, reset]))
+        visualContainer.run(walkCycle, withKey: walkActionKey)
     }
     
     func setMovementDirection(_ direction: CGPoint) {
