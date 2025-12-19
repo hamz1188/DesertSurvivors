@@ -11,7 +11,8 @@ import GameplayKit
 class GameScene: SKScene {
     
     // Core game objects
-    private var player: Player!
+    // Core game objects
+    var player: Player!
     private var weaponManager: WeaponManager!
     private var enemySpawner: EnemySpawner!
     private var pickupManager: PickupManager!

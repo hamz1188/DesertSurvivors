@@ -24,6 +24,7 @@ class BaseWeapon: SKNode, WeaponProtocol {
     let baseCooldown: TimeInterval
     var level: Int = 1
     let maxLevel: Int = 8
+    var isAwakened: Bool = false
     
     private var currentCooldown: TimeInterval = 0
     var damageMultiplier: Float = 1.0

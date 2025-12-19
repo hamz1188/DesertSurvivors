@@ -44,6 +44,34 @@ class LevelUpChoiceGenerator {
         
         // Generate choices
         while choices.count < numChoices {
+            
+            // PRIORITY: Check for Awakening (Evolution)
+            // If we have a max level weapon (8) AND the corresponding passive, force an awakening choice
+            if let evolution = checkForEvolution(currentWeapons: currentWeapons, currentPassives: currentPassives) {
+                // If we found an evolution recipe, offer it! 
+                // We'll treat it as a special "Weapon Upgrade" choice if possible, or new weapon.
+                // Since it REPLACES the old weapon, "New Weapon" semantic works well enough visually.
+                // But in GameScene, we need to handle the replacement logic (remove old, add new).
+                // For now, let's just make sure the user can select it.
+                
+                // Avoid offering it multiple times
+                let alreadyOffered = choices.contains { choice in
+                    if case .newWeapon(let w) = choice {
+                        return w.weaponName == evolution.weaponName
+                    }
+                    return false
+                }
+                
+                if !alreadyOffered {
+                    // Force the evolution as the FIRST option usually
+                    choices.insert(.newWeapon(evolution), at: 0)
+                    addedWeaponTypes.insert(evolution.weaponName)
+                    
+                    if choices.count >= numChoices { break }
+                    continue // Continue to generate other choices
+                }
+            }
+
             let choiceType = Int.random(in: 0...5)
             
             switch choiceType {
@@ -142,6 +170,18 @@ class LevelUpChoiceGenerator {
         
         if let randomType = available.randomElement() {
             return PassiveItem(type: randomType)
+        }
+        return nil
+    }
+    
+    private func checkForEvolution(currentWeapons: [BaseWeapon], currentPassives: [PassiveItem]) -> BaseWeapon? {
+        // Iterate through owned weapons to see if any are ready to evolve
+        for weapon in currentWeapons {
+            // Check if AwakeningManager has a valid recipe
+            if let recipe = AwakeningManager.shared.checkAwakening(weapon: weapon, passives: currentPassives) {
+                // Found one! Create the evolved form
+                return AwakeningManager.shared.getAwakenedWeapon(for: recipe)
+            }
         }
         return nil
     }
