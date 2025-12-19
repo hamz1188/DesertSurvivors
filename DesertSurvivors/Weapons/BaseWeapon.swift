@@ -32,13 +32,18 @@ class BaseWeapon: SKNode, WeaponProtocol {
     var attackSpeedMultiplier: Float = 1.0
     var critChance: Float = 0
     var critMultiplier: Float = 2.0
-    
+
+    /// Cached sanitized weapon name for sound effects
+    private lazy var sanitizedName: String = {
+        weaponName.lowercased().replacingOccurrences(of: " ", with: "_")
+    }()
+
     /// The effective cooldown after applying cooldown reduction and attack speed
     var effectiveCooldown: TimeInterval {
         let reducedCooldown = baseCooldown * Double(1.0 - cooldownReduction)
         return reducedCooldown / Double(attackSpeedMultiplier)
     }
-    
+
     init(name: String, baseDamage: Float, cooldown: TimeInterval) {
         self.weaponName = name
         self.baseDamage = baseDamage
@@ -62,10 +67,8 @@ class BaseWeapon: SKNode, WeaponProtocol {
     }
     
     private func playAttackSound() {
-        // Sanitize name: "Curved Dagger" -> "curved_dagger"
-        let sanitizedName = weaponName.lowercased().replacingOccurrences(of: " ", with: "_")
         let soundName = "sfx_attack_\(sanitizedName).wav"
-        
+
         // Find scene to play sound
         if let scene = scene {
             SoundManager.shared.playSFX(filename: soundName, scene: scene)

@@ -20,18 +20,23 @@ class WorldManager {
     // Grid management
     private var currentTileCoord: CGPoint = .zero
     
-    // Prop textures
-    private var propTextures: [SKTexture] = []
-    
+    // Prop metadata with rotation behavior
+    private struct PropMetadata {
+        let texture: SKTexture
+        let name: String
+        let allowFullRotation: Bool
+    }
+    private var propMetadata: [PropMetadata] = []
+
     init(scene: SKScene, player: SKNode) {
         self.scene = scene
         self.player = player
-        
+
         // Use fallbacks if textures aren't loaded in Assets.xcassets yet
         // For now, assume background_desert exists and props are in Art/Environment
         self.backgroundTexture = SKTexture(imageNamed: "background_desert")
         self.backgroundTexture.filteringMode = .nearest
-        
+
         loadPropTextures()
         setupSandstorm()
         update(playerPos: player.position)
@@ -62,14 +67,22 @@ class WorldManager {
     }
     
     private func loadPropTextures() {
-        // Attempt to load from Art/Environment (assuming they'll be added to project)
-        // For testing, we can use fallbacks if needed.
-        let names = ["cactus", "rock", "bones"]
-        for name in names {
+        // Define prop configurations: (name, canRotate360)
+        let propConfigs: [(String, Bool)] = [
+            ("cactus", false),   // Upright only - slight wobble
+            ("rock", true),      // Can rotate 360 degrees
+            ("bones", false)     // Upright only - slight wobble
+        ]
+
+        for (name, canRotate) in propConfigs {
             let texture = SKTexture(imageNamed: name)
             if texture.size() != .zero {
                 texture.filteringMode = .nearest
-                propTextures.append(texture)
+                propMetadata.append(PropMetadata(
+                    texture: texture,
+                    name: name,
+                    allowFullRotation: canRotate
+                ))
             }
         }
     }
@@ -139,22 +152,22 @@ class WorldManager {
     }
     
     private func spawnProps(for coord: CGPoint) {
-        guard let scene = scene, !propTextures.isEmpty else { return }
-        
+        guard let scene = scene, !propMetadata.isEmpty else { return }
+
         let numProps = Int.random(in: 3...6)
         var tileProps: [SKNode] = []
-        
+
         // Define base size matching player scale (approx 40-50 pts)
         let baseSize: CGFloat = 40.0
-        
+
         for _ in 0..<numProps {
-            let texture = propTextures.randomElement()!
-            let prop = SKSpriteNode(texture: texture)
-            
+            let meta = propMetadata.randomElement()!
+            let prop = SKSpriteNode(texture: meta.texture)
+
             // Standardize size while keeping aspect ratio
-            let ratio = texture.size().width / texture.size().height
+            let ratio = meta.texture.size().width / meta.texture.size().height
             prop.size = CGSize(width: baseSize * ratio, height: baseSize)
-            
+
             // Random position
             let offsetX = CGFloat.random(in: -tileSize/2...tileSize/2)
             let offsetY = CGFloat.random(in: -tileSize/2...tileSize/2)
@@ -162,26 +175,19 @@ class WorldManager {
                 x: coord.x * tileSize + offsetX,
                 y: coord.y * tileSize + offsetY
             )
-            
-            // Type-specific logic based on texture name (simple heuristic via index/lookup would be better, but assuming textures are loaded)
-            // Since we just have a list of textures, we can try to guess or just apply general rules.
-            // Ideally we'd map naming to logic. Since we loaded them in order: "cactus", "rock", "bones", we can assume some behavior or check description.
-            // Let's rely on a check if possible, or simple random variation without full rotation for upright objects.
-            
-            // FIX: Enforce upright orientation for everything except rocks
-            // Assuming most sprites are generated "upright"
-            prop.zRotation = 0
-            
+
             // Randomize scale slightly
             let scaleVar = CGFloat.random(in: 0.8...1.2)
             prop.setScale(scaleVar)
-            
-            // Only rocks should rotate fully. Cacti and bones usually sit upright.
-            // Since we can't easily check name from SKTexture instance without custom struct,
-            // we will add a slight random "wobble" to everything to break uniformity, but NOT 360 spin.
-            // If it's a "round" object (rock), 360 is fine.
-            // For now, restrictive rotation:
-            prop.zRotation = CGFloat.random(in: -0.1...0.1) 
+
+            // Type-specific rotation based on metadata
+            if meta.allowFullRotation {
+                // Rocks can rotate 360 degrees
+                prop.zRotation = CGFloat.random(in: 0...(2 * .pi))
+            } else {
+                // Cacti and bones get slight wobble only
+                prop.zRotation = CGFloat.random(in: -0.1...0.1)
+            } 
             
             prop.zPosition = Constants.ZPosition.map
             
@@ -207,9 +213,12 @@ class WorldManager {
     }
 }
 
+// CGPoint conforms to Hashable in iOS 16+, only add extension for older versions
+#if !os(iOS) || swift(<5.9)
 extension CGPoint: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(x)
         hasher.combine(y)
     }
 }
+#endif

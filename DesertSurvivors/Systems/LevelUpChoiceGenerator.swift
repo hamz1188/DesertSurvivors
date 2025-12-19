@@ -118,7 +118,7 @@ class LevelUpChoiceGenerator {
                 }
                 
             case 4: // Gold
-                let goldAmount = currentLevel * 10 + Int.random(in: 0...20)
+                let goldAmount = currentLevel * 10 + 10  // Predictable scaling
                 choices.append(.gold(goldAmount))
                 
             case 5: // Health restore

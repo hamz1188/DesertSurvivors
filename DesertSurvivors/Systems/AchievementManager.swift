@@ -150,8 +150,10 @@ class AchievementNotificationNode: SKNode {
         let remove = SKAction.removeFromParent()
         
         run(SKAction.sequence([appear, wait, fadeOut, remove]))
-        
+
         // Sound
-        SoundManager.shared.playSFX(filename: "sfx_level_up.wav", scene: self.scene ?? SKScene())
+        if let scene = self.scene {
+            SoundManager.shared.playSFX(filename: "sfx_level_up.wav", scene: scene)
+        }
     }
 }
