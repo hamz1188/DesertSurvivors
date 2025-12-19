@@ -154,18 +154,25 @@ Refined the visuals and added audio infrastructure to create a premium feel.
     - **Triggers**: Hooks for attacks, damage, death, pickups, and UI.
     - *Note*: Requires user-provided audio files.
 
-### 🚧 Phase 4: Meta-Progression (IN PROGRESS)
+### ✅ Phase 4: Meta-Progression (COMPLETED)
+**Status:** 100% Complete
 
-**Status:** 50% Complete
-
-Adding persistent progression and polish.
+Added persistent progression elements to keep players engaged.
 
 #### Completed Features:
-- ✅ **Save Data System** - Persists gold and upgrades between runs (`PersistenceManager`).
+- ✅ **Save Data System** - Persists gold, kills, and upgrades between runs (`PersistenceManager`).
 - ✅ **Merchant Shop** - Main Menu accessible shop to buy permanent stat boosts.
 - ✅ **Upgrades** - 10 Global upgrades including Might, Armor, Speed, Luck, and Greed.
+- ✅ **Character Unlocking** - Logic to unlock new characters (Amara, Zahra) based on gameplay feats.
+- ✅ **Achievements** - System to track and notify player of milestones ("First Blood", "Slayer").
 
-#### Planned Features:
-- [ ] **Achievements** - Unlock new weapons/characters by completing tasks
-- [ ] **Character Selection** - Unlock logic for new characters
-- [ ] **Settings Menu** - Toggle sound, music, and vibration
+### ✅ Phase 5: Polish & Release (COMPLETED)
+**Status:** 100% Complete
+
+Final clean-up and polish for release candidate.
+
+#### Completed Features:
+- ✅ **UI Standardization**: Unified button layouts and consistent design.
+- ✅ **Settings Menu**: Toggles for Music, SFX, and Haptics. Reset Data functionality.
+- ✅ **App Icon**: High-quality pixel art icon inspired by the game theme.
+- ✅ **Haptics**: Tactile feedback for key game interactions.

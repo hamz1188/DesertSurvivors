@@ -38,9 +38,9 @@ class CharacterSelectionScene: SKScene {
         // Back Button
         let backButton = SKLabelNode(fontNamed: "AvenirNext-Bold")
         backButton.text = "< Back"
-        backButton.fontSize = 20
+        backButton.fontSize = 24
         backButton.fontColor = .gray
-        backButton.position = CGPoint(x: 60, y: size.height - 50)
+        backButton.position = CGPoint(x: 60, y: size.height - 80) // Lowered from 50.
         backButton.name = "backButton"
         addChild(backButton)
     }

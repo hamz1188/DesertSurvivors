@@ -48,7 +48,7 @@ class ShopScene: SKScene {
         backButton.fontSize = 28
         backButton.fontColor = .white
         backButton.name = "backButton"
-        backButton.position = CGPoint(x: 80, y: size.height - 60)
+        backButton.position = CGPoint(x: 80, y: size.height - 80) // Standardized to 80
         addChild(backButton)
     }
     
@@ -59,17 +59,13 @@ class ShopScene: SKScene {
     
     private func setupUpgrades() {
         let upgrades = ShopUpgradeType.allCases
-        let startX: CGFloat = size.width / 2 - 160
+        let startX: CGFloat = size.width / 2
         let startY: CGFloat = size.height - 180
-        let spacingY: CGFloat = 85
-        let spacingX: CGFloat = 320 // 2 columns
+        let spacingY: CGFloat = 75
         
         for (index, type) in upgrades.enumerated() {
-            let col = index % 2
-            let row = index / 2
-            
-            let x = startX + CGFloat(col) * spacingX
-            let y = startY - CGFloat(row) * spacingY
+            let x = startX
+            let y = startY - CGFloat(index) * spacingY
             
             createUpgradeNode(for: type, at: CGPoint(x: x, y: y))
         }
@@ -82,7 +78,7 @@ class ShopScene: SKScene {
         addChild(container)
         
         // Background
-        let bg = SKShapeNode(rectOf: CGSize(width: 300, height: 75), cornerRadius: 8)
+        let bg = SKShapeNode(rectOf: CGSize(width: 320, height: 65), cornerRadius: 8)
         bg.fillColor = SKColor(white: 0.2, alpha: 1.0)
         bg.strokeColor = .gray
         container.addChild(bg)

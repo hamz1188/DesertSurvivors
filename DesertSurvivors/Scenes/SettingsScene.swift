@@ -60,7 +60,7 @@ class SettingsScene: SKScene {
         backButton.text = "BACK"
         backButton.fontSize = 28
         backButton.fontColor = .white
-        backButton.position = CGPoint(x: size.width / 2, y: 50)
+        backButton.position = CGPoint(x: 80, y: size.height - 80) // Standard Top-Left
         addChild(backButton)
     }
     
