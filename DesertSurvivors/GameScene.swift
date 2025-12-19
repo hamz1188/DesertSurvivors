@@ -111,7 +111,7 @@ class GameScene: SKScene {
     private func setupJoystick() {
         joystick = VirtualJoystick()
         gameCamera.addChild(joystick)
-        joystick.position = CGPoint(x: -size.width/2 + 80, y: -size.height/2 + 80)
+        joystick.zPosition = Constants.ZPosition.hud
     }
     
     private func setupLevelUpUI() {
@@ -131,6 +131,20 @@ class GameScene: SKScene {
              name: .playerLevelUp,
              object: nil
          )
+         
+         NotificationCenter.default.addObserver(
+             self,
+             selector: #selector(handleEnemyDeath),
+             name: .enemyDied,
+             object: nil
+         )
+         
+         NotificationCenter.default.addObserver(
+             self,
+             selector: #selector(handleExperienceCollection),
+             name: .experienceCollected,
+             object: nil
+         )
     }
     
     @objc private func handleLevelUpNotification(_ notification: Notification) {
@@ -138,6 +152,23 @@ class GameScene: SKScene {
             hud.updateLevel(level)
             levelUp()
         }
+    }
+    
+    @objc private func handleEnemyDeath(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let position = userInfo["position"] as? CGPoint,
+              let xp = userInfo["xp"] as? Float else { return }
+        
+        pickupManager.spawnExperienceGem(at: position, xpValue: xp)
+        addKill()
+        hud.updateKillCount(killCount)
+    }
+    
+    @objc private func handleExperienceCollection(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let xp = userInfo["xp"] as? Float else { return }
+        
+        levelUpSystem.addXP(xp, multiplier: player.stats.experienceMultiplier)
     }
     
     // MARK: - Game Loop
@@ -181,7 +212,6 @@ class GameScene: SKScene {
         hud.updateGold(gold)
         
         hud.positionHUD(in: self)
-        joystick.position = CGPoint(x: -size.width/2 + 80, y: -size.height/2 + 80)
         
         if !player.stats.isAlive {
             gameOver()

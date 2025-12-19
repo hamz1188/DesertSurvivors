@@ -105,7 +105,8 @@ class WrathOfTheSun: BaseWeapon {
             
             if dist > beamLength { continue } // Too far
             
-            let enemyAngle = atan2(toEnemy.y, toEnemy.x)
+            _ = atan2(toEnemy.y, toEnemy.x) // Kept for reference but unused, actually just delete logic
+            // Unused logic removed
             
             // Normalize enemy angle relative to container rotation
             // Beam 1 is at 0 relative to container.

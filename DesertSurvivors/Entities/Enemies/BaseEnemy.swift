@@ -116,12 +116,16 @@ class BaseEnemy: SKNode {
         // Death animation
         currentHealth = 0
         
+        // Notify game to spawn XP and count kill
+        NotificationCenter.default.post(name: .enemyDied, object: nil, userInfo: ["position": position, "xp": xpValue])
+        
         // Scale down and fade out
         let shrink = SKAction.scale(to: 0.5, duration: 0.15)
         let fade = SKAction.fadeOut(withDuration: 0.15)
+        let remove = SKAction.removeFromParent()
         let group = SKAction.group([shrink, fade])
         
-        spriteNode.run(group)
+        spriteNode.run(SKAction.sequence([group, remove]))
     }
     
     var isAlive: Bool {
@@ -135,3 +139,7 @@ class BaseEnemy: SKNode {
     }
 }
 
+
+extension Notification.Name {
+    static let enemyDied = Notification.Name("enemyDied")
+}

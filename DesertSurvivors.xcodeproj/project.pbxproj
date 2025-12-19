@@ -7,9 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3FBAC5B89510C47016E5391D /* PauseMenuUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 978827F7C12D10968BF5C113 /* PauseMenuUI.swift */; };
 		950617222EF42728001FD761 /* desert-survivors-game-prompt.md in Resources */ = {isa = PBXBuildFile; fileRef = 950617212EF42728001FD761 /* desert-survivors-game-prompt.md */; };
-		E9EF4169C0835D0DD66D4324 /* CharacterSelectionScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 960A6F4E7B3649BD8FE30417 /* CharacterSelectionScene.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -249,8 +247,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3FBAC5B89510C47016E5391D /* PauseMenuUI.swift in Sources */,
-				E9EF4169C0835D0DD66D4324 /* CharacterSelectionScene.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
