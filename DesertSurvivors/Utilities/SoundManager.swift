@@ -12,8 +12,22 @@ class SoundManager {
     static let shared = SoundManager()
     
     private var backgroundMusicPlayer: AVAudioPlayer?
-    private var isMusicEnabled: Bool = true
-    private var isSFXEnabled: Bool = true
+    var isMusicEnabled: Bool {
+        get { return UserDefaults.standard.object(forKey: "isMusicEnabled") as? Bool ?? true }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "isMusicEnabled")
+            if !newValue {
+                backgroundMusicPlayer?.pause()
+            } else {
+                backgroundMusicPlayer?.play()
+            }
+        }
+    }
+    
+    var isSFXEnabled: Bool {
+        get { return UserDefaults.standard.object(forKey: "isSFXEnabled") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "isSFXEnabled") }
+    }
     
     private init() {}
     

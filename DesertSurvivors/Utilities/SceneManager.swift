@@ -29,11 +29,12 @@ class SceneManager {
         view.presentScene(scene, transition: transition)
     }
     
-    func presentGameScene() {
+    func presentGameScene(character: CharacterType = .tariq) {
         guard let view = gameViewController?.view as? SKView else { return }
         
         // Force programmatic creation to avoid loading SKS artifacts like "Hello World"
         let scene = GameScene(size: view.bounds.size)
+        scene.selectedCharacter = character
         scene.scaleMode = .aspectFill
         let transition = SKTransition.doorsOpenHorizontal(withDuration: transitionDuration)
         view.presentScene(scene, transition: transition)
@@ -60,6 +61,14 @@ class SceneManager {
         let scene = ShopScene(size: view.bounds.size)
         scene.scaleMode = .aspectFill
         let transition = SKTransition.push(with: .down, duration: 0.5)
+        view.presentScene(scene, transition: transition)
+    }
+    
+    func presentSettings() {
+        guard let view = gameViewController?.view as? SKView else { return }
+        let scene = SettingsScene(size: view.bounds.size)
+        scene.scaleMode = .aspectFill
+        let transition = SKTransition.push(with: .right, duration: 0.5)
         view.presentScene(scene, transition: transition)
     }
 }

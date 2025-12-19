@@ -23,6 +23,8 @@ class GameScene: SKScene {
     private var joystick: VirtualJoystick!
     private var levelUpUI: LevelUpUI!
     
+    var selectedCharacter: CharacterType = .tariq
+    
     // Game state
     private var lastUpdateTime: TimeInterval = 0
     private var gameTime: TimeInterval = 0
@@ -85,7 +87,7 @@ class GameScene: SKScene {
     }
     
     private func setupPlayer() {
-        player = Player()
+        player = Player(character: selectedCharacter)
         player.position = .zero
         addChild(player)
     }
@@ -234,8 +236,9 @@ class GameScene: SKScene {
         let seconds = Int(gameTime) % 60
         let timeString = String(format: "%02d:%02d", minutes, seconds)
         
-        // Save Gold
+        // Save Data
         PersistenceManager.shared.addGold(gold)
+        PersistenceManager.shared.updateProgression(runKills: killCount, runTime: gameTime)
         
         SceneManager.shared.presentGameOver(finalLevel: levelUpSystem.currentLevel, kills: killCount, timeSurvived: timeString)
     }

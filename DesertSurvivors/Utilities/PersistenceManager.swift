@@ -11,6 +11,9 @@ struct PlayerData: Codable {
     var totalGold: Int = 0
     var upgrades: [String: Int] = [:] // UpgradeID: Level
     var unlockedCharacters: [String] = ["tariq"]
+    var unlockedAchievements: [String] = []
+    var totalKills: Int = 0
+    var maxTimeSurvived: TimeInterval = 0
     var highScores: [Int] = [] // Top 10 scores?
 }
 
@@ -86,5 +89,41 @@ class PersistenceManager {
     
     func isCharacterUnlocked(_ id: String) -> Bool {
         return data.unlockedCharacters.contains(id)
+    }
+    
+    func unlockAchievement(_ id: String) -> Bool {
+        if !data.unlockedAchievements.contains(id) {
+            data.unlockedAchievements.append(id)
+            save()
+            return true // Newly unlocked
+        }
+        return false // Already unlocked
+    }
+    
+    func updateProgression(runKills: Int, runTime: TimeInterval) {
+        data.totalKills += runKills
+        if runTime > data.maxTimeSurvived {
+            data.maxTimeSurvived = runTime
+        }
+        
+        checkUnlocks(runTime: runTime)
+        save()
+    }
+    
+    func resetData() {
+        data = PlayerData(totalGold: 0, upgrades: [:], unlockedCharacters: ["tariq"], unlockedAchievements: [], totalKills: 0, maxTimeSurvived: 0, highScores: [])
+        save()
+    }
+    
+    private func checkUnlocks(runTime: TimeInterval) {
+        // Amara: Survive 5 mins (300s)
+        if runTime >= 300 {
+            unlockCharacter(CharacterType.amara.rawValue)
+        }
+        
+        // Zahra: 1000 Total Kills
+        if data.totalKills >= 1000 {
+            unlockCharacter(CharacterType.zahra.rawValue)
+        }
     }
 }

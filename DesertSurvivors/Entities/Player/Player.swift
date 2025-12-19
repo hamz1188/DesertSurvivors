@@ -9,6 +9,7 @@ import SpriteKit
 
 class Player: SKNode {
     var stats: PlayerStats
+    var character: CharacterType
     var movementDirection: CGPoint = .zero
     var isMoving: Bool = false
     
@@ -22,11 +23,15 @@ class Player: SKNode {
     // Health regeneration
     private var regenTimer: TimeInterval = 0
     
-    init(stats: PlayerStats = PlayerStats()) {
+    init(character: CharacterType = .tariq, stats: PlayerStats = PlayerStats()) {
+        self.character = character
         self.stats = stats
         
         // Apply permanent upgrades
         ShopManager.shared.applyUpgrades(to: &self.stats)
+        
+        // Apply character specific stats
+        character.applyBaseStats(to: &self.stats)
         
         super.init()
         
@@ -40,7 +45,8 @@ class Player: SKNode {
     
     private func setupSprite() {
         // Load pixel art sprite
-        spriteNode = SKSpriteNode(imageNamed: "player_tariq")
+        let textureName = "player_\(character.rawValue)"
+        spriteNode = SKSpriteNode(imageNamed: textureName)
         
         // If asset not found, fallback to color
         if spriteNode.texture == nil {

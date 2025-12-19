@@ -189,6 +189,9 @@ class ShopScene: SKScene {
                     updateUpgradeNode(node, type: type)
                 }
             }
+            
+            // Check Achievements
+            AchievementManager.shared.checkAchievements(scene: self)
         } else {
             // Fail
             // specific fail sound?
