@@ -189,13 +189,32 @@ class HUD: SKNode {
     }
     
     func positionHUD(in scene: SKScene) {
-        // Position at top-left of screen with proper margins
-        // Account for Dynamic Island / notch safe area (approximately 60 points from top)
-        let topSafeArea: CGFloat = 60
-        let margin: CGFloat = 15
+        guard let view = scene.view else { return }
+        
+        // Use actual safe area insets
+        let topInset = view.safeAreaInsets.top
+        let leftInset = view.safeAreaInsets.left
+        
+        // Dynamic Island is usually around 59pts, standard notch is 47pts.
+        // Add extra padding to be safe.
+        let topMargin = max(topInset, 50) + 10
+        let leftMargin = max(leftInset, 20)
+        
         let levelLabelSpace: CGFloat = 40
-        position = CGPoint(x: -scene.size.width/2 + margin + levelLabelSpace,
-                          y: scene.size.height/2 - topSafeArea - margin)
+        
+        // Position relative to the camera's viewable area
+        // Since camera is centered at 0,0, the top-left corner is (-width/2, height/2)
+        // BUT we need to account for safe area in the coordinate space
+        
+        // Calculate the visible height/width in scene coordinates
+        let visibleHeight = scene.size.height
+        let visibleWidth = scene.size.width
+        
+        // Determine position
+        let xPos = -visibleWidth/2 + leftMargin + levelLabelSpace
+        let yPos = visibleHeight/2 - topMargin
+        
+        position = CGPoint(x: xPos, y: yPos)
     }
 }
 

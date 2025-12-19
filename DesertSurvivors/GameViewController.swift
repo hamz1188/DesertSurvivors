@@ -14,13 +14,13 @@ class GameViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Create GameScene directly (no longer using .sks file)
-        let scene = GameScene(size: view.bounds.size)
-        scene.scaleMode = .aspectFill
+        // Initialize SceneManager
+        SceneManager.shared.setGameViewController(self)
         
-        // Present the scene
+        // Present Main Menu
+        SceneManager.shared.presentMainMenu()
+        
         if let skView = self.view as? SKView {
-            skView.presentScene(scene)
             skView.ignoresSiblingOrder = true
             skView.showsFPS = true
             skView.showsNodeCount = true

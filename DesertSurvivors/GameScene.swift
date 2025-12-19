@@ -220,41 +220,61 @@ class GameScene: SKScene {
         player.healthRegenPerSecond = player.stats.healthRegenPerSecond
     }
     
+    // Touch handling
+    private var joystickTouch: UITouch?
+    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, let gameCamera = gameCamera else { return }
-        let location = touch.location(in: self)
-        let cameraLocation = touch.location(in: gameCamera)
+        guard let gameCamera = gameCamera else { return }
         
-        // Check if level up UI is visible and handle touch
-        if levelUpUI.isVisible {
-            if levelUpUI.handleTouch(at: cameraLocation) {
-                return // Touch was handled by level up UI
+        for touch in touches {
+            let location = touch.location(in: self)
+            let cameraLocation = touch.location(in: gameCamera)
+            
+            // Check if level up UI is visible and handle touch
+            if levelUpUI.isVisible {
+                if levelUpUI.handleTouch(at: cameraLocation) {
+                    return
+                }
             }
-        }
-        
-        // Check if touch is on left side (joystick area)
-        if location.x < size.width / 3 && !isGamePaused {
-            joystick.activate(at: cameraLocation)
+            
+            // Check if touch is on left side (joystick area) and we don't already have a joystick touch
+            if joystickTouch == nil && location.x < size.width / 3 && !isGamePaused {
+                joystickTouch = touch
+                joystick.activate(at: cameraLocation)
+            }
         }
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, let gameCamera = gameCamera else { return }
-        let cameraLocation = touch.location(in: gameCamera)
-        joystick.updateStickPosition(cameraLocation)
+        guard let gameCamera = gameCamera else { return }
         
-        // Update player movement
-        player?.setMovementDirection(joystick.direction)
+        for touch in touches {
+            if touch == joystickTouch {
+                let cameraLocation = touch.location(in: gameCamera)
+                joystick.updateStickPosition(cameraLocation)
+                player?.setMovementDirection(joystick.direction)
+            }
+        }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        joystick?.deactivate()
-        player?.setMovementDirection(.zero)
+        for touch in touches {
+            if touch == joystickTouch {
+                joystickTouch = nil
+                joystick.deactivate()
+                player?.setMovementDirection(.zero)
+            }
+        }
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        joystick?.deactivate()
-        player?.setMovementDirection(.zero)
+        for touch in touches {
+            if touch == joystickTouch {
+                joystickTouch = nil
+                joystick.deactivate()
+                player?.setMovementDirection(.zero)
+            }
+        }
     }
     
     override func update(_ currentTime: TimeInterval) {
@@ -322,8 +342,16 @@ class GameScene: SKScene {
     
     private func gameOver() {
         isGamePaused = true
-        // TODO: Show game over scene
-        print("Game Over! Survived for \(Int(gameTime)) seconds. Kills: \(killCount)")
+        
+        let minutes = Int(gameTime) / 60
+        let seconds = Int(gameTime) % 60
+        let timeString = String(format: "%02d:%02d", minutes, seconds)
+        
+        SceneManager.shared.presentGameOver(
+            finalLevel: levelUpSystem.currentLevel,
+            kills: killCount,
+            timeSurvived: timeString
+        )
     }
 }
 

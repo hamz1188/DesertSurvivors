@@ -61,8 +61,24 @@ class EnemySpawner {
         let spawnX = player.position.x + cos(angle) * spawnDistance
         let spawnY = player.position.y + sin(angle) * spawnDistance
         
-        // Create a basic enemy (will be replaced with tier-based spawning)
-        let enemy = createTier1Enemy()
+        // Determine allowable tiers based on time
+        // Tier 1: 0+ seconds
+        // Tier 2: 120+ seconds (2:00)
+        
+        var allowedTiers: [Int] = [1]
+        if gameTime >= 120 {
+            allowedTiers.append(2)
+        }
+        
+        let selectedTier = allowedTiers.randomElement() ?? 1
+        
+        let enemy: BaseEnemy
+        if selectedTier == 2 {
+            enemy = createTier2Enemy()
+        } else {
+            enemy = createTier1Enemy()
+        }
+        
         enemy.position = CGPoint(x: spawnX, y: spawnY)
         scene.addChild(enemy)
         activeEnemies.append(enemy)
@@ -84,6 +100,24 @@ class EnemySpawner {
             return DustSprite()
         default:
             return SandScarab()
+        }
+    }
+    
+    private func createTier2Enemy() -> BaseEnemy {
+        let types = ["MummifiedWanderer", "SandCobra", "DesertBandit", "CursedJackal"]
+        let type = types.randomElement() ?? "MummifiedWanderer"
+        
+        switch type {
+        case "MummifiedWanderer":
+            return MummifiedWanderer()
+        case "SandCobra":
+            return SandCobra()
+        case "DesertBandit":
+            return DesertBandit()
+        case "CursedJackal":
+            return CursedJackal()
+        default:
+            return MummifiedWanderer()
         }
     }
     
