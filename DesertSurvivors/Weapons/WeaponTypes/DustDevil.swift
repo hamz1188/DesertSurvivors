@@ -53,15 +53,31 @@ class DustDevil: BaseWeapon {
         container.position = position
         container.zPosition = Constants.ZPosition.weapon
         
-        // Visual representation - spinning circle
-        let visual = SKShapeNode(circleOfRadius: devilRadius)
-        visual.fillColor = SKColor(white: 0.8, alpha: 0.6)
-        visual.strokeColor = .brown
-        visual.lineWidth = 3
-        container.addChild(visual)
-        
-        // Spin animation
-        visual.run(SKAction.repeatForever(SKAction.rotate(byAngle: .pi * 2, duration: 1.0)))
+        // Vortex rings
+        let ringCount = 3
+        for i in 0..<ringCount {
+            let radius = devilRadius * CGFloat(i + 1) / CGFloat(ringCount)
+            let ring = SKShapeNode(circleOfRadius: radius)
+            ring.fillColor = .clear
+            ring.strokeColor = SKColor(white: 0.82, alpha: 0.4)
+            ring.lineWidth = 2
+            
+            // Add some "dust" clouds around the ring
+            for _ in 0..<4 {
+                let angle = CGFloat.random(in: 0..<2 * .pi)
+                let dust = SKShapeNode(circleOfRadius: CGFloat.random(in: 5...12))
+                dust.fillColor = SKColor(red: 0.76, green: 0.69, blue: 0.5, alpha: 0.3)
+                dust.strokeColor = .clear
+                dust.position = CGPoint(x: cos(angle) * radius, y: sin(angle) * radius)
+                ring.addChild(dust)
+            }
+            
+            container.addChild(ring)
+            
+            // Rotation speed varies by ring
+            let duration = 1.0 / Double(i + 1)
+            ring.run(SKAction.repeatForever(SKAction.rotate(byAngle: .pi * 2, duration: duration)))
+        }
         
         return container
     }

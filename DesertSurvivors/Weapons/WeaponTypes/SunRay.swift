@@ -53,6 +53,19 @@ class SunRay: BaseWeapon {
         beam.zRotation = angle
         beam.alpha = 0.8
         
+        // Add Glow effect
+        let glow = SKShapeNode(rectOf: CGSize(width: beamLength, height: beamWidth + 10))
+        glow.fillColor = .yellow.withAlphaComponent(0.2)
+        glow.strokeColor = .clear
+        glow.zPosition = -1
+        beam.addChild(glow)
+        
+        // Add flickering animation
+        let flickerOut = SKAction.fadeAlpha(to: 0.4, duration: 0.05)
+        let flickerIn = SKAction.fadeAlpha(to: 0.8, duration: 0.05)
+        let flicker = SKAction.repeatForever(SKAction.sequence([flickerOut, flickerIn]))
+        beam.run(flicker)
+        
         scene.addChild(beam)
         activeBeams.append(beam)
         

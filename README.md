@@ -195,9 +195,8 @@ Implemented critical bug fixes and performance optimizations from comprehensive 
 - ✅ **HUD Optimization**: Recalculates layout only on orientation changes; added a real-time **FPS Monitor**.
 - ✅ **CurvedDagger Optimization**: Pre-filters enemies for sweep checks (~90% calculation reduction).
 
-#### Architecture & Quality:
-- ✅ **Standardized Weapons**: All 24 weapons now strictly follow the `BaseWeapon` protocol.
-- ✅ **Dependency Injection**: Refactored `Player` initialization to remove hidden singleton dependencies.
-- ✅ **Accessibility**: Added Full **VoiceOver support** to the game HUD for inclusive play.
-- ✅ **Clean Code**: Removed magic numbers, unused imports, and enabled proper debug logging.
+#### Visuals & "Juice":
+- ✅ **Procedural Weapons**: Core weapons (Daggers, Tails, Shards) now look like their namesakes through custom `CGPath` drawing.
+- ✅ **Dynamic Animation**: Added flickering beams, swirling vortices, rotatonal alignment, and particle trails.
+- ✅ **Hit Indicators**: Improved combat readability with new visual effects on dodge and hit.
 

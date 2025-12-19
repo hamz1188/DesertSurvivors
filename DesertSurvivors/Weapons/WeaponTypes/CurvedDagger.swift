@@ -33,10 +33,70 @@ class CurvedDagger: BaseWeapon {
     }
     
     private func createDagger() {
-        let dagger = SKSpriteNode(color: .orange, size: CGSize(width: 20, height: 8))
+        let dagger = createDaggerShape()
         dagger.zPosition = Constants.ZPosition.weapon
         daggers.append(dagger)
         addChild(dagger)
+        
+        // Add trail effect
+        addDaggerTrail(to: dagger)
+    }
+    
+    private func createDaggerShape() -> SKSpriteNode {
+        // We'll use multiple nodes to construct a dagger for "texture" feel
+        // but package them in a single node for easy rotation.
+        let container = SKSpriteNode(color: .clear, size: CGSize(width: 25, height: 10))
+        
+        // Blade (Curved)
+        let bladePath = CGMutablePath()
+        bladePath.move(to: CGPoint(x: -8, y: 0))
+        bladePath.addQuadCurve(to: CGPoint(x: 12, y: 0), control: CGPoint(x: 2, y: 5))
+        bladePath.addQuadCurve(to: CGPoint(x: -8, y: -2), control: CGPoint(x: 2, y: 2))
+        bladePath.closeSubpath()
+        
+        let blade = SKShapeNode(path: bladePath)
+        blade.fillColor = .lightGray
+        blade.strokeColor = .white
+        blade.lineWidth = 1
+        container.addChild(blade)
+        
+        // Hilt / Crossguard
+        let hilt = SKShapeNode(rectOf: CGSize(width: 3, height: 12), cornerRadius: 1)
+        hilt.fillColor = SKColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0)
+        hilt.strokeColor = .black
+        hilt.lineWidth = 0.5
+        hilt.position = CGPoint(x: -8, y: 0)
+        container.addChild(hilt)
+        
+        // Grip
+        let grip = SKShapeNode(rectOf: CGSize(width: 6, height: 3), cornerRadius: 1)
+        grip.fillColor = .brown
+        grip.position = CGPoint(x: -12, y: 0)
+        container.addChild(grip)
+        
+        return container
+    }
+    
+    private func addDaggerTrail(to dagger: SKNode) {
+        // Simple trail using a particle system template
+        let trail = SKEmitterNode()
+        trail.particleTexture = nil // Use squares if no texture
+        trail.particleBirthRate = 50
+        trail.particleLifetime = 0.3
+        trail.particlePositionRange = CGVector(dx: 2, dy: 2)
+        trail.particleSpeed = 20
+        trail.particleSpeedRange = 10
+        trail.emissionAngle = .pi // Emit backwards
+         trail.emissionAngleRange = 0.5
+        trail.particleAlpha = 0.6
+        trail.particleAlphaSpeed = -2.0
+        trail.particleScale = 0.1
+        trail.particleScaleSpeed = -0.3
+        trail.particleColor = .lightGray
+        trail.particleColorBlendFactor = 1.0
+        trail.targetNode = self.scene // Particles stay in world space
+        
+        dagger.addChild(trail)
     }
     
     override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
@@ -186,13 +246,17 @@ class CurvedDagger: BaseWeapon {
         // Visual enhancement at higher levels
         if level >= 5 {
             for dagger in daggers {
-                dagger.color = .orange.withAlphaComponent(0.9)
+                if let blade = dagger.children.first(where: { $0 is SKShapeNode }) as? SKShapeNode {
+                    blade.fillColor = .orange
+                }
                 dagger.setScale(1.2)
             }
         }
         if level >= 8 {
             for dagger in daggers {
-                dagger.color = .red
+                if let blade = dagger.children.first(where: { $0 is SKShapeNode }) as? SKShapeNode {
+                    blade.fillColor = .red
+                }
                 dagger.setScale(1.5)
             }
         }

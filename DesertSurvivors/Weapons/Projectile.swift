@@ -31,7 +31,23 @@ class Projectile: SKNode {
     }
     
     private func setupSprite(color: SKColor) {
-        spriteNode = SKSpriteNode(color: color, size: CGSize(width: 12, height: 12))
+        // Draw a diamond/shard shape
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: 0, y: 8))
+        path.addLine(to: CGPoint(x: 4, y: 0))
+        path.addLine(to: CGPoint(x: 0, y: -8))
+        path.addLine(to: CGPoint(x: -4, y: 0))
+        path.closeSubpath()
+        
+        spriteNode = SKSpriteNode(color: .clear, size: CGSize(width: 12, height: 16))
+        
+        let shard = SKShapeNode(path: path)
+        shard.fillColor = color
+        shard.strokeColor = .white
+        shard.lineWidth = 0.5
+        shard.name = "shard"
+        spriteNode.addChild(shard)
+        
         spriteNode.zPosition = Constants.ZPosition.projectile
         addChild(spriteNode)
     }
@@ -51,9 +67,15 @@ class Projectile: SKNode {
         self.direction = direction.normalized()
         self.elapsedTime = 0
         self.hasHit = false
-        self.spriteNode.color = color
-        self.spriteNode.colorBlendFactor = 1.0
+        
+        if let shard = spriteNode.childNode(withName: "shard") as? SKShapeNode {
+            shard.fillColor = color
+        }
+        
         self.isHidden = false
+        
+        // Face movement direction
+        spriteNode.zRotation = atan2(direction.y, direction.x) - .pi/2
     }
     
     func update(deltaTime: TimeInterval, onExpired: () -> Void) {

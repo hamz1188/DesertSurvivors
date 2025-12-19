@@ -63,34 +63,44 @@ class ScorpionTail: BaseWeapon {
         ]))
     }
 
-    private func createWhip(angle: CGFloat) -> SKShapeNode {
-        // Create a curved path for the whip
-        let path = CGMutablePath()
-        path.move(to: CGPoint(x: 0, y: 0))
-
-        // Create a sweeping arc
-        let midPoint = CGPoint(
-            x: cos(angle) * whipLength * 0.6,
-            y: sin(angle) * whipLength * 0.6
-        )
-        let endPoint = CGPoint(
-            x: cos(angle) * whipLength,
-            y: sin(angle) * whipLength
-        )
-
-        path.addQuadCurve(
-            to: endPoint,
-            control: CGPoint(x: midPoint.x * 1.2, y: midPoint.y * 1.2)
-        )
-
-        let whip = SKShapeNode(path: path)
-        whip.strokeColor = .purple
-        whip.lineWidth = whipWidth
-        whip.alpha = 0.0
-        whip.zPosition = Constants.ZPosition.weapon
-        whip.lineCap = .round
-
-        return whip
+    private func createWhip(angle: CGFloat) -> SKNode {
+        let container = SKNode()
+        container.zPosition = Constants.ZPosition.weapon
+        
+        let segmentCount = 10
+        for i in 0..<segmentCount {
+            let progress = CGFloat(i) / CGFloat(segmentCount - 1)
+            let radius = whipWidth * 0.5 * (1.1 - progress) // Tapers toward the end
+            
+            // Calculate segment position along an arc
+            let segmentDistance = progress * whipLength
+            // Add a slight curve/bend to the tail
+            let bendAngle = angle + sin(progress * .pi) * 0.3
+            
+            let segment = SKShapeNode(circleOfRadius: radius)
+            segment.fillColor = .purple
+            segment.strokeColor = .black
+            segment.lineWidth = 1
+            segment.position = CGPoint(
+                x: cos(bendAngle) * segmentDistance,
+                y: sin(bendAngle) * segmentDistance
+            )
+            
+            // Add stinger at the end
+            if i == segmentCount - 1 {
+                let stinger = SKShapeNode(rectOf: CGSize(width: 8, height: 16), cornerRadius: 2)
+                stinger.fillColor = .red
+                stinger.strokeColor = .black
+                stinger.position = .zero
+                stinger.zRotation = bendAngle + .pi/2
+                segment.addChild(stinger)
+            }
+            
+            container.addChild(segment)
+        }
+        
+        container.alpha = 0.0
+        return container
     }
 
     private func damageEnemiesInWhip(playerPosition: CGPoint, direction: CGPoint, spatialHash: SpatialHash) {
