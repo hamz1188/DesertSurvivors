@@ -48,6 +48,9 @@ class GameScene: SKScene {
         physicsWorld.gravity = .zero
         physicsWorld.contactDelegate = self
         
+        // Explicitly remove any template nodes that might be present
+        removeAllChildren()
+        
         // Set camera to follow player (will be set up after player is created)
         gameCamera = SKCameraNode()
         camera = gameCamera
@@ -230,14 +233,20 @@ class GameScene: SKScene {
             let location = touch.location(in: self)
             let cameraLocation = touch.location(in: gameCamera)
             
-            // Check if level up UI is visible and handle touch
+            // Handle level up UI
             if levelUpUI.isVisible {
                 if levelUpUI.handleTouch(at: cameraLocation) {
-                    return
+                    continue // Handle other touches in set
                 }
             }
             
-            // Check if touch is on left side (joystick area) and we don't already have a joystick touch
+            // Clear dead joystick touch if it exists
+            if let existingTouch = joystickTouch, existingTouch.phase == .ended || existingTouch.phase == .cancelled {
+                joystickTouch = nil
+                joystick.deactivate()
+            }
+            
+            // Re-assign or assign joystick
             if joystickTouch == nil && location.x < size.width / 3 && !isGamePaused {
                 joystickTouch = touch
                 joystick.activate(at: cameraLocation)
@@ -248,9 +257,10 @@ class GameScene: SKScene {
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let gameCamera = gameCamera else { return }
         
-        for touch in touches {
-            if touch == joystickTouch {
-                let cameraLocation = touch.location(in: gameCamera)
+        if let trackedTouch = joystickTouch {
+            // Check if our tracked touch is in this update set
+            if touches.contains(trackedTouch) {
+                let cameraLocation = trackedTouch.location(in: gameCamera)
                 joystick.updateStickPosition(cameraLocation)
                 player?.setMovementDirection(joystick.direction)
             }
@@ -258,8 +268,8 @@ class GameScene: SKScene {
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for touch in touches {
-            if touch == joystickTouch {
+        if let trackedTouch = joystickTouch {
+            if touches.contains(trackedTouch) || trackedTouch.phase == .ended || trackedTouch.phase == .cancelled {
                 joystickTouch = nil
                 joystick.deactivate()
                 player?.setMovementDirection(.zero)
@@ -268,8 +278,8 @@ class GameScene: SKScene {
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for touch in touches {
-            if touch == joystickTouch {
+        if let trackedTouch = joystickTouch {
+            if touches.contains(trackedTouch) || trackedTouch.phase == .ended || trackedTouch.phase == .cancelled {
                 joystickTouch = nil
                 joystick.deactivate()
                 player?.setMovementDirection(.zero)

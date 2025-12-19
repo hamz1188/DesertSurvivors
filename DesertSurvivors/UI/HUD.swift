@@ -191,20 +191,16 @@ class HUD: SKNode {
     func positionHUD(in scene: SKScene) {
         guard let view = scene.view else { return }
         
-        // Use actual safe area insets
+        // Use actual safe area insets if available, otherwise use substantial default
         let topInset = view.safeAreaInsets.top
         let leftInset = view.safeAreaInsets.left
         
-        // Dynamic Island is usually around 59pts, standard notch is 47pts.
-        // Add extra padding to be safe.
-        let topMargin = max(topInset, 50) + 10
+        // Dynamic Island/Notch safety. 
+        // 100pts is safe for almost all modern iPhones to be well below the pill/clock area.
+        let topMargin = max(topInset, 100) 
         let leftMargin = max(leftInset, 20)
         
         let levelLabelSpace: CGFloat = 40
-        
-        // Position relative to the camera's viewable area
-        // Since camera is centered at 0,0, the top-left corner is (-width/2, height/2)
-        // BUT we need to account for safe area in the coordinate space
         
         // Calculate the visible height/width in scene coordinates
         let visibleHeight = scene.size.height

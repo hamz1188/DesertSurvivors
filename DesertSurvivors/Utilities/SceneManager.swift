@@ -32,18 +32,11 @@ class SceneManager {
     func presentGameScene() {
         guard let view = gameViewController?.view as? SKView else { return }
         
-        // Load GameScene from SKS file if possible, or create programmatically
-        if let scene = SKScene(fileNamed: "GameScene") as? GameScene {
-            scene.scaleMode = .aspectFill
-            let transition = SKTransition.doorsOpenHorizontal(withDuration: transitionDuration)
-            view.presentScene(scene, transition: transition)
-        } else {
-             // Fallback
-            let scene = GameScene(size: view.bounds.size)
-            scene.scaleMode = .aspectFill
-            let transition = SKTransition.doorsOpenHorizontal(withDuration: transitionDuration)
-            view.presentScene(scene, transition: transition)
-        }
+        // Force programmatic creation to avoid loading SKS artifacts like "Hello World"
+        let scene = GameScene(size: view.bounds.size)
+        scene.scaleMode = .aspectFill
+        let transition = SKTransition.doorsOpenHorizontal(withDuration: transitionDuration)
+        view.presentScene(scene, transition: transition)
     }
     
     func presentGameOver(finalLevel: Int, kills: Int, timeSurvived: String) {
