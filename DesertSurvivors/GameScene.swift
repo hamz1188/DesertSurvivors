@@ -211,7 +211,13 @@ class GameScene: SKScene {
         // Logic
         player.update(deltaTime: deltaTime)
         player.setMovementDirection(joystick.direction) // Fixed: direction instead of velocity
-        
+
+        // Check obstacle collisions and push player out
+        let playerRadius: CGFloat = 15
+        if let pushOut = worldManager.getObstacleCollision(at: player.position, radius: playerRadius) {
+            player.position = player.position + pushOut
+        }
+
         gameCamera.position = player.position
         worldManager.update(playerPos: player.position)
         

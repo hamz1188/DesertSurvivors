@@ -133,15 +133,114 @@ class DesertEagle: BaseWeapon {
     }
     
     private func createFalcon(at position: CGPoint) -> Falcon {
-        let node = SKSpriteNode(color: .brown, size: CGSize(width: 30, height: 20))
+        let node = SKSpriteNode(color: .clear, size: CGSize(width: 40, height: 30))
         node.position = position
         node.zPosition = Constants.ZPosition.projectile
-        
-        // Add "Eagle" details - yellow beak
-        let beak = SKSpriteNode(color: .yellow, size: CGSize(width: 5, height: 5))
-        beak.position = CGPoint(x: 15, y: 0)
-        node.addChild(beak)
-        
+
+        // Create procedural falcon/eagle
+        let falcon = SKNode()
+
+        // Body - streamlined
+        let bodyPath = CGMutablePath()
+        bodyPath.move(to: CGPoint(x: -15, y: 0))
+        bodyPath.addQuadCurve(to: CGPoint(x: 12, y: 0), control: CGPoint(x: 0, y: 8))
+        bodyPath.addQuadCurve(to: CGPoint(x: -15, y: 0), control: CGPoint(x: 0, y: -6))
+
+        let body = SKShapeNode(path: bodyPath)
+        body.fillColor = SKColor(red: 0.45, green: 0.35, blue: 0.25, alpha: 1.0) // Brown
+        body.strokeColor = SKColor(red: 0.35, green: 0.25, blue: 0.18, alpha: 1.0)
+        body.lineWidth = 1
+        falcon.addChild(body)
+
+        // Wings (animated)
+        let wingPath = CGMutablePath()
+        wingPath.move(to: CGPoint(x: -5, y: 3))
+        wingPath.addQuadCurve(to: CGPoint(x: -18, y: 12), control: CGPoint(x: -12, y: 10))
+        wingPath.addLine(to: CGPoint(x: -8, y: 3))
+        wingPath.closeSubpath()
+
+        let topWing = SKShapeNode(path: wingPath)
+        topWing.fillColor = SKColor(red: 0.5, green: 0.4, blue: 0.3, alpha: 1.0)
+        topWing.strokeColor = SKColor(red: 0.35, green: 0.25, blue: 0.18, alpha: 1.0)
+        topWing.lineWidth = 0.5
+        topWing.name = "wing"
+        falcon.addChild(topWing)
+
+        // Bottom wing (mirror)
+        let bottomWingPath = CGMutablePath()
+        bottomWingPath.move(to: CGPoint(x: -5, y: -3))
+        bottomWingPath.addQuadCurve(to: CGPoint(x: -18, y: -12), control: CGPoint(x: -12, y: -10))
+        bottomWingPath.addLine(to: CGPoint(x: -8, y: -3))
+        bottomWingPath.closeSubpath()
+
+        let bottomWing = SKShapeNode(path: bottomWingPath)
+        bottomWing.fillColor = SKColor(red: 0.5, green: 0.4, blue: 0.3, alpha: 1.0)
+        bottomWing.strokeColor = SKColor(red: 0.35, green: 0.25, blue: 0.18, alpha: 1.0)
+        bottomWing.lineWidth = 0.5
+        bottomWing.name = "wing"
+        falcon.addChild(bottomWing)
+
+        // Head
+        let head = SKShapeNode(circleOfRadius: 6)
+        head.fillColor = SKColor(red: 0.4, green: 0.3, blue: 0.22, alpha: 1.0)
+        head.strokeColor = .clear
+        head.position = CGPoint(x: 10, y: 2)
+        falcon.addChild(head)
+
+        // Beak - hooked
+        let beakPath = CGMutablePath()
+        beakPath.move(to: CGPoint(x: 14, y: 3))
+        beakPath.addLine(to: CGPoint(x: 22, y: 1))
+        beakPath.addQuadCurve(to: CGPoint(x: 18, y: -2), control: CGPoint(x: 21, y: -1))
+        beakPath.addLine(to: CGPoint(x: 14, y: 0))
+        beakPath.closeSubpath()
+
+        let beak = SKShapeNode(path: beakPath)
+        beak.fillColor = SKColor(red: 0.9, green: 0.75, blue: 0.2, alpha: 1.0)
+        beak.strokeColor = SKColor(red: 0.7, green: 0.55, blue: 0.1, alpha: 1.0)
+        beak.lineWidth = 0.5
+        falcon.addChild(beak)
+
+        // Eye
+        let eye = SKShapeNode(circleOfRadius: 2)
+        eye.fillColor = SKColor(red: 0.9, green: 0.7, blue: 0.1, alpha: 1.0) // Golden eye
+        eye.strokeColor = .black
+        eye.lineWidth = 0.5
+        eye.position = CGPoint(x: 12, y: 4)
+        falcon.addChild(eye)
+
+        // Tail feathers
+        for i in 0..<3 {
+            let tailPath = CGMutablePath()
+            let yOffset = CGFloat(i - 1) * 3
+            tailPath.move(to: CGPoint(x: -15, y: yOffset))
+            tailPath.addLine(to: CGPoint(x: -22, y: yOffset + CGFloat(i - 1) * 2))
+            tailPath.addLine(to: CGPoint(x: -20, y: yOffset))
+            tailPath.closeSubpath()
+
+            let tail = SKShapeNode(path: tailPath)
+            tail.fillColor = SKColor(red: 0.4, green: 0.3, blue: 0.22, alpha: 1.0)
+            tail.strokeColor = .clear
+            falcon.addChild(tail)
+        }
+
+        node.addChild(falcon)
+
+        // Wing flapping animation
+        let flapUp = SKAction.run {
+            topWing.yScale = 1.3
+            bottomWing.yScale = 0.7
+        }
+        let flapDown = SKAction.run {
+            topWing.yScale = 0.7
+            bottomWing.yScale = 1.3
+        }
+        let flapSequence = SKAction.repeatForever(SKAction.sequence([
+            flapUp, SKAction.wait(forDuration: 0.1),
+            flapDown, SKAction.wait(forDuration: 0.1)
+        ]))
+        node.run(flapSequence)
+
         return Falcon(node: node, damage: getDamage(), speed: falconSpeed, lifetime: falconLifetime)
     }
     

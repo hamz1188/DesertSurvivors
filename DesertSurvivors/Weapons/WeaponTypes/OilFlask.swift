@@ -92,19 +92,83 @@ class OilFlask: BaseWeapon {
             targetDirection = CGPoint(x: cos(angle), y: sin(angle))
         }
 
-        // Create flask projectile
-        let flaskNode = SKSpriteNode(color: .orange, size: CGSize(width: 15, height: 15))
+        // Create flask projectile - ceramic pot style
+        let flaskNode = SKSpriteNode(color: .clear, size: CGSize(width: 20, height: 24))
         flaskNode.position = playerPosition
         flaskNode.zPosition = Constants.ZPosition.projectile
+
+        let flask = SKNode()
+
+        // Flask body (pottery)
+        let bodyPath = CGMutablePath()
+        bodyPath.move(to: CGPoint(x: -6, y: -10))
+        bodyPath.addQuadCurve(to: CGPoint(x: -8, y: 0), control: CGPoint(x: -10, y: -5))
+        bodyPath.addQuadCurve(to: CGPoint(x: -4, y: 8), control: CGPoint(x: -8, y: 5))
+        bodyPath.addLine(to: CGPoint(x: 4, y: 8))
+        bodyPath.addQuadCurve(to: CGPoint(x: 8, y: 0), control: CGPoint(x: 8, y: 5))
+        bodyPath.addQuadCurve(to: CGPoint(x: 6, y: -10), control: CGPoint(x: 10, y: -5))
+        bodyPath.closeSubpath()
+
+        let body = SKShapeNode(path: bodyPath)
+        body.fillColor = SKColor(red: 0.65, green: 0.45, blue: 0.3, alpha: 1.0) // Terracotta
+        body.strokeColor = SKColor(red: 0.5, green: 0.35, blue: 0.22, alpha: 1.0)
+        body.lineWidth = 1
+        flask.addChild(body)
+
+        // Flask neck
+        let neck = SKShapeNode(rectOf: CGSize(width: 6, height: 5), cornerRadius: 1)
+        neck.fillColor = SKColor(red: 0.6, green: 0.42, blue: 0.28, alpha: 1.0)
+        neck.strokeColor = SKColor(red: 0.5, green: 0.35, blue: 0.22, alpha: 1.0)
+        neck.lineWidth = 0.5
+        neck.position = CGPoint(x: 0, y: 10)
+        flask.addChild(neck)
+
+        // Cork/stopper with wick
+        let cork = SKShapeNode(circleOfRadius: 4)
+        cork.fillColor = SKColor(red: 0.55, green: 0.4, blue: 0.25, alpha: 1.0)
+        cork.strokeColor = .clear
+        cork.position = CGPoint(x: 0, y: 13)
+        flask.addChild(cork)
+
+        // Burning wick
+        let wick = SKShapeNode(rectOf: CGSize(width: 2, height: 6))
+        wick.fillColor = SKColor(red: 0.3, green: 0.25, blue: 0.2, alpha: 1.0)
+        wick.strokeColor = .clear
+        wick.position = CGPoint(x: 0, y: 17)
+        flask.addChild(wick)
+
+        // Flame on wick
+        let flame = SKShapeNode(circleOfRadius: 4)
+        flame.fillColor = SKColor(red: 1.0, green: 0.6, blue: 0.1, alpha: 0.9)
+        flame.strokeColor = SKColor(red: 1.0, green: 0.8, blue: 0.3, alpha: 1.0)
+        flame.lineWidth = 1
+        flame.position = CGPoint(x: 0, y: 21)
+
+        // Flame flicker
+        let flickerAction = SKAction.repeatForever(SKAction.sequence([
+            SKAction.scale(to: 1.2, duration: 0.1),
+            SKAction.scale(to: 0.8, duration: 0.1)
+        ]))
+        flame.run(flickerAction)
+        flask.addChild(flame)
+
+        // Oil sloshing highlight
+        let oilHighlight = SKShapeNode(ellipseOf: CGSize(width: 8, height: 4))
+        oilHighlight.fillColor = SKColor(red: 0.3, green: 0.25, blue: 0.15, alpha: 0.5)
+        oilHighlight.strokeColor = .clear
+        oilHighlight.position = CGPoint(x: -2, y: -2)
+        flask.addChild(oilHighlight)
+
+        flaskNode.addChild(flask)
         scene.addChild(flaskNode)
 
-        let flask = Flask(
+        let flaskData = Flask(
             projectile: flaskNode,
             direction: targetDirection,
             speed: flaskSpeed,
             damage: getDamage()
         )
-        activeFlasks.append(flask)
+        activeFlasks.append(flaskData)
     }
 
     override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
@@ -161,23 +225,75 @@ class OilFlask: BaseWeapon {
         poolNode.position = position
         poolNode.zPosition = Constants.ZPosition.weapon
 
-        // Visual effect - burning circle
-        let fire = SKShapeNode(circleOfRadius: poolRadius)
-        fire.fillColor = SKColor.orange.withAlphaComponent(0.7)
-        fire.strokeColor = .red
-        fire.lineWidth = 3
-        fire.alpha = 0.0
-        poolNode.addChild(fire)
+        // Base oil slick
+        let oilSlick = SKShapeNode(ellipseOf: CGSize(width: poolRadius * 2.2, height: poolRadius * 1.8))
+        oilSlick.fillColor = SKColor(red: 0.15, green: 0.1, blue: 0.05, alpha: 0.7)
+        oilSlick.strokeColor = .clear
+        oilSlick.zPosition = 0
+        poolNode.addChild(oilSlick)
+
+        // Fire ring (outer)
+        let fireRing = SKShapeNode(circleOfRadius: poolRadius)
+        fireRing.fillColor = SKColor(red: 1.0, green: 0.4, blue: 0.1, alpha: 0.6)
+        fireRing.strokeColor = SKColor(red: 1.0, green: 0.6, blue: 0.2, alpha: 0.8)
+        fireRing.lineWidth = 4
+        fireRing.zPosition = 1
+        poolNode.addChild(fireRing)
+
+        // Inner fire (brighter)
+        let innerFire = SKShapeNode(circleOfRadius: poolRadius * 0.6)
+        innerFire.fillColor = SKColor(red: 1.0, green: 0.7, blue: 0.2, alpha: 0.7)
+        innerFire.strokeColor = .clear
+        innerFire.zPosition = 2
+        poolNode.addChild(innerFire)
+
+        // Fire particles
+        let flames = SKEmitterNode()
+        flames.particleBirthRate = 40
+        flames.particleLifetime = 0.8
+        flames.particlePositionRange = CGVector(dx: poolRadius * 1.5, dy: poolRadius * 1.5)
+        flames.particleSpeed = 40
+        flames.particleSpeedRange = 20
+        flames.emissionAngle = .pi / 2
+        flames.emissionAngleRange = 0.5
+        flames.particleAlpha = 0.8
+        flames.particleAlphaSpeed = -1.0
+        flames.particleScale = 0.2
+        flames.particleScaleSpeed = -0.15
+        flames.particleColor = SKColor(red: 1.0, green: 0.5, blue: 0.1, alpha: 1.0)
+        flames.particleColorBlendFactor = 1.0
+        flames.zPosition = 3
+        poolNode.addChild(flames)
+
+        // Smoke particles
+        let smoke = SKEmitterNode()
+        smoke.particleBirthRate = 15
+        smoke.particleLifetime = 1.5
+        smoke.particlePositionRange = CGVector(dx: poolRadius, dy: poolRadius)
+        smoke.particleSpeed = 25
+        smoke.particleSpeedRange = 10
+        smoke.emissionAngle = .pi / 2
+        smoke.emissionAngleRange = 0.3
+        smoke.particleAlpha = 0.3
+        smoke.particleAlphaSpeed = -0.2
+        smoke.particleScale = 0.15
+        smoke.particleScaleSpeed = 0.1
+        smoke.particleColor = SKColor(red: 0.3, green: 0.25, blue: 0.2, alpha: 1.0)
+        smoke.particleColorBlendFactor = 1.0
+        smoke.zPosition = 4
+        poolNode.addChild(smoke)
 
         // Pulse animation
         let pulse = SKAction.repeatForever(SKAction.sequence([
-            SKAction.scale(to: 1.1, duration: 0.5),
-            SKAction.scale(to: 1.0, duration: 0.5)
+            SKAction.scale(to: 1.08, duration: 0.3),
+            SKAction.scale(to: 0.95, duration: 0.3)
         ]))
-        fire.run(pulse)
+        fireRing.run(pulse)
+        innerFire.run(pulse)
 
         // Fade in
-        fire.run(SKAction.fadeAlpha(to: 0.7, duration: 0.2))
+        poolNode.alpha = 0
+        poolNode.run(SKAction.fadeAlpha(to: 1.0, duration: 0.2))
 
         scene.addChild(poolNode)
 

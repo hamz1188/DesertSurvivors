@@ -33,27 +33,69 @@ class SandstormShield: BaseWeapon {
 
     private func createShield() {
         guard let scene = scene else { return }
-        
+
         let node = SKNode()
         node.zPosition = Constants.ZPosition.weapon
         shieldNode = node
-        
-        // Create initial segments
+
+        // Create initial segments - sand barrier style
         let segmentCount = 6 + (level - 1)
         for i in 0..<segmentCount {
-            let segment = SKShapeNode(rectOf: CGSize(width: 40, height: 15), cornerRadius: 5)
-            segment.fillColor = SKColor.yellow.withAlphaComponent(0.6)
-            segment.strokeColor = .orange
-            segment.lineWidth = 2
-            segment.zPosition = Constants.ZPosition.weapon
-            
+            let segment = createShieldSegment()
             shieldSegments.append(segment)
             node.addChild(segment)
         }
-        
-        // Add to player/scene (usually added as child of player in WeaponManager)
-        // If it's a child of the weapon, it will rotate with the player if the weapon does.
+
         addChild(node)
+    }
+
+    private func createShieldSegment() -> SKShapeNode {
+        // Create an arc-shaped sand barrier segment
+        let container = SKShapeNode()
+        container.zPosition = Constants.ZPosition.weapon
+
+        // Main barrier - curved sand wall
+        let barrierPath = CGMutablePath()
+        barrierPath.move(to: CGPoint(x: -20, y: -6))
+        barrierPath.addQuadCurve(to: CGPoint(x: 20, y: -6), control: CGPoint(x: 0, y: 6))
+        barrierPath.addLine(to: CGPoint(x: 18, y: -10))
+        barrierPath.addQuadCurve(to: CGPoint(x: -18, y: -10), control: CGPoint(x: 0, y: 2))
+        barrierPath.closeSubpath()
+
+        let barrier = SKShapeNode(path: barrierPath)
+        barrier.fillColor = SKColor(red: 0.85, green: 0.75, blue: 0.5, alpha: 0.8)
+        barrier.strokeColor = SKColor(red: 0.7, green: 0.6, blue: 0.35, alpha: 1.0)
+        barrier.lineWidth = 1.5
+        container.addChild(barrier)
+
+        // Inner sand texture lines
+        for offset in [-8, 0, 8] {
+            let line = SKShapeNode(rectOf: CGSize(width: 2, height: 8))
+            line.fillColor = SKColor(red: 0.75, green: 0.65, blue: 0.4, alpha: 0.5)
+            line.strokeColor = .clear
+            line.position = CGPoint(x: CGFloat(offset), y: -4)
+            container.addChild(line)
+        }
+
+        // Swirling sand particles on top
+        let particles = SKEmitterNode()
+        particles.particleBirthRate = 15
+        particles.particleLifetime = 0.5
+        particles.particlePositionRange = CGVector(dx: 30, dy: 5)
+        particles.particleSpeed = 20
+        particles.particleSpeedRange = 10
+        particles.emissionAngle = .pi / 2
+        particles.emissionAngleRange = 1.0
+        particles.particleAlpha = 0.4
+        particles.particleAlphaSpeed = -0.8
+        particles.particleScale = 0.08
+        particles.particleScaleSpeed = -0.1
+        particles.particleColor = SKColor(red: 0.9, green: 0.8, blue: 0.6, alpha: 1.0)
+        particles.particleColorBlendFactor = 1.0
+        particles.position = CGPoint(x: 0, y: 0)
+        container.addChild(particles)
+
+        return container
     }
     
     override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
@@ -148,23 +190,9 @@ class SandstormShield: BaseWeapon {
         // Add more shield segments at higher levels
         let targetSegmentCount = 6 + (level - 1)
         while shieldSegments.count < targetSegmentCount && shieldSegments.count < 13 {
-            let segment = SKShapeNode(rectOf: CGSize(width: 40, height: 15), cornerRadius: 5)
-            segment.fillColor = SKColor.yellow.withAlphaComponent(0.6)
-            segment.strokeColor = level >= 5 ? .red : .orange
-            segment.lineWidth = 2
-            segment.zPosition = Constants.ZPosition.weapon
-
+            let segment = createShieldSegment()
             shieldSegments.append(segment)
             shieldNode?.addChild(segment)
-        }
-
-        // Visual enhancement at higher levels
-        if level >= 8 {
-            for segment in shieldSegments {
-                segment.fillColor = SKColor.orange.withAlphaComponent(0.8)
-                segment.strokeColor = .red
-                segment.lineWidth = 3
-            }
         }
     }
 }

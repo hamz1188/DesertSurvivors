@@ -43,59 +43,122 @@ class CurvedDagger: BaseWeapon {
     }
     
     private func createDaggerShape() -> SKSpriteNode {
-        // We'll use multiple nodes to construct a dagger for "texture" feel
-        // but package them in a single node for easy rotation.
-        let container = SKSpriteNode(color: .clear, size: CGSize(width: 25, height: 10))
-        
-        // Blade (Curved)
+        // Arabian-style curved dagger (Jambiya/Khanjar inspired)
+        let container = SKSpriteNode(color: .clear, size: CGSize(width: 30, height: 14))
+
+        // Main curved blade - scimitar style
         let bladePath = CGMutablePath()
-        bladePath.move(to: CGPoint(x: -8, y: 0))
-        bladePath.addQuadCurve(to: CGPoint(x: 12, y: 0), control: CGPoint(x: 2, y: 5))
-        bladePath.addQuadCurve(to: CGPoint(x: -8, y: -2), control: CGPoint(x: 2, y: 2))
+        // Start at the base of the blade
+        bladePath.move(to: CGPoint(x: -6, y: 2))
+        // Top edge - sweeping curve
+        bladePath.addQuadCurve(to: CGPoint(x: 16, y: 3), control: CGPoint(x: 6, y: 8))
+        // Tip - sharp point
+        bladePath.addLine(to: CGPoint(x: 18, y: 0))
+        // Bottom edge - less curved
+        bladePath.addQuadCurve(to: CGPoint(x: -6, y: -2), control: CGPoint(x: 6, y: 0))
         bladePath.closeSubpath()
-        
+
         let blade = SKShapeNode(path: bladePath)
-        blade.fillColor = .lightGray
-        blade.strokeColor = .white
+        blade.fillColor = SKColor(red: 0.75, green: 0.78, blue: 0.82, alpha: 1.0) // Steel color
+        blade.strokeColor = SKColor(red: 0.9, green: 0.92, blue: 0.95, alpha: 1.0) // Bright edge
         blade.lineWidth = 1
         container.addChild(blade)
-        
-        // Hilt / Crossguard
-        let hilt = SKShapeNode(rectOf: CGSize(width: 3, height: 12), cornerRadius: 1)
-        hilt.fillColor = SKColor(red: 0.6, green: 0.4, blue: 0.2, alpha: 1.0)
-        hilt.strokeColor = .black
-        hilt.lineWidth = 0.5
-        hilt.position = CGPoint(x: -8, y: 0)
-        container.addChild(hilt)
-        
-        // Grip
-        let grip = SKShapeNode(rectOf: CGSize(width: 6, height: 3), cornerRadius: 1)
-        grip.fillColor = .brown
-        grip.position = CGPoint(x: -12, y: 0)
-        container.addChild(grip)
-        
+
+        // Blade edge highlight (sharp edge gleam)
+        let edgePath = CGMutablePath()
+        edgePath.move(to: CGPoint(x: -4, y: 2))
+        edgePath.addQuadCurve(to: CGPoint(x: 17, y: 2), control: CGPoint(x: 6, y: 7))
+        let edge = SKShapeNode(path: edgePath)
+        edge.strokeColor = SKColor.white.withAlphaComponent(0.7)
+        edge.lineWidth = 1
+        container.addChild(edge)
+
+        // Fuller (blood groove) - decorative line on blade
+        let fullerPath = CGMutablePath()
+        fullerPath.move(to: CGPoint(x: -2, y: 0))
+        fullerPath.addQuadCurve(to: CGPoint(x: 12, y: 1), control: CGPoint(x: 5, y: 3))
+        let fuller = SKShapeNode(path: fullerPath)
+        fuller.strokeColor = SKColor(red: 0.6, green: 0.62, blue: 0.65, alpha: 0.6)
+        fuller.lineWidth = 1.5
+        container.addChild(fuller)
+
+        // Crossguard - ornate curved
+        let guardPath = CGMutablePath()
+        guardPath.move(to: CGPoint(x: -6, y: -6))
+        guardPath.addQuadCurve(to: CGPoint(x: -6, y: 6), control: CGPoint(x: -10, y: 0))
+        guardPath.addLine(to: CGPoint(x: -5, y: 5))
+        guardPath.addQuadCurve(to: CGPoint(x: -5, y: -5), control: CGPoint(x: -8, y: 0))
+        guardPath.closeSubpath()
+
+        let guard_ = SKShapeNode(path: guardPath)
+        guard_.fillColor = SKColor(red: 0.85, green: 0.7, blue: 0.25, alpha: 1.0) // Gold/brass
+        guard_.strokeColor = SKColor(red: 0.7, green: 0.55, blue: 0.15, alpha: 1.0)
+        guard_.lineWidth = 0.5
+        container.addChild(guard_)
+
+        // Handle - wrapped grip
+        let handlePath = CGMutablePath()
+        handlePath.move(to: CGPoint(x: -7, y: 3))
+        handlePath.addLine(to: CGPoint(x: -14, y: 2))
+        handlePath.addLine(to: CGPoint(x: -14, y: -2))
+        handlePath.addLine(to: CGPoint(x: -7, y: -3))
+        handlePath.closeSubpath()
+
+        let handle = SKShapeNode(path: handlePath)
+        handle.fillColor = SKColor(red: 0.35, green: 0.2, blue: 0.1, alpha: 1.0) // Dark wood
+        handle.strokeColor = SKColor(red: 0.25, green: 0.15, blue: 0.05, alpha: 1.0)
+        handle.lineWidth = 0.5
+        container.addChild(handle)
+
+        // Handle wrapping lines
+        for i in 0..<3 {
+            let wrapX = CGFloat(-9 - i * 2)
+            let wrap = SKShapeNode(rectOf: CGSize(width: 1, height: 5))
+            wrap.fillColor = SKColor(red: 0.55, green: 0.35, blue: 0.15, alpha: 1.0)
+            wrap.strokeColor = .clear
+            wrap.position = CGPoint(x: wrapX, y: 0)
+            container.addChild(wrap)
+        }
+
+        // Pommel - decorative end
+        let pommel = SKShapeNode(circleOfRadius: 3)
+        pommel.fillColor = SKColor(red: 0.85, green: 0.7, blue: 0.25, alpha: 1.0)
+        pommel.strokeColor = SKColor(red: 0.7, green: 0.55, blue: 0.15, alpha: 1.0)
+        pommel.lineWidth = 0.5
+        pommel.position = CGPoint(x: -15, y: 0)
+        container.addChild(pommel)
+
+        // Gem in pommel
+        let gem = SKShapeNode(circleOfRadius: 1.5)
+        gem.fillColor = SKColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 1.0) // Ruby
+        gem.strokeColor = .white
+        gem.lineWidth = 0.3
+        gem.position = CGPoint(x: -15, y: 0)
+        container.addChild(gem)
+
         return container
     }
     
     private func addDaggerTrail(to dagger: SKNode) {
-        // Simple trail using a particle system template
+        // Metallic slash trail effect
         let trail = SKEmitterNode()
-        trail.particleTexture = nil // Use squares if no texture
-        trail.particleBirthRate = 50
-        trail.particleLifetime = 0.3
-        trail.particlePositionRange = CGVector(dx: 2, dy: 2)
-        trail.particleSpeed = 20
-        trail.particleSpeedRange = 10
-        trail.emissionAngle = .pi // Emit backwards
-         trail.emissionAngleRange = 0.5
-        trail.particleAlpha = 0.6
-        trail.particleAlphaSpeed = -2.0
-        trail.particleScale = 0.1
-        trail.particleScaleSpeed = -0.3
-        trail.particleColor = .lightGray
+        trail.particleTexture = nil
+        trail.particleBirthRate = 60
+        trail.particleLifetime = 0.25
+        trail.particlePositionRange = CGVector(dx: 3, dy: 3)
+        trail.particleSpeed = 15
+        trail.particleSpeedRange = 8
+        trail.emissionAngle = .pi
+        trail.emissionAngleRange = 0.4
+        trail.particleAlpha = 0.7
+        trail.particleAlphaSpeed = -2.8
+        trail.particleScale = 0.12
+        trail.particleScaleSpeed = -0.4
+        trail.particleColor = SKColor(red: 0.85, green: 0.88, blue: 0.92, alpha: 1.0) // Steel color
         trail.particleColorBlendFactor = 1.0
-        trail.targetNode = self.scene // Particles stay in world space
-        
+        trail.targetNode = self.scene
+        trail.position = CGPoint(x: 10, y: 0) // Trail from blade tip
+
         dagger.addChild(trail)
     }
     

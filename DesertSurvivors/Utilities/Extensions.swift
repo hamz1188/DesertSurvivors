@@ -56,3 +56,53 @@ extension CGFloat {
     }
 }
 
+// MARK: - SKColor Extensions
+
+extension SKColor {
+    /// Returns a darker version of the color
+    func darker(by percentage: CGFloat = 0.2) -> SKColor {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        #if os(iOS)
+        self.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        #else
+        if let rgbColor = self.usingColorSpace(.sRGB) {
+            rgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        }
+        #endif
+
+        return SKColor(
+            red: max(red - percentage, 0),
+            green: max(green - percentage, 0),
+            blue: max(blue - percentage, 0),
+            alpha: alpha
+        )
+    }
+
+    /// Returns a lighter version of the color
+    func lighter(by percentage: CGFloat = 0.2) -> SKColor {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        #if os(iOS)
+        self.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        #else
+        if let rgbColor = self.usingColorSpace(.sRGB) {
+            rgbColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        }
+        #endif
+
+        return SKColor(
+            red: min(red + percentage, 1),
+            green: min(green + percentage, 1),
+            blue: min(blue + percentage, 1),
+            alpha: alpha
+        )
+    }
+}
+

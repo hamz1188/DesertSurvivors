@@ -52,33 +52,82 @@ class DustDevil: BaseWeapon {
         let container = SKNode()
         container.position = position
         container.zPosition = Constants.ZPosition.weapon
-        
-        // Vortex rings
-        let ringCount = 3
+
+        // Ground shadow/disturbance
+        let groundShadow = SKShapeNode(ellipseOf: CGSize(width: devilRadius * 1.8, height: devilRadius * 0.6))
+        groundShadow.fillColor = SKColor(red: 0.6, green: 0.5, blue: 0.35, alpha: 0.4)
+        groundShadow.strokeColor = .clear
+        groundShadow.zPosition = -1
+        container.addChild(groundShadow)
+
+        // Vortex cone - multiple layers creating depth
+        let ringCount = 5
         for i in 0..<ringCount {
-            let radius = devilRadius * CGFloat(i + 1) / CGFloat(ringCount)
+            let progress = CGFloat(i) / CGFloat(ringCount - 1)
+            let radius = devilRadius * (0.3 + progress * 0.7)
+            let yOffset = progress * devilRadius * 0.8
+
+            // Main ring
             let ring = SKShapeNode(circleOfRadius: radius)
             ring.fillColor = .clear
-            ring.strokeColor = SKColor(white: 0.82, alpha: 0.4)
-            ring.lineWidth = 2
-            
-            // Add some "dust" clouds around the ring
-            for _ in 0..<4 {
-                let angle = CGFloat.random(in: 0..<2 * .pi)
-                let dust = SKShapeNode(circleOfRadius: CGFloat.random(in: 5...12))
-                dust.fillColor = SKColor(red: 0.76, green: 0.69, blue: 0.5, alpha: 0.3)
+            ring.strokeColor = SKColor(red: 0.85, green: 0.75, blue: 0.55, alpha: 0.5 - progress * 0.3)
+            ring.lineWidth = 3 - progress * 2
+            ring.position = CGPoint(x: 0, y: yOffset)
+            ring.zPosition = CGFloat(i)
+
+            // Add swirling dust particles around each ring
+            let dustCount = 6 - i
+            for j in 0..<dustCount {
+                let angle = CGFloat(j) / CGFloat(dustCount) * .pi * 2
+                let dustSize = CGFloat.random(in: 4...10) * (1 - progress * 0.5)
+
+                let dust = SKShapeNode(ellipseOf: CGSize(width: dustSize * 1.5, height: dustSize))
+                dust.fillColor = SKColor(red: 0.82, green: 0.72, blue: 0.52, alpha: 0.5)
                 dust.strokeColor = .clear
-                dust.position = CGPoint(x: cos(angle) * radius, y: sin(angle) * radius)
+                dust.position = CGPoint(x: cos(angle) * radius, y: sin(angle) * radius * 0.3)
                 ring.addChild(dust)
             }
-            
+
             container.addChild(ring)
-            
-            // Rotation speed varies by ring
-            let duration = 1.0 / Double(i + 1)
-            ring.run(SKAction.repeatForever(SKAction.rotate(byAngle: .pi * 2, duration: duration)))
+
+            // Rotation - inner rings spin faster
+            let duration = 0.8 + Double(i) * 0.3
+            let direction: CGFloat = i % 2 == 0 ? 1 : -1 // Alternate directions
+            ring.run(SKAction.repeatForever(SKAction.rotate(byAngle: .pi * 2 * direction, duration: duration)))
         }
-        
+
+        // Central funnel core
+        let corePath = CGMutablePath()
+        corePath.move(to: CGPoint(x: -8, y: 0))
+        corePath.addQuadCurve(to: CGPoint(x: 0, y: devilRadius * 0.7), control: CGPoint(x: -15, y: devilRadius * 0.4))
+        corePath.addQuadCurve(to: CGPoint(x: 8, y: 0), control: CGPoint(x: 15, y: devilRadius * 0.4))
+        corePath.closeSubpath()
+
+        let core = SKShapeNode(path: corePath)
+        core.fillColor = SKColor(red: 0.75, green: 0.65, blue: 0.45, alpha: 0.3)
+        core.strokeColor = .clear
+        core.zPosition = 10
+        container.addChild(core)
+
+        // Particle emitter for flying debris
+        let debris = SKEmitterNode()
+        debris.particleBirthRate = 30
+        debris.particleLifetime = 1.5
+        debris.particlePositionRange = CGVector(dx: devilRadius * 0.5, dy: 10)
+        debris.particleSpeed = 80
+        debris.particleSpeedRange = 40
+        debris.emissionAngle = .pi / 2
+        debris.emissionAngleRange = 0.5
+        debris.particleAlpha = 0.6
+        debris.particleAlphaSpeed = -0.4
+        debris.particleScale = 0.15
+        debris.particleScaleSpeed = -0.05
+        debris.particleColor = SKColor(red: 0.8, green: 0.7, blue: 0.5, alpha: 1.0)
+        debris.particleColorBlendFactor = 1.0
+        debris.position = CGPoint(x: 0, y: 0)
+        debris.zPosition = 5
+        container.addChild(debris)
+
         return container
     }
     

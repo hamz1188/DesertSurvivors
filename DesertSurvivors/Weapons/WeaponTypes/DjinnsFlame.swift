@@ -135,21 +135,89 @@ class DjinnsFlame: BaseWeapon {
         let container = SKNode()
         container.position = position
         container.zPosition = Constants.ZPosition.weapon
-        
-        // Visual representation - flickering flame
-        let flame = SKShapeNode(circleOfRadius: 15)
-        flame.fillColor = .orange
-        flame.strokeColor = .yellow
-        flame.lineWidth = 2
-        container.addChild(flame)
-        
-        // Simple flicker animation
-        let flicker = SKAction.repeatForever(SKAction.sequence([
-            SKAction.scale(to: 1.2, duration: 0.1),
-            SKAction.scale(to: 1.0, duration: 0.1)
+
+        // Mystical djinn flame - magical fire spirit
+        let flameContainer = SKNode()
+
+        // Outer magical aura
+        let aura = SKShapeNode(circleOfRadius: 18)
+        aura.fillColor = SKColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.2) // Blue magic glow
+        aura.strokeColor = SKColor(red: 0.3, green: 0.5, blue: 0.9, alpha: 0.4)
+        aura.lineWidth = 2
+        aura.zPosition = 0
+        flameContainer.addChild(aura)
+
+        // Main flame body - teardrop shape
+        let flamePath = CGMutablePath()
+        flamePath.move(to: CGPoint(x: 0, y: 18))
+        flamePath.addQuadCurve(to: CGPoint(x: 10, y: -5), control: CGPoint(x: 14, y: 8))
+        flamePath.addQuadCurve(to: CGPoint(x: 0, y: -12), control: CGPoint(x: 6, y: -10))
+        flamePath.addQuadCurve(to: CGPoint(x: -10, y: -5), control: CGPoint(x: -6, y: -10))
+        flamePath.addQuadCurve(to: CGPoint(x: 0, y: 18), control: CGPoint(x: -14, y: 8))
+
+        let flameBody = SKShapeNode(path: flamePath)
+        flameBody.fillColor = SKColor(red: 1.0, green: 0.5, blue: 0.1, alpha: 0.9)
+        flameBody.strokeColor = SKColor(red: 1.0, green: 0.7, blue: 0.3, alpha: 1.0)
+        flameBody.lineWidth = 1.5
+        flameBody.zPosition = 1
+        flameContainer.addChild(flameBody)
+
+        // Inner bright core
+        let innerPath = CGMutablePath()
+        innerPath.move(to: CGPoint(x: 0, y: 12))
+        innerPath.addQuadCurve(to: CGPoint(x: 5, y: -2), control: CGPoint(x: 7, y: 5))
+        innerPath.addQuadCurve(to: CGPoint(x: 0, y: -6), control: CGPoint(x: 3, y: -5))
+        innerPath.addQuadCurve(to: CGPoint(x: -5, y: -2), control: CGPoint(x: -3, y: -5))
+        innerPath.addQuadCurve(to: CGPoint(x: 0, y: 12), control: CGPoint(x: -7, y: 5))
+
+        let innerFlame = SKShapeNode(path: innerPath)
+        innerFlame.fillColor = SKColor(red: 1.0, green: 0.85, blue: 0.4, alpha: 0.9)
+        innerFlame.strokeColor = .clear
+        innerFlame.zPosition = 2
+        flameContainer.addChild(innerFlame)
+
+        // White hot center
+        let core = SKShapeNode(circleOfRadius: 4)
+        core.fillColor = .white
+        core.strokeColor = .clear
+        core.alpha = 0.9
+        core.position = CGPoint(x: 0, y: -2)
+        core.zPosition = 3
+        flameContainer.addChild(core)
+
+        // Magical sparkles
+        let sparkles = SKEmitterNode()
+        sparkles.particleBirthRate = 20
+        sparkles.particleLifetime = 0.6
+        sparkles.particlePositionRange = CGVector(dx: 15, dy: 20)
+        sparkles.particleSpeed = 15
+        sparkles.particleSpeedRange = 10
+        sparkles.emissionAngle = .pi / 2
+        sparkles.emissionAngleRange = 1.5
+        sparkles.particleAlpha = 0.8
+        sparkles.particleAlphaSpeed = -1.3
+        sparkles.particleScale = 0.06
+        sparkles.particleScaleSpeed = -0.08
+        sparkles.particleColor = SKColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 1.0) // Blue magical
+        sparkles.particleColorBlendFactor = 1.0
+        sparkles.zPosition = 4
+        flameContainer.addChild(sparkles)
+
+        container.addChild(flameContainer)
+
+        // Flicker animation
+        let flickerScale = SKAction.repeatForever(SKAction.sequence([
+            SKAction.scale(to: 1.15, duration: 0.08),
+            SKAction.scale(to: 0.9, duration: 0.08),
+            SKAction.scale(to: 1.05, duration: 0.06)
         ]))
-        flame.run(flicker)
-        
+        flameBody.run(flickerScale)
+        innerFlame.run(flickerScale)
+
+        // Gentle rotation for magical feel
+        let rotate = SKAction.repeatForever(SKAction.rotate(byAngle: .pi * 2, duration: 3.0))
+        aura.run(rotate)
+
         return Flame(
             node: container,
             damage: getDamage(),

@@ -66,39 +66,96 @@ class ScorpionTail: BaseWeapon {
     private func createWhip(angle: CGFloat) -> SKNode {
         let container = SKNode()
         container.zPosition = Constants.ZPosition.weapon
-        
-        let segmentCount = 10
+
+        let segmentCount = 12
         for i in 0..<segmentCount {
             let progress = CGFloat(i) / CGFloat(segmentCount - 1)
-            let radius = whipWidth * 0.5 * (1.1 - progress) // Tapers toward the end
-            
-            // Calculate segment position along an arc
+
+            // Calculate segment position along a curved arc
             let segmentDistance = progress * whipLength
-            // Add a slight curve/bend to the tail
-            let bendAngle = angle + sin(progress * .pi) * 0.3
-            
-            let segment = SKShapeNode(circleOfRadius: radius)
-            segment.fillColor = .purple
-            segment.strokeColor = .black
-            segment.lineWidth = 1
-            segment.position = CGPoint(
+            let bendAngle = angle + sin(progress * .pi) * 0.4 // More pronounced curve
+
+            let segmentPos = CGPoint(
                 x: cos(bendAngle) * segmentDistance,
                 y: sin(bendAngle) * segmentDistance
             )
-            
-            // Add stinger at the end
-            if i == segmentCount - 1 {
-                let stinger = SKShapeNode(rectOf: CGSize(width: 8, height: 16), cornerRadius: 2)
-                stinger.fillColor = .red
-                stinger.strokeColor = .black
-                stinger.position = .zero
-                stinger.zRotation = bendAngle + .pi/2
-                segment.addChild(stinger)
+
+            if i < segmentCount - 1 {
+                // Tail segments - armored scorpion segments
+                let segmentWidth = whipWidth * (1.0 - progress * 0.6)
+                let segmentHeight = segmentWidth * 0.6
+
+                // Armored segment shape
+                let segmentPath = CGMutablePath()
+                segmentPath.move(to: CGPoint(x: -segmentWidth/2, y: -segmentHeight/2))
+                segmentPath.addLine(to: CGPoint(x: -segmentWidth/2 * 0.7, y: segmentHeight/2))
+                segmentPath.addLine(to: CGPoint(x: segmentWidth/2 * 0.7, y: segmentHeight/2))
+                segmentPath.addLine(to: CGPoint(x: segmentWidth/2, y: -segmentHeight/2))
+                segmentPath.closeSubpath()
+
+                let segment = SKShapeNode(path: segmentPath)
+                segment.fillColor = SKColor(red: 0.25, green: 0.2, blue: 0.15, alpha: 1.0) // Dark chitin
+                segment.strokeColor = SKColor(red: 0.35, green: 0.28, blue: 0.2, alpha: 1.0)
+                segment.lineWidth = 1
+                segment.position = segmentPos
+                segment.zRotation = bendAngle + .pi/2
+                segment.zPosition = CGFloat(i)
+
+                // Highlight ridge on each segment
+                let ridge = SKShapeNode(rectOf: CGSize(width: segmentWidth * 0.3, height: 2))
+                ridge.fillColor = SKColor(red: 0.4, green: 0.32, blue: 0.25, alpha: 0.6)
+                ridge.strokeColor = .clear
+                ridge.position = CGPoint(x: 0, y: segmentHeight * 0.2)
+                segment.addChild(ridge)
+
+                container.addChild(segment)
+            } else {
+                // Stinger - the venomous tip
+                let stingerContainer = SKNode()
+                stingerContainer.position = segmentPos
+                stingerContainer.zRotation = bendAngle
+                stingerContainer.zPosition = CGFloat(segmentCount)
+
+                // Stinger base (bulb)
+                let bulb = SKShapeNode(ellipseOf: CGSize(width: 14, height: 10))
+                bulb.fillColor = SKColor(red: 0.25, green: 0.2, blue: 0.15, alpha: 1.0)
+                bulb.strokeColor = SKColor(red: 0.35, green: 0.28, blue: 0.2, alpha: 1.0)
+                bulb.lineWidth = 1
+                stingerContainer.addChild(bulb)
+
+                // Stinger needle
+                let needlePath = CGMutablePath()
+                needlePath.move(to: CGPoint(x: 5, y: 0))
+                needlePath.addLine(to: CGPoint(x: 22, y: 0))
+                needlePath.addLine(to: CGPoint(x: 5, y: -3))
+                needlePath.closeSubpath()
+
+                let needle = SKShapeNode(path: needlePath)
+                needle.fillColor = SKColor(red: 0.15, green: 0.1, blue: 0.08, alpha: 1.0)
+                needle.strokeColor = SKColor(red: 0.3, green: 0.25, blue: 0.2, alpha: 1.0)
+                needle.lineWidth = 0.5
+                stingerContainer.addChild(needle)
+
+                // Venom drip effect
+                let venomDrip = SKShapeNode(circleOfRadius: 3)
+                venomDrip.fillColor = SKColor(red: 0.4, green: 0.8, blue: 0.2, alpha: 0.8) // Toxic green
+                venomDrip.strokeColor = .clear
+                venomDrip.position = CGPoint(x: 20, y: -2)
+
+                // Drip animation
+                let dripAction = SKAction.repeatForever(SKAction.sequence([
+                    SKAction.moveBy(x: 0, y: -5, duration: 0.3),
+                    SKAction.fadeOut(withDuration: 0.2),
+                    SKAction.move(to: CGPoint(x: 20, y: -2), duration: 0),
+                    SKAction.fadeIn(withDuration: 0.1)
+                ]))
+                venomDrip.run(dripAction)
+                stingerContainer.addChild(venomDrip)
+
+                container.addChild(stingerContainer)
             }
-            
-            container.addChild(segment)
         }
-        
+
         container.alpha = 0.0
         return container
     }
