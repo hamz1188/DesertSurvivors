@@ -45,6 +45,8 @@ class Player: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
     
+    private var dustTrail: SKEmitterNode?
+    
     private func setupSprite() {
         // Load pixel art sprite
         let textureName = "player_\(character.rawValue)"
@@ -61,6 +63,30 @@ class Player: SKNode {
         
         spriteNode.zPosition = Constants.ZPosition.player
         addChild(spriteNode)
+        
+        // Setup dust trail
+        setupDustTrail()
+    }
+    
+    private func setupDustTrail() {
+        let trail = SKEmitterNode()
+        trail.particleBirthRate = 0 // Start off
+        trail.particleLifetime = 0.4
+        trail.particlePositionRange = CGVector(dx: 10, dy: 5)
+        trail.particleSpeed = 20
+        trail.particleSpeedRange = 10
+        trail.emissionAngle = .pi * 1.5 // Downwards
+        trail.emissionAngleRange = 0.4
+        trail.particleAlpha = 0.4
+        trail.particleAlphaSpeed = -1.0
+        trail.particleScale = 0.05
+        trail.particleScaleSpeed = 0.2
+        trail.particleColor = SKColor(red: 0.96, green: 0.87, blue: 0.70, alpha: 1.0) // Sand color
+        trail.particleColorBlendFactor = 1.0
+        trail.zPosition = -1 // Behind player
+        
+        addChild(trail)
+        self.dustTrail = trail
     }
     
     private func setupPhysics() {
@@ -72,13 +98,30 @@ class Player: SKNode {
         physicsBody?.affectedByGravity = false
     }
     
+    // Animation actions
+    private let idleActionKey = "player_idle"
+    private let walkActionKey = "player_walk"
+    
+    // Track previous movement state to detect transitions
+    private var wasMoving: Bool = false
+    
     func update(deltaTime: TimeInterval) {
         // Update movement
         if isMoving && movementDirection.length() > 0 {
             let speed = CGFloat(stats.moveSpeed) * CGFloat(deltaTime)
             let movement = movementDirection.normalized() * speed
             position = position + movement
+            
+            // Flip sprite based on direction
+            if movementDirection.x > 0 {
+                spriteNode.xScale = abs(spriteNode.xScale)
+            } else if movementDirection.x < 0 {
+                spriteNode.xScale = -abs(spriteNode.xScale)
+            }
         }
+        
+        // Update animations
+        updateAnimations()
         
         // Update invincibility timer
         if isInvincible {
@@ -100,6 +143,67 @@ class Player: SKNode {
                 regenTimer = 0
             }
         }
+    }
+    
+    private func updateAnimations() {
+        if isMoving && !wasMoving {
+            startWalkAnimation()
+            dustTrail?.particleBirthRate = 30
+        } else if !isMoving && wasMoving {
+            startIdleAnimation()
+            dustTrail?.particleBirthRate = 0
+        }
+        
+        // If first run, start idle
+        if spriteNode.action(forKey: idleActionKey) == nil && spriteNode.action(forKey: walkActionKey) == nil {
+            startIdleAnimation()
+        }
+        
+        wasMoving = isMoving
+    }
+    
+    private func startIdleAnimation() {
+        spriteNode.removeAction(forKey: walkActionKey)
+        
+        let bobUp = SKAction.moveBy(x: 0, y: 2, duration: 0.6)
+        let bobDown = SKAction.moveBy(x: 0, y: -2, duration: 0.6)
+        bobUp.timingMode = .easeInEaseOut
+        bobDown.timingMode = .easeInEaseOut
+        
+        let scaleLarge = SKAction.scaleY(to: 1.02, duration: 0.6)
+        let scaleSmall = SKAction.scaleY(to: 0.98, duration: 0.6)
+        scaleLarge.timingMode = .easeInEaseOut
+        scaleSmall.timingMode = .easeInEaseOut
+        
+        let bobGroup = SKAction.group([
+            SKAction.sequence([bobUp, bobDown]),
+            SKAction.sequence([scaleSmall, scaleLarge])
+        ])
+        
+        spriteNode.run(SKAction.repeatForever(bobGroup), withKey: idleActionKey)
+        
+        // Reset rotation and position offset gradually
+        spriteNode.run(SKAction.rotate(toAngle: 0, duration: 0.2))
+    }
+    
+    private func startWalkAnimation() {
+        spriteNode.removeAction(forKey: idleActionKey)
+        
+        // Bouncy walk
+        let bounceUp = SKAction.moveBy(x: 0, y: 4, duration: 0.15)
+        let bounceDown = SKAction.moveBy(x: 0, y: -4, duration: 0.15)
+        bounceUp.timingMode = .easeOut
+        bounceDown.timingMode = .easeIn
+        
+        let tiltRight = SKAction.rotate(toAngle: -0.1, duration: 0.15)
+        let tiltLeft = SKAction.rotate(toAngle: 0.1, duration: 0.15)
+        
+        let walkStep = SKAction.sequence([
+            SKAction.group([bounceUp, tiltRight]),
+            SKAction.group([bounceDown, tiltLeft])
+        ])
+        
+        spriteNode.run(SKAction.repeatForever(walkStep), withKey: walkActionKey)
     }
     
     func setMovementDirection(_ direction: CGPoint) {

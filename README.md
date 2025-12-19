@@ -196,7 +196,9 @@ Implemented critical bug fixes and performance optimizations from comprehensive 
 - ✅ **CurvedDagger Optimization**: Pre-filters enemies for sweep checks (~90% calculation reduction).
 
 #### Visuals & "Juice":
-- ✅ **Procedural Weapons**: Core weapons (Daggers, Tails, Shards) now look like their namesakes through custom `CGPath` drawing.
+- ✅ **Animated Player**: Tariq now features procedural idle bobbing, bouncy walk cycles, and directional flipping.
+- ✅ **Sand Trails**: Movement kicks up sand particles, grounding the player in the desert environment.
+- ✅ **Procedural Weapons**: Core weapons now look like their namesakes through custom `CGPath` drawing.
 - ✅ **Dynamic Animation**: Added flickering beams, swirling vortices, rotatonal alignment, and particle trails.
 - ✅ **Hit Indicators**: Improved combat readability with new visual effects on dodge and hit.
 
