@@ -12,10 +12,23 @@ class Player: SKNode {
     var character: CharacterType
     var movementDirection: CGPoint = .zero
     var isMoving: Bool = false
-    
+
     private var visualContainer: SKNode!
     private var spriteNode: SKSpriteNode!
     private var dustTrail: SKEmitterNode?
+
+    // 8-directional sprite system
+    enum Direction: String, CaseIterable {
+        case south, north, east, west
+        case southEast = "south-east"
+        case southWest = "south-west"
+        case northEast = "north-east"
+        case northWest = "north-west"
+    }
+
+    private var directionalTextures: [Direction: SKTexture] = [:]
+    private var currentDirection: Direction = .south
+    private var hasDirectionalSprites: Bool = false
     
     // Invincibility frames system
     private var isInvincible: Bool = false
@@ -52,26 +65,113 @@ class Player: SKNode {
         // Container for all visual elements (sprite, trails, etc.)
         visualContainer = SKNode()
         addChild(visualContainer)
-        
-        // Load pixel art sprite
-        let textureName = "player_\(character.rawValue)"
-        spriteNode = SKSpriteNode(imageNamed: textureName)
-        
-        // If asset not found, fallback to color
-        if spriteNode.texture == nil {
-            spriteNode = SKSpriteNode(color: .blue, size: CGSize(width: 30, height: 30))
+
+        // Try to load 8-directional sprites first (new PixelLab sprites)
+        loadDirectionalTextures()
+
+        if hasDirectionalSprites {
+            // Use new directional sprite system
+            spriteNode = SKSpriteNode(texture: directionalTextures[.south])
+            spriteNode.size = CGSize(width: 48, height: 48) // 64x64 canvas scaled to gameplay size
         } else {
-            // Scale to gameplay size (assuming base texture might vary)
-            spriteNode.scale(to: CGSize(width: 40, height: 40))
+            // Fallback to legacy single sprite
+            let textureName = "player_\(character.rawValue)"
+            spriteNode = SKSpriteNode(imageNamed: textureName)
+
+            if spriteNode.texture == nil {
+                spriteNode = SKSpriteNode(color: .blue, size: CGSize(width: 30, height: 30))
+            } else {
+                spriteNode.scale(to: CGSize(width: 40, height: 40))
+            }
         }
-        
+
         spriteNode.zPosition = Constants.ZPosition.player
         visualContainer.addChild(spriteNode)
-        
+
         // Setup dust trail (attached to visual container but behind sprite)
         setupDustTrail()
     }
-    
+
+    private func loadDirectionalTextures() {
+        // Character name mapping - Tariq uses "Tariq" prefix for PixelLab sprites
+        let characterName: String
+        switch character {
+        case .tariq:
+            characterName = "Tariq"
+        case .amara:
+            characterName = "Amara"
+        case .zahra:
+            characterName = "Zahra"
+        }
+
+        // Try to load all 8 directions
+        var loadedCount = 0
+        for direction in Direction.allCases {
+            let textureName = direction == .south ? characterName : "\(characterName)-\(direction.rawValue)"
+            let texture = SKTexture(imageNamed: textureName)
+
+            // Check if texture loaded successfully (has valid size)
+            if texture.size().width > 0 && texture.size().height > 0 {
+                directionalTextures[direction] = texture
+                loadedCount += 1
+            }
+        }
+
+        // Consider directional sprites available if we loaded at least 4 directions
+        hasDirectionalSprites = loadedCount >= 4
+
+        // If we have directional sprites but missing some, fill in with south as fallback
+        if hasDirectionalSprites {
+            if let southTexture = directionalTextures[.south] {
+                for direction in Direction.allCases where directionalTextures[direction] == nil {
+                    directionalTextures[direction] = southTexture
+                }
+            }
+        }
+    }
+
+    private func updateSpriteDirection() {
+        guard hasDirectionalSprites else { return }
+
+        let newDirection = getDirectionFromMovement(movementDirection)
+
+        // Only update texture if direction changed
+        if newDirection != currentDirection {
+            currentDirection = newDirection
+            if let texture = directionalTextures[newDirection] {
+                spriteNode.texture = texture
+            }
+        }
+    }
+
+    private func getDirectionFromMovement(_ direction: CGPoint) -> Direction {
+        let angle = atan2(direction.y, direction.x)
+        let degrees = angle * 180 / .pi
+
+        // Map angle to 8 directions (SpriteKit uses standard math coordinates)
+        // East = 0°, North = 90°, West = 180°/-180°, South = -90°
+        switch degrees {
+        case -22.5..<22.5:
+            return .east
+        case 22.5..<67.5:
+            return .northEast
+        case 67.5..<112.5:
+            return .north
+        case 112.5..<157.5:
+            return .northWest
+        case 157.5...180, -180..<(-157.5):
+            return .west
+        case -157.5..<(-112.5):
+            return .southWest
+        case -112.5..<(-67.5):
+            return .south
+        case -67.5..<(-22.5):
+            return .southEast
+        default:
+            return .south
+        }
+    }
+
     private func setupDustTrail() {
         let trail = SKEmitterNode()
         trail.particleBirthRate = 0
@@ -117,15 +217,22 @@ class Player: SKNode {
             let speed = CGFloat(stats.moveSpeed) * CGFloat(deltaTime)
             let movement = movementDirection.normalized() * speed
             position = position + movement
-            
-            // Flip and Lean based on direction
-            let leanAngle: CGFloat = movementDirection.x > 0 ? -0.15 : 0.15
-            let targetXScale: CGFloat = movementDirection.x > 0 ? 1.0 : -1.0
-            
+
+            if hasDirectionalSprites {
+                // Use 8-directional sprites - update texture based on movement direction
+                updateSpriteDirection()
+                // Subtle lean for visual feedback
+                let leanAngle: CGFloat = movementDirection.x > 0 ? -0.08 : (movementDirection.x < 0 ? 0.08 : 0)
+                visualContainer.zRotation = visualContainer.zRotation + (leanAngle - visualContainer.zRotation) * 0.1
+            } else {
+                // Legacy: Flip and Lean based on direction
+                let leanAngle: CGFloat = movementDirection.x > 0 ? -0.15 : 0.15
+                let targetXScale: CGFloat = movementDirection.x > 0 ? 1.0 : -1.0
+                visualContainer.xScale = visualContainer.xScale + (targetXScale - visualContainer.xScale) * 0.2
+                visualContainer.zRotation = visualContainer.zRotation + (leanAngle - visualContainer.zRotation) * 0.1
+            }
+
             isVisualDirty = true
-            // Smoothly lerp scale and rotation for "alive" feel
-            visualContainer.xScale = visualContainer.xScale + (targetXScale - visualContainer.xScale) * 0.2
-            visualContainer.zRotation = visualContainer.zRotation + (leanAngle - visualContainer.zRotation) * 0.1
         } else {
             // Only reset rotation if it's not already zeroed
             if abs(visualContainer.zRotation) > 0.01 {
@@ -134,10 +241,12 @@ class Player: SKNode {
             } else {
                 visualContainer.zRotation = 0
             }
-            
-            if visualContainer.xScale != 1.0 && visualContainer.xScale != -1.0 {
-                visualContainer.xScale = visualContainer.xScale > 0 ? 1.0 : -1.0
-                isVisualDirty = true
+
+            if !hasDirectionalSprites {
+                if visualContainer.xScale != 1.0 && visualContainer.xScale != -1.0 {
+                    visualContainer.xScale = visualContainer.xScale > 0 ? 1.0 : -1.0
+                    isVisualDirty = true
+                }
             }
         }
         
