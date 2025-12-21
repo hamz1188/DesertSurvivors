@@ -93,7 +93,7 @@ class Player: SKNode {
     }
 
     private func loadDirectionalTextures() {
-        // Character name mapping - Tariq uses "Tariq" prefix for PixelLab sprites
+        // Character name mapping for PixelLab sprites
         let characterName: String
         switch character {
         case .tariq:
