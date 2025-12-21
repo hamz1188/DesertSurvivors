@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Error calling tool 'create_character': 2 validation errors for call[create_character]\nstyle\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value='16-bit', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.12/v/unexpected_keyword_argument\ncolor_palette\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value=['#D4A574', '#8B4513', '#FFD700', '#2C1810'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.12/v/unexpected_keyword_argument"
+      }
+    ],
+    "isError": true
+  }
+}

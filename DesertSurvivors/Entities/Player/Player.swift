@@ -12,10 +12,19 @@ class Player: SKNode {
     var character: CharacterType
     var movementDirection: CGPoint = .zero
     var isMoving: Bool = false
-    
+
     private var visualContainer: SKNode!
     private var spriteNode: SKSpriteNode!
     private var dustTrail: SKEmitterNode?
+
+    // Directional sprite textures
+    private var directionalTextures: [Direction: SKTexture] = [:]
+    private var currentDirection: Direction = .south
+
+    enum Direction {
+        case south, north, east, west
+        case southEast, southWest, northEast, northWest
+    }
     
     // Invincibility frames system
     private var isInvincible: Bool = false
@@ -52,24 +61,49 @@ class Player: SKNode {
         // Container for all visual elements (sprite, trails, etc.)
         visualContainer = SKNode()
         addChild(visualContainer)
-        
-        // Load pixel art sprite
-        let textureName = "player_\(character.rawValue)"
-        spriteNode = SKSpriteNode(imageNamed: textureName)
-        
+
+        // Load all directional textures for the character
+        loadDirectionalTextures()
+
+        // Start with south-facing sprite
+        let defaultTexture = directionalTextures[.south] ?? SKTexture(imageNamed: character.displayName)
+        spriteNode = SKSpriteNode(texture: defaultTexture)
+
         // If asset not found, fallback to color
         if spriteNode.texture == nil {
             spriteNode = SKSpriteNode(color: .blue, size: CGSize(width: 30, height: 30))
         } else {
-            // Scale to gameplay size (assuming base texture might vary)
-            spriteNode.scale(to: CGSize(width: 40, height: 40))
+            // Scale PixelLab sprites (64x64) to gameplay size
+            spriteNode.scale(to: CGSize(width: 64, height: 64))
         }
-        
+
         spriteNode.zPosition = Constants.ZPosition.player
         visualContainer.addChild(spriteNode)
-        
+
         // Setup dust trail (attached to visual container but behind sprite)
         setupDustTrail()
+    }
+
+    private func loadDirectionalTextures() {
+        let baseName = character.displayName
+
+        // Load all 8 directional textures
+        directionalTextures[.south] = SKTexture(imageNamed: "\(baseName)-south")
+        directionalTextures[.north] = SKTexture(imageNamed: "\(baseName)-north")
+        directionalTextures[.east] = SKTexture(imageNamed: "\(baseName)-east")
+        directionalTextures[.west] = SKTexture(imageNamed: "\(baseName)-west")
+        directionalTextures[.southEast] = SKTexture(imageNamed: "\(baseName)-south-east")
+        directionalTextures[.southWest] = SKTexture(imageNamed: "\(baseName)-south-west")
+        directionalTextures[.northEast] = SKTexture(imageNamed: "\(baseName)-north-east")
+        directionalTextures[.northWest] = SKTexture(imageNamed: "\(baseName)-north-west")
+
+        // Fallback to default sprite if directional sprites don't exist
+        let defaultTexture = SKTexture(imageNamed: baseName)
+        for direction in [Direction.south, .north, .east, .west, .southEast, .southWest, .northEast, .northWest] {
+            if directionalTextures[direction]?.size() == .zero {
+                directionalTextures[direction] = defaultTexture
+            }
+        }
     }
     
     private func setupDustTrail() {
@@ -117,14 +151,15 @@ class Player: SKNode {
             let speed = CGFloat(stats.moveSpeed) * CGFloat(deltaTime)
             let movement = movementDirection.normalized() * speed
             position = position + movement
-            
-            // Flip and Lean based on direction
-            let leanAngle: CGFloat = movementDirection.x > 0 ? -0.15 : 0.15
-            let targetXScale: CGFloat = movementDirection.x > 0 ? 1.0 : -1.0
-            
+
+            // Update sprite direction based on movement
+            updateSpriteDirection()
+
+            // Slight lean based on direction for juice
+            let leanAngle: CGFloat = movementDirection.x > 0 ? -0.05 : 0.05
+
             isVisualDirty = true
-            // Smoothly lerp scale and rotation for "alive" feel
-            visualContainer.xScale = visualContainer.xScale + (targetXScale - visualContainer.xScale) * 0.2
+            // Smoothly lerp rotation for "alive" feel
             visualContainer.zRotation = visualContainer.zRotation + (leanAngle - visualContainer.zRotation) * 0.1
         } else {
             // Only reset rotation if it's not already zeroed
@@ -133,11 +168,6 @@ class Player: SKNode {
                 isVisualDirty = true
             } else {
                 visualContainer.zRotation = 0
-            }
-            
-            if visualContainer.xScale != 1.0 && visualContainer.xScale != -1.0 {
-                visualContainer.xScale = visualContainer.xScale > 0 ? 1.0 : -1.0
-                isVisualDirty = true
             }
         }
         
@@ -168,6 +198,50 @@ class Player: SKNode {
         }
     }
     
+    private func updateSpriteDirection() {
+        let direction = getDirectionFromMovement()
+
+        // Only update texture if direction changed
+        if direction != currentDirection {
+            currentDirection = direction
+
+            if let newTexture = directionalTextures[direction] {
+                spriteNode.texture = newTexture
+            }
+        }
+    }
+
+    private func getDirectionFromMovement() -> Direction {
+        guard movementDirection.length() > 0.1 else {
+            return currentDirection // Keep current direction when idle
+        }
+
+        let angle = atan2(movementDirection.y, movementDirection.x)
+        let degrees = angle * 180 / .pi
+
+        // Map angle to 8 directions (0° is east, 90° is north)
+        switch degrees {
+        case -22.5..<22.5:
+            return .east
+        case 22.5..<67.5:
+            return .northEast
+        case 67.5..<112.5:
+            return .north
+        case 112.5..<157.5:
+            return .northWest
+        case 157.5...180, -180..<(-157.5):
+            return .west
+        case -157.5..<(-112.5):
+            return .southWest
+        case -112.5..<(-67.5):
+            return .south
+        case -67.5..<(-22.5):
+            return .southEast
+        default:
+            return .south
+        }
+    }
+
     private func updateAnimations() {
         if isMoving && !wasMoving {
             startWalkAnimation()
@@ -176,12 +250,12 @@ class Player: SKNode {
             startIdleAnimation()
             dustTrail?.particleBirthRate = 0
         }
-        
+
         // Initial state
         if visualContainer.action(forKey: idleActionKey) == nil && visualContainer.action(forKey: walkActionKey) == nil {
             startIdleAnimation()
         }
-        
+
         wasMoving = isMoving
     }
     

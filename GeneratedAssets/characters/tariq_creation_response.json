@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "\u00e2\u009c\u0085 Character generation queued!\n\n**Character ID:** `1b6c1bbc-06e8-4fb6-aa9a-54cca2782d3d`\n**Name:** Tariq\n**Status:** Processing in background\n\n**What's happening:**\n- Generating 8 directional views (south, south-west, west, north-west, north, north-east, east, south-east)\n- Canvas size: 64\u00c3\u009764px (character ~38px tall, ~28px wide)\n- Using proportions: custom\n- Style: medium shading, single color black outline, high detail\n\n**Next steps:**\n- You can immediately queue animations: `animate_character(character_id=\"1b6c1bbc-06e8-4fb6-aa9a-54cca2782d3d\", ...)`\n- Check status: `get_character(character_id=\"1b6c1bbc-06e8-4fb6-aa9a-54cca2782d3d\")`\n- Generation takes ~3-5 minutes"
+      }
+    ],
+    "isError": false
+  }
+}
