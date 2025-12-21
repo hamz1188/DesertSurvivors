@@ -58,6 +58,43 @@ class BaseEnemy: SKNode {
         }
         spriteNode.zPosition = Constants.ZPosition.enemy
         addChild(spriteNode)
+        
+        setupAnimation()
+    }
+    
+    private func setupAnimation() {
+        guard let textureName = textureName else { return }
+        let sheetName = textureName + "_sheet"
+        let sheetTexture = SKTexture(imageNamed: sheetName)
+        
+        // Check if the sheet texture exists by checking its size (0,0 if missing)
+        // Note: SpriteKit logs an error if image is missing but returns a placeholder or empty texture.
+        // Size of empty texture is usually (0,0) or (1,1) depending on version, but let's try safely.
+        
+        // Actually, 'imageNamed' might return a valid object even if file missing, but with execution time error log.
+        // A better check is difficult without trying to load. 
+        // We will assume if texture size > 10 it's valid.
+        
+        if sheetTexture.size().width < 10 { return }
+        
+        // Slice into 4 frames (Horizontal Strip)
+        // Texture coordinates (u,v) are normalized 0.0 to 1.0
+        var frames: [SKTexture] = []
+        let frameCount = 4
+        let frameWidth = 1.0 / CGFloat(frameCount)
+        
+        for i in 0..<frameCount {
+            let u = CGFloat(i) * frameWidth
+            let rect = CGRect(x: u, y: 0, width: frameWidth, height: 1.0)
+            let frame = SKTexture(rect: rect, in: sheetTexture)
+            frame.filteringMode = .nearest
+            frames.append(frame)
+        }
+        
+        if !frames.isEmpty {
+            let animate = SKAction.animate(with: frames, timePerFrame: 0.15)
+            spriteNode.run(SKAction.repeatForever(animate), withKey: "walk")
+        }
     }
     
     private func setupPhysics() {

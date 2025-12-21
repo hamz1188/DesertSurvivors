@@ -10,8 +10,8 @@ import SpriteKit
 /// Slow, tanky, poison attack
 class Scorpion: BaseEnemy {
     init() {
-        super.init(name: "Scorpion", maxHealth: 30, moveSpeed: 80, damage: 8, xpValue: 8, textureName: "enemy_scorpion")
-        setColor(.darkGray)
+        super.init(name: "Scorpion", maxHealth: 30, moveSpeed: 80, damage: 8, xpValue: 8, textureName: "scorpion")
+
     }
     
     required init?(coder aDecoder: NSCoder) {

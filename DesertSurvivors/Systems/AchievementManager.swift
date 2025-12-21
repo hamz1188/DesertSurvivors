@@ -58,10 +58,8 @@ class AchievementManager {
             unlock(.survivor, in: scene)
         }
         
-        // 4. Hoarder
-        if data.totalGold >= 500 {
-            // Note: Currently tracking current gold, not total lifetime gold. 
-            // Ideally we'd have lifetimeGold, but totalGold works if they hoard it.
+        // 4. Hoarder - uses lifetime gold collected, not current balance
+        if data.lifetimeGoldCollected >= 500 {
             unlock(.hoarder, in: scene)
         }
         

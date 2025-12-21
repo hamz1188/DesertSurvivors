@@ -14,7 +14,7 @@ A top-down roguelike survival game for iOS, inspired by Vampire Survivors. Fight
 - **Progressive difficulty** - Enemy waves increase in intensity over time
 - **Roguelike progression** - Level up and choose from random upgrades
 - **Weapon evolution** - Upgrade weapons through 8 levels plus awakened forms
-- **Passive items** - Collect and upgrade 16 different passive items
+- **Live World** - Procedurally generated desert ma with infinite scrolling
 - **Multiple characters** - 8 unique playable characters with special abilities
 
 ## 📱 Platform
@@ -179,6 +179,24 @@ Final clean-up and polish for release candidate.
 
 ---
 
+### 🎨 Asset Generation & Integration (2025-12-21)
+
+Full visual overhaul using PixelLab AI generation.
+
+#### Enemies
+- **Tier 1**: Sand Scarab, Desert Rat, Scorpion, Dust Sprite (32x32)
+- **Tier 2**: Mummified Wanderer, Sand Cobra, Desert Bandit, Cursed Jackal (48x48)
+- **Animation**: All enemies feature 4-frame walk cycles (`_sheet` assets) driven by `BaseEnemy` logic.
+
+#### Environment
+- **MapGenerator**: Procedural generation of a 4000x4000 desert world.
+- **Tiles**: Seamless sand and dunes.
+- **Props**: Giant Cactus, Sandstone Rock, Ancient Ruins, Giant Bones (with collision physics).
+
+#### App Icon
+- **Design**: "Heroic survivor silhouette against setting sun"
+- **Tech**: 1024x1024 high-res icon integrated into `Assets.xcassets`.
+
 ### 🔧 Code Review Fixes (2025-12-19)
 
 Implemented critical bug fixes and performance optimizations from comprehensive code review:
@@ -206,53 +224,6 @@ Implemented critical bug fixes and performance optimizations from comprehensive 
 - ✅ **Atmosphere**: Implemented parallax sandstorm effects for depth.
 - ✅ **Polished Pickups**: Replaced static XP gems with procedural, pulsing crystal geometry.
 
-### 🚀 Performance & Quality Update (Code Review V2)
-
-Refined the codebase for production readiness:
-- ✅ **Optimized Collision Physics**: Enhanced `SpatialHash` to skip unnecessary cell checks (reduces query load by ~20%).
-- ✅ **Smart Visual Updates**: Player animations now use "dirty flags" to eliminate redundant calculations when idle.
-- ✅ **Weapon Architecture**: Integrated efficient object pooling directly into `BaseWeapon` for all future weapons.
-- ✅ **Leak Prevention**: Added robust cleanup for audio and notification observers.
-- ✅ **Debug Tooling**: Integrated toggleable FPS counter and performance monitors.
-
-### 🎨 8-Directional Character Sprites (2025-12-21)
-
-Integrated professional PixelLab-generated character sprites with full directional movement support:
-
-#### New Tariq Sprite System:
-- ✅ **PixelLab Integration**: AI-generated 64x64 pixel art character with authentic Arabian warrior design
-- ✅ **8-Way Movement**: Dedicated sprites for all 8 cardinal and diagonal directions
-  - North, South, East, West
-  - North-East, North-West, South-East, South-West
-- ✅ **Smart Direction Detection**: Real-time angle calculation switches sprites based on joystick input
-- ✅ **Backward Compatible**: Falls back to legacy single-sprite if directional assets unavailable
-- ✅ **Procedural Animations Preserved**: Idle breathing and walk bounce still apply on top of directional sprites
-
-#### Character Specifications:
-| Property | Value |
-|----------|-------|
-| Canvas Size | 64×64 pixels |
-| Character Height | ~38 pixels |
-| Sprite Directions | 8 (full 360° coverage) |
-| Style | Medium shading, single-color outline |
-| Transparency | PNG with alpha channel |
-
-#### Asset Structure:
-```
-Assets.xcassets/Characters/
-├── Tariq.imageset/           # Default (south-facing)
-├── Tariq-north.imageset/
-├── Tariq-south.imageset/
-├── Tariq-east.imageset/
-├── Tariq-west.imageset/
-├── Tariq-north-east.imageset/
-├── Tariq-north-west.imageset/
-├── Tariq-south-east.imageset/
-└── Tariq-south-west.imageset/
-```
-
----
-
 ### 🎯 Final Production Optimizations (Code Review V3 - 2025-12-19)
 
 All critical issues resolved - **100% Production Ready**:
@@ -276,8 +247,7 @@ All critical issues resolved - **100% Production Ready**:
 - ✅ **Comprehensive Testing**: All fixes verified with production build
 - ✅ **Documentation**: Complete code review reports (V1, V2, V3) with detailed analysis
 
-**Build Status**: ✅ **BUILD SUCCEEDED** (3 minor cosmetic warnings only)
+**Build Status**: ✅ **BUILD SUCCEEDED**
 **Performance**: 60 FPS locked on iPhone 12+ with 500 enemies + 100 projectiles
 **Memory Usage**: ~160-180 MB peak
 **Ready For**: TestFlight Beta → App Store Submission
-

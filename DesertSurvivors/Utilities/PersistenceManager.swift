@@ -9,6 +9,7 @@ import Foundation
 
 struct PlayerData: Codable {
     var totalGold: Int = 0
+    var lifetimeGoldCollected: Int = 0 // Total gold ever collected (for achievements)
     var upgrades: [String: Int] = [:] // UpgradeID: Level
     var unlockedCharacters: [String] = ["tariq"]
     var unlockedAchievements: [String] = []
@@ -61,6 +62,7 @@ class PersistenceManager {
     
     func addGold(_ amount: Int) {
         data.totalGold += amount
+        data.lifetimeGoldCollected += amount // Track lifetime total for achievements
         save()
     }
     
@@ -111,7 +113,7 @@ class PersistenceManager {
     }
     
     func resetData() {
-        data = PlayerData(totalGold: 0, upgrades: [:], unlockedCharacters: ["tariq"], unlockedAchievements: [], totalKills: 0, maxTimeSurvived: 0, highScores: [])
+        data = PlayerData(totalGold: 0, lifetimeGoldCollected: 0, upgrades: [:], unlockedCharacters: ["tariq"], unlockedAchievements: [], totalKills: 0, maxTimeSurvived: 0, highScores: [])
         save()
     }
     

@@ -36,12 +36,11 @@ class GameScene: SKScene {
     // Camera
     private var gameCamera: SKCameraNode!
     
-    // Performance Monitoring
-    #if DEBUG
+    // Performance Monitoring (runtime toggleable via Settings)
     private var frameCounter = 0
     private var fpsTimer: TimeInterval = 0
-    private var fpsLabel: SKLabelNode!
-    #endif
+    private var debugLabel: SKLabelNode?
+    private var lastDebugUpdateTime: TimeInterval = 0
     
     // Touch handling
     private var joystickTouch: UITouch?
@@ -63,13 +62,16 @@ class GameScene: SKScene {
     }
     
     private func setupScene() {
-        backgroundColor = Constants.Colors.desertSand
+        // backgroundColor = Constants.Colors.desertSand // Replaced by generated map
         
         physicsWorld.gravity = .zero
         physicsWorld.contactDelegate = self
         
         // Ensure clean state
         removeAllChildren()
+        
+        // Generate Map
+        MapGenerator.shared.generateMap(in: self)
         
         gameCamera = SKCameraNode()
         camera = gameCamera
@@ -103,13 +105,17 @@ class GameScene: SKScene {
         hud = HUD()
         gameCamera.addChild(hud)
         
-        #if DEBUG
-        fpsLabel = SKLabelNode(fontNamed: "Arial")
-        fpsLabel.fontSize = 14
-        fpsLabel.fontColor = .green
-        fpsLabel.zPosition = 1000
-        gameCamera.addChild(fpsLabel)
-        #endif
+        // Debug label (always created, visibility controlled by DebugSettings)
+        debugLabel = SKLabelNode(fontNamed: "Courier-Bold")
+        debugLabel?.fontSize = 12
+        debugLabel?.fontColor = .green
+        debugLabel?.zPosition = 1000
+        debugLabel?.horizontalAlignmentMode = .left
+        debugLabel?.verticalAlignmentMode = .bottom
+        debugLabel?.numberOfLines = 3
+        debugLabel?.isHidden = !DebugSettings.shared.isDeveloperModeEnabled
+        debugLabel?.position = CGPoint(x: -size.width/2 + 10, y: -size.height/2 + 60)
+        gameCamera.addChild(debugLabel!)
     }
     
     private func setupJoystick() {
@@ -161,11 +167,8 @@ class GameScene: SKScene {
     @objc private func deviceRotated() {
         hud.positionHUD(in: self)
         
-        #if DEBUG
-        if let fpsLabel = fpsLabel {
-            fpsLabel.position = CGPoint(x: -size.width/2 + 50, y: size.height/2 - 100)
-        }
-        #endif
+        // Position debug label in bottom-left corner
+        debugLabel?.position = CGPoint(x: -size.width/2 + 10, y: -size.height/2 + 60)
     }
     
     @objc private func handleLevelUpNotification(_ notification: Notification) {
@@ -243,15 +246,31 @@ class GameScene: SKScene {
             gameOver()
         }
         
-        #if DEBUG
+        // Debug overlay (runtime toggleable via Settings > Developer Mode)
+        updateDebugOverlay(deltaTime: deltaTime, activeEnemies: activeEnemies)
+    }
+    
+    private func updateDebugOverlay(deltaTime: TimeInterval, activeEnemies: [BaseEnemy]) {
+        // Check if developer mode is enabled (can change at runtime)
+        let shouldShow = DebugSettings.shared.isDeveloperModeEnabled
+        debugLabel?.isHidden = !shouldShow
+        
+        guard shouldShow else { return }
+        
         frameCounter += 1
         fpsTimer += deltaTime
+        
+        // Update every second to avoid excessive string allocations
         if fpsTimer >= 1.0 {
-            fpsLabel.text = "FPS: \(frameCounter)"
+            let fps = frameCounter
+            let enemyCount = activeEnemies.count
+            let weaponCount = weaponManager.getWeapons().count
+            
+            debugLabel?.text = "FPS: \(fps)\nEnemies: \(enemyCount)\nWeapons: \(weaponCount)"
+            
             frameCounter = 0
             fpsTimer = 0
         }
-        #endif
     }
     
     // MARK: - Generic Logic

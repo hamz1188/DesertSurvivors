@@ -1,15 +1,9 @@
 {
   "images": [
     {
-      "size": "1024x1024",
-      "idiom": "ios-marketing",
-      "filename": "icon_1024.png",
-      "scale": "1x"
-    },
-    {
-      "size": "1024x1024",
       "idiom": "universal",
       "platform": "ios",
+      "size": "1024x1024",
       "filename": "icon_1024.png"
     }
   ],

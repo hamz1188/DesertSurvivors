@@ -10,8 +10,8 @@ import SpriteKit
 /// Pack enemy - average stats, fast
 class CursedJackal: BaseEnemy {
     init() {
-        super.init(name: "Cursed Jackal", maxHealth: 35, moveSpeed: 140, damage: 6, xpValue: 14, textureName: "enemy_cursed_jackal")
-        setColor(.purple)
+        super.init(name: "Cursed Jackal", maxHealth: 35, moveSpeed: 140, damage: 6, xpValue: 14, textureName: "cursed_jackal")
+
     }
     
     required init?(coder aDecoder: NSCoder) {

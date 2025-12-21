@@ -49,6 +49,7 @@ struct Constants {
         static let projectile: UInt32 = 0b100
         static let pickup: UInt32 = 0b1000
         static let weapon: UInt32 = 0b10000
+        static let wall: UInt32 = 0b100000
     }
     
     // Colors
@@ -73,3 +74,28 @@ struct Constants {
     }
 }
 
+/// Runtime debug settings that can be toggled in-game via Settings menu.
+/// These are separate from compile-time DEBUG flags.
+class DebugSettings {
+    static let shared = DebugSettings()
+    
+    private let developerModeKey = "isDeveloperModeEnabled"
+    
+    /// Master toggle for developer mode (shows FPS, enemy count, etc.)
+    var isDeveloperModeEnabled: Bool {
+        get { return UserDefaults.standard.bool(forKey: developerModeKey) }
+        set { UserDefaults.standard.set(newValue, forKey: developerModeKey) }
+    }
+    
+    /// Whether to show FPS counter in-game
+    var showFPS: Bool {
+        return isDeveloperModeEnabled
+    }
+    
+    /// Whether to show enemy/projectile counts
+    var showStats: Bool {
+        return isDeveloperModeEnabled
+    }
+    
+    private init() {}
+}

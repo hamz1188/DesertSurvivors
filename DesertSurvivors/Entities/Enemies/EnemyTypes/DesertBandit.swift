@@ -12,8 +12,8 @@ class DesertBandit: BaseEnemy {
     private let preferredDistance: CGFloat = 200.0
     
     init() {
-        super.init(name: "Desert Bandit", maxHealth: 40, moveSpeed: 100, damage: 7, xpValue: 18, textureName: "enemy_desert_bandit")
-        setColor(.orange)
+        super.init(name: "Desert Bandit", maxHealth: 40, moveSpeed: 100, damage: 7, xpValue: 18, textureName: "desert_bandit")
+
     }
     
     required init?(coder aDecoder: NSCoder) {

@@ -12,6 +12,7 @@ class SettingsScene: SKScene {
     private var musicLabel: SKLabelNode!
     private var sfxLabel: SKLabelNode!
     private var hapticsLabel: SKLabelNode!
+    private var developerLabel: SKLabelNode!
     private var resetLabel: SKLabelNode!
     
     private var resetConfirmStage = false
@@ -45,13 +46,18 @@ class SettingsScene: SKScene {
         hapticsLabel = createToggle(name: "hapticsToggle", text: "VIBRATION: ON", y: startY - spacing * 2)
         updateHapticsLabel()
         
+        // Developer Mode Toggle
+        developerLabel = createToggle(name: "developerToggle", text: "DEV MODE: OFF", y: startY - spacing * 3)
+        developerLabel.fontSize = 24 // Slightly smaller
+        updateDeveloperLabel()
+        
         // Reset Data
         resetLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
         resetLabel.name = "resetButton"
         resetLabel.text = "RESET SAVE DATA"
         resetLabel.fontSize = 28
         resetLabel.fontColor = .red
-        resetLabel.position = CGPoint(x: size.width / 2, y: startY - spacing * 3.5)
+        resetLabel.position = CGPoint(x: size.width / 2, y: startY - spacing * 4.5)
         addChild(resetLabel)
         
         // Back Button
@@ -93,6 +99,12 @@ class SettingsScene: SKScene {
         hapticsLabel.fontColor = HapticManager.shared.isHapticsEnabled ? .yellow : .gray
     }
     
+    private func updateDeveloperLabel() {
+        let state = DebugSettings.shared.isDeveloperModeEnabled ? "ON" : "OFF"
+        developerLabel.text = "DEV MODE: \(state)"
+        developerLabel.fontColor = DebugSettings.shared.isDeveloperModeEnabled ? .cyan : .gray
+    }
+    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
@@ -126,6 +138,12 @@ class SettingsScene: SKScene {
                 if HapticManager.shared.isHapticsEnabled {
                     HapticManager.shared.selection()
                 }
+            }
+            
+            if node.name == "developerToggle" {
+                DebugSettings.shared.isDeveloperModeEnabled.toggle()
+                updateDeveloperLabel()
+                SoundManager.shared.playSFX(filename: "sfx_gem_collect.wav", scene: self)
             }
             
             if node.name == "resetButton" {

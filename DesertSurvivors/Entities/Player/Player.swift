@@ -27,8 +27,10 @@ class Player: SKNode {
     }
 
     private var directionalTextures: [Direction: SKTexture] = [:]
+    private var walkAnimationTextures: [Direction: [SKTexture]] = [:]
     private var currentDirection: Direction = .south
     private var hasDirectionalSprites: Bool = false
+    private var hasWalkAnimations: Bool = false
     
     // Invincibility frames system
     private var isInvincible: Bool = false
@@ -128,6 +130,35 @@ class Player: SKNode {
                 }
             }
         }
+        
+        // Load walk animations (6 frames per direction)
+        loadWalkAnimations(characterName: characterName)
+    }
+    
+    private func loadWalkAnimations(characterName: String) {
+        let frameCount = 6
+        var loadedDirections = 0
+        
+        for direction in Direction.allCases {
+            var frames: [SKTexture] = []
+            for i in 0..<frameCount {
+                let frameName = "\(characterName)-walking-\(direction.rawValue)-\(String(format: "%03d", i))"
+                let texture = SKTexture(imageNamed: frameName)
+                
+                if texture.size().width > 0 && texture.size().height > 0 {
+                    texture.filteringMode = .nearest // Pixel art crisp scaling
+                    frames.append(texture)
+                }
+            }
+            
+            if !frames.isEmpty {
+                walkAnimationTextures[direction] = frames
+                loadedDirections += 1
+            }
+        }
+        
+        // Consider walk animations available if we have at least 4 directions
+        hasWalkAnimations = loadedDirections >= 4
     }
 
     private func updateSpriteDirection() {
@@ -135,10 +166,20 @@ class Player: SKNode {
 
         let newDirection = getDirectionFromMovement(movementDirection)
 
-        // Only update texture if direction changed
+        // Only update if direction changed
         if newDirection != currentDirection {
             currentDirection = newDirection
-            if let texture = directionalTextures[newDirection] {
+            
+            if isMoving && hasWalkAnimations {
+                // Update walk animation to new direction
+                if let frames = walkAnimationTextures[newDirection], !frames.isEmpty {
+                    spriteNode.removeAction(forKey: walkActionKey)
+                    let animateAction = SKAction.animate(with: frames, timePerFrame: 0.1)
+                    let loopAnimation = SKAction.repeatForever(animateAction)
+                    spriteNode.run(loopAnimation, withKey: walkActionKey)
+                }
+            } else if let texture = directionalTextures[newDirection] {
+                // Update idle texture
                 spriteNode.texture = texture
             }
         }
@@ -296,6 +337,13 @@ class Player: SKNode {
     
     private func startIdleAnimation() {
         visualContainer.removeAction(forKey: walkActionKey)
+        visualContainer.removeAction(forKey: "walkBounce")
+        spriteNode.removeAction(forKey: walkActionKey)
+        
+        // Reset to idle texture for current direction
+        if hasDirectionalSprites, let idleTexture = directionalTextures[currentDirection] {
+            spriteNode.texture = idleTexture
+        }
         
         // Breathing effect: subtle scale and lift
         let breatheUp = SKAction.group([
@@ -316,31 +364,43 @@ class Player: SKNode {
     
     private func startWalkAnimation() {
         visualContainer.removeAction(forKey: idleActionKey)
+        spriteNode.removeAction(forKey: walkActionKey)
         
-        // Bouncy walk with "jump" and "squash" feel
-        // Part 1: Jump up
-        let jump = SKAction.group([
-            SKAction.moveBy(x: 0, y: 8, duration: 0.12),
-            SKAction.scaleY(to: 1.15, duration: 0.12),
-            SKAction.scaleX(to: 0.9, duration: 0.12)
-        ])
-        jump.timingMode = .easeOut
-        
-        // Part 2: Fall and squash
-        let land = SKAction.group([
-            SKAction.moveBy(x: 0, y: -8, duration: 0.12),
-            SKAction.scaleY(to: 0.85, duration: 0.12),
-            SKAction.scaleX(to: 1.15, duration: 0.12)
-        ])
-        land.timingMode = .easeIn
-        
-        // Part 3: Reset to neutral
-        let reset = SKAction.group([
-            SKAction.scale(to: 1.0, duration: 0.1)
-        ])
-        
-        let walkCycle = SKAction.repeatForever(SKAction.sequence([jump, land, reset]))
-        visualContainer.run(walkCycle, withKey: walkActionKey)
+        // Use frame-based walk animation if available
+        if hasWalkAnimations, let frames = walkAnimationTextures[currentDirection], !frames.isEmpty {
+            let animateAction = SKAction.animate(with: frames, timePerFrame: 0.1)
+            let loopAnimation = SKAction.repeatForever(animateAction)
+            spriteNode.run(loopAnimation, withKey: walkActionKey)
+            
+            // Add subtle bounce to complement the walk frames
+            let bounce = SKAction.sequence([
+                SKAction.moveBy(x: 0, y: 2, duration: 0.15),
+                SKAction.moveBy(x: 0, y: -2, duration: 0.15)
+            ])
+            visualContainer.run(SKAction.repeatForever(bounce), withKey: "walkBounce")
+        } else {
+            // Fallback: Bouncy walk with "jump" and "squash" feel
+            let jump = SKAction.group([
+                SKAction.moveBy(x: 0, y: 8, duration: 0.12),
+                SKAction.scaleY(to: 1.15, duration: 0.12),
+                SKAction.scaleX(to: 0.9, duration: 0.12)
+            ])
+            jump.timingMode = .easeOut
+            
+            let land = SKAction.group([
+                SKAction.moveBy(x: 0, y: -8, duration: 0.12),
+                SKAction.scaleY(to: 0.85, duration: 0.12),
+                SKAction.scaleX(to: 1.15, duration: 0.12)
+            ])
+            land.timingMode = .easeIn
+            
+            let reset = SKAction.group([
+                SKAction.scale(to: 1.0, duration: 0.1)
+            ])
+            
+            let walkCycle = SKAction.repeatForever(SKAction.sequence([jump, land, reset]))
+            visualContainer.run(walkCycle, withKey: walkActionKey)
+        }
     }
     
     func setMovementDirection(_ direction: CGPoint) {
