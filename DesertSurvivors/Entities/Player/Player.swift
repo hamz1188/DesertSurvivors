@@ -13,8 +13,8 @@ class Player: SKNode {
     var movementDirection: CGPoint = .zero
     var isMoving: Bool = false
 
-    private var visualContainer: SKNode!
-    private var spriteNode: SKSpriteNode!
+    private var visualContainer: SKNode?
+    private var spriteNode: SKSpriteNode?
     private var dustTrail: SKEmitterNode?
 
     // 8-directional sprite system
@@ -65,30 +65,34 @@ class Player: SKNode {
     
     private func setupSprite() {
         // Container for all visual elements (sprite, trails, etc.)
-        visualContainer = SKNode()
-        addChild(visualContainer)
+        let newVisualContainer = SKNode()
+        visualContainer = newVisualContainer
+        addChild(newVisualContainer)
 
         // Try to load 8-directional sprites first (new PixelLab sprites)
         loadDirectionalTextures()
 
+        let newSpriteNode: SKSpriteNode
         if hasDirectionalSprites {
             // Use new directional sprite system
-            spriteNode = SKSpriteNode(texture: directionalTextures[.south])
-            spriteNode.size = CGSize(width: 48, height: 48) // 64x64 canvas scaled to gameplay size
+            newSpriteNode = SKSpriteNode(texture: directionalTextures[.south])
+            newSpriteNode.size = CGSize(width: 48, height: 48) // 64x64 canvas scaled to gameplay size
         } else {
             // Fallback to legacy single sprite
             let textureName = "player_\(character.rawValue)"
-            spriteNode = SKSpriteNode(imageNamed: textureName)
+            let tempSprite = SKSpriteNode(imageNamed: textureName)
 
-            if spriteNode.texture == nil {
-                spriteNode = SKSpriteNode(color: .blue, size: CGSize(width: 30, height: 30))
+            if tempSprite.texture == nil {
+                newSpriteNode = SKSpriteNode(color: .blue, size: CGSize(width: 30, height: 30))
             } else {
-                spriteNode.scale(to: CGSize(width: 40, height: 40))
+                tempSprite.scale(to: CGSize(width: 40, height: 40))
+                newSpriteNode = tempSprite
             }
         }
 
-        spriteNode.zPosition = Constants.ZPosition.player
-        visualContainer.addChild(spriteNode)
+        newSpriteNode.zPosition = Constants.ZPosition.player
+        spriteNode = newSpriteNode
+        newVisualContainer.addChild(newSpriteNode)
 
         // Setup dust trail (attached to visual container but behind sprite)
         setupDustTrail()
@@ -173,14 +177,14 @@ class Player: SKNode {
             if isMoving && hasWalkAnimations {
                 // Update walk animation to new direction
                 if let frames = walkAnimationTextures[newDirection], !frames.isEmpty {
-                    spriteNode.removeAction(forKey: walkActionKey)
+                    spriteNode?.removeAction(forKey: walkActionKey)
                     let animateAction = SKAction.animate(with: frames, timePerFrame: 0.1)
                     let loopAnimation = SKAction.repeatForever(animateAction)
-                    spriteNode.run(loopAnimation, withKey: walkActionKey)
+                    spriteNode?.run(loopAnimation, withKey: walkActionKey)
                 }
             } else if let texture = directionalTextures[newDirection] {
                 // Update idle texture
-                spriteNode.texture = texture
+                spriteNode?.texture = texture
             }
         }
     }
@@ -230,8 +234,8 @@ class Player: SKNode {
         trail.particleColorBlendFactor = 1.0
         trail.zPosition = -1
         trail.position = CGPoint(x: 0, y: -15)
-        
-        visualContainer.addChild(trail)
+
+        visualContainer?.addChild(trail)
         self.dustTrail = trail
     }
     
@@ -264,28 +268,32 @@ class Player: SKNode {
                 updateSpriteDirection()
                 // Subtle lean for visual feedback
                 let leanAngle: CGFloat = movementDirection.x > 0 ? -0.08 : (movementDirection.x < 0 ? 0.08 : 0)
-                visualContainer.zRotation = visualContainer.zRotation + (leanAngle - visualContainer.zRotation) * 0.1
+                if let container = visualContainer {
+                    container.zRotation = container.zRotation + (leanAngle - container.zRotation) * 0.1
+                }
             } else {
                 // Legacy: Flip and Lean based on direction
                 let leanAngle: CGFloat = movementDirection.x > 0 ? -0.15 : 0.15
                 let targetXScale: CGFloat = movementDirection.x > 0 ? 1.0 : -1.0
-                visualContainer.xScale = visualContainer.xScale + (targetXScale - visualContainer.xScale) * 0.2
-                visualContainer.zRotation = visualContainer.zRotation + (leanAngle - visualContainer.zRotation) * 0.1
+                if let container = visualContainer {
+                    container.xScale = container.xScale + (targetXScale - container.xScale) * 0.2
+                    container.zRotation = container.zRotation + (leanAngle - container.zRotation) * 0.1
+                }
             }
 
             isVisualDirty = true
         } else {
             // Only reset rotation if it's not already zeroed
-            if abs(visualContainer.zRotation) > 0.01 {
-                visualContainer.zRotation = visualContainer.zRotation * 0.8
+            if let container = visualContainer, abs(container.zRotation) > 0.01 {
+                container.zRotation = container.zRotation * 0.8
                 isVisualDirty = true
             } else {
-                visualContainer.zRotation = 0
+                visualContainer?.zRotation = 0
             }
 
             if !hasDirectionalSprites {
-                if visualContainer.xScale != 1.0 && visualContainer.xScale != -1.0 {
-                    visualContainer.xScale = visualContainer.xScale > 0 ? 1.0 : -1.0
+                if let container = visualContainer, container.xScale != 1.0 && container.xScale != -1.0 {
+                    container.xScale = container.xScale > 0 ? 1.0 : -1.0
                     isVisualDirty = true
                 }
             }
@@ -302,9 +310,9 @@ class Player: SKNode {
             invincibilityTimer -= deltaTime
             if invincibilityTimer <= 0 {
                 isInvincible = false
-                spriteNode.alpha = 1.0
+                spriteNode?.alpha = 1.0
             } else {
-                spriteNode.alpha = sin(invincibilityTimer * 20) > 0 ? 1.0 : 0.3
+                spriteNode?.alpha = sin(invincibilityTimer * 20) > 0 ? 1.0 : 0.3
             }
         }
         
@@ -328,7 +336,7 @@ class Player: SKNode {
         }
         
         // Initial state
-        if visualContainer.action(forKey: idleActionKey) == nil && visualContainer.action(forKey: walkActionKey) == nil {
+        if visualContainer?.action(forKey: idleActionKey) == nil && visualContainer?.action(forKey: walkActionKey) == nil {
             startIdleAnimation()
         }
         
@@ -336,13 +344,13 @@ class Player: SKNode {
     }
     
     private func startIdleAnimation() {
-        visualContainer.removeAction(forKey: walkActionKey)
-        visualContainer.removeAction(forKey: "walkBounce")
-        spriteNode.removeAction(forKey: walkActionKey)
-        
+        visualContainer?.removeAction(forKey: walkActionKey)
+        visualContainer?.removeAction(forKey: "walkBounce")
+        spriteNode?.removeAction(forKey: walkActionKey)
+
         // Reset to idle texture for current direction
         if hasDirectionalSprites, let idleTexture = directionalTextures[currentDirection] {
-            spriteNode.texture = idleTexture
+            spriteNode?.texture = idleTexture
         }
         
         // Breathing effect: subtle scale and lift
@@ -357,27 +365,27 @@ class Player: SKNode {
         
         breatheUp.timingMode = .easeInEaseOut
         breatheDown.timingMode = .easeInEaseOut
-        
+
         let idleCycle = SKAction.repeatForever(SKAction.sequence([breatheUp, breatheDown]))
-        visualContainer.run(idleCycle, withKey: idleActionKey)
+        visualContainer?.run(idleCycle, withKey: idleActionKey)
     }
     
     private func startWalkAnimation() {
-        visualContainer.removeAction(forKey: idleActionKey)
-        spriteNode.removeAction(forKey: walkActionKey)
-        
+        visualContainer?.removeAction(forKey: idleActionKey)
+        spriteNode?.removeAction(forKey: walkActionKey)
+
         // Use frame-based walk animation if available
         if hasWalkAnimations, let frames = walkAnimationTextures[currentDirection], !frames.isEmpty {
             let animateAction = SKAction.animate(with: frames, timePerFrame: 0.1)
             let loopAnimation = SKAction.repeatForever(animateAction)
-            spriteNode.run(loopAnimation, withKey: walkActionKey)
-            
+            spriteNode?.run(loopAnimation, withKey: walkActionKey)
+
             // Add subtle bounce to complement the walk frames
             let bounce = SKAction.sequence([
                 SKAction.moveBy(x: 0, y: 2, duration: 0.15),
                 SKAction.moveBy(x: 0, y: -2, duration: 0.15)
             ])
-            visualContainer.run(SKAction.repeatForever(bounce), withKey: "walkBounce")
+            visualContainer?.run(SKAction.repeatForever(bounce), withKey: "walkBounce")
         } else {
             // Fallback: Bouncy walk with "jump" and "squash" feel
             let jump = SKAction.group([
@@ -397,9 +405,9 @@ class Player: SKNode {
             let reset = SKAction.group([
                 SKAction.scale(to: 1.0, duration: 0.1)
             ])
-            
+
             let walkCycle = SKAction.repeatForever(SKAction.sequence([jump, land, reset]))
-            visualContainer.run(walkCycle, withKey: walkActionKey)
+            visualContainer?.run(walkCycle, withKey: walkActionKey)
         }
     }
     
@@ -451,15 +459,16 @@ class Player: SKNode {
     }
     
     private func flashDamage() {
-        let originalBlend = spriteNode.colorBlendFactor
-        spriteNode.color = .red
-        spriteNode.colorBlendFactor = 0.5
-        
+        guard let sprite = spriteNode else { return }
+        let originalBlend = sprite.colorBlendFactor
+        sprite.color = .red
+        sprite.colorBlendFactor = 0.5
+
         let wait = SKAction.wait(forDuration: 0.1)
         let reset = SKAction.run { [weak self] in
-            self?.spriteNode.colorBlendFactor = originalBlend
+            self?.spriteNode?.colorBlendFactor = originalBlend
         }
-        spriteNode.run(SKAction.sequence([wait, reset]))
+        sprite.run(SKAction.sequence([wait, reset]))
     }
     
     var canTakeDamage: Bool {

@@ -17,9 +17,14 @@ class BaseEnemy: SKNode {
     
     var spriteNode: SKSpriteNode!
     weak var target: Player?
-    
+
     private var originalColor: SKColor = .red
-    
+    private var isDying: Bool = false
+
+    // Spatial hash optimization
+    var lastHashedPosition: CGPoint = .zero
+    var needsRehash: Bool = true
+
     var textureName: String? // Added property
     
     init(name: String, maxHealth: Float, moveSpeed: CGFloat, damage: Float, xpValue: Float = 10, textureName: String? = nil) {
@@ -108,12 +113,19 @@ class BaseEnemy: SKNode {
     
     func update(deltaTime: TimeInterval, playerPosition: CGPoint) {
         guard isAlive else { return }
-        
+
         // Move toward player
         let direction = (playerPosition - position).normalized()
         let movement = direction * moveSpeed * CGFloat(deltaTime)
+        let oldPosition = position
         position = position + movement
-        
+
+        // Check if enemy moved enough to require rehashing (half a cell or more)
+        let moveDist = oldPosition.distance(to: position)
+        if moveDist > Constants.spatialHashCellSize / 2 {
+            needsRehash = true
+        }
+
         // Rotate sprite to face movement direction
         if direction.length() > 0 {
             spriteNode.zRotation = atan2(direction.y, direction.x)
@@ -153,23 +165,27 @@ class BaseEnemy: SKNode {
     }
     
     func die() {
+        // Prevent double-call bug (e.g., from simultaneous projectile hits)
+        guard !isDying else { return }
+        isDying = true
+
         // Death animation
         currentHealth = 0
-        
+
         // Audio
         if let scene = scene {
             SoundManager.shared.playSFX(filename: "sfx_enemy_die.wav", scene: scene)
         }
-        
+
         // Notify game to spawn XP and count kill
         NotificationCenter.default.post(name: .enemyDied, object: nil, userInfo: ["position": position, "xp": xpValue])
-        
+
         // Scale down and fade out
         let shrink = SKAction.scale(to: 0.5, duration: 0.15)
         let fade = SKAction.fadeOut(withDuration: 0.15)
         let remove = SKAction.removeFromParent()
         let group = SKAction.group([shrink, fade])
-        
+
         spriteNode.run(SKAction.sequence([group, remove]))
     }
     

@@ -11,18 +11,18 @@ import GameplayKit
 class GameScene: SKScene {
     
     // Core game objects
-    var player: Player!
-    private var weaponManager: WeaponManager!
-    private var enemySpawner: EnemySpawner!
-    private var pickupManager: PickupManager!
-    private var collisionManager: CollisionManager!
-    private var levelUpSystem: LevelUpSystem!
-    private var passiveItemManager: PassiveItemManager!
-    private var levelUpChoiceGenerator: LevelUpChoiceGenerator!
-    private var hud: HUD!
-    private var joystick: VirtualJoystick!
-    private var levelUpUI: LevelUpUI!
-    private var worldManager: WorldManager!
+    var player: Player?
+    private var weaponManager: WeaponManager?
+    private var enemySpawner: EnemySpawner?
+    private var pickupManager: PickupManager?
+    private var collisionManager: CollisionManager?
+    private var levelUpSystem: LevelUpSystem?
+    private var passiveItemManager: PassiveItemManager?
+    private var levelUpChoiceGenerator: LevelUpChoiceGenerator?
+    private var hud: HUD?
+    private var joystick: VirtualJoystick?
+    private var levelUpUI: LevelUpUI?
+    private var worldManager: WorldManager?
     
     var selectedCharacter: CharacterType = .tariq
     
@@ -32,9 +32,17 @@ class GameScene: SKScene {
     private var killCount: Int = 0
     private var isGamePaused: Bool = false
     private var gold: Int = 0
+
+    // HUD optimization - cached values to reduce update frequency
+    private var cachedHealthPercent: Float = 1.0
+    private var cachedXPPercent: Float = 0.0
+    private var cachedKillCount: Int = 0
+    private var cachedGold: Int = 0
+    private var cachedTimerSeconds: Int = 0
+    private var hudTimerAccumulator: TimeInterval = 0
     
     // Camera
-    private var gameCamera: SKCameraNode!
+    private var gameCamera: SKCameraNode?
     
     // Performance Monitoring (runtime toggleable via Settings)
     private var frameCounter = 0
@@ -53,41 +61,46 @@ class GameScene: SKScene {
         setupJoystick()
         setupLevelUpUI()
         setupNotifications()
-        
+
         // Initial HUD positioning
-        hud.positionHUD(in: self)
-        
+        hud?.positionHUD(in: self)
+
         // Start Music
         SoundManager.shared.playBackgroundMusic(filename: "bgm_desert.mp3")
     }
     
     private func setupScene() {
         // backgroundColor = Constants.Colors.desertSand // Replaced by generated map
-        
+
         physicsWorld.gravity = .zero
         physicsWorld.contactDelegate = self
-        
+
         // Ensure clean state
         removeAllChildren()
-        
+
         // Generate Map
         MapGenerator.shared.generateMap(in: self)
-        
-        gameCamera = SKCameraNode()
-        camera = gameCamera
-        addChild(gameCamera)
+
+        let newCamera = SKCameraNode()
+        gameCamera = newCamera
+        camera = newCamera
+        addChild(newCamera)
     }
     
     private func setupPlayer() {
-        player = Player(character: selectedCharacter)
-        player.position = .zero
-        addChild(player)
+        let newPlayer = Player(character: selectedCharacter)
+        newPlayer.position = .zero
+        player = newPlayer
+        addChild(newPlayer)
     }
     
     private func setupSystems() {
-        weaponManager = WeaponManager(scene: self)
-        weaponManager.updatePlayerStats(player.stats)
-        
+        guard let player = player else { return }
+
+        let newWeaponManager = WeaponManager(scene: self)
+        newWeaponManager.updatePlayerStats(player.stats)
+        weaponManager = newWeaponManager
+
         enemySpawner = EnemySpawner(scene: self, player: player)
         pickupManager = PickupManager(scene: self, player: player)
         collisionManager = CollisionManager()
@@ -95,41 +108,51 @@ class GameScene: SKScene {
         passiveItemManager = PassiveItemManager()
         levelUpChoiceGenerator = LevelUpChoiceGenerator()
         worldManager = WorldManager(scene: self, player: player)
-        
+
         let startingWeapon = CurvedDagger()
         player.addChild(startingWeapon)
-        weaponManager.addWeapon(startingWeapon)
+        newWeaponManager.addWeapon(startingWeapon)
     }
     
     private func setupHUD() {
-        hud = HUD()
-        gameCamera.addChild(hud)
-        
+        guard let gameCamera = gameCamera else { return }
+
+        let newHUD = HUD()
+        hud = newHUD
+        gameCamera.addChild(newHUD)
+
         // Debug label (always created, visibility controlled by DebugSettings)
-        debugLabel = SKLabelNode(fontNamed: "Courier-Bold")
-        debugLabel?.fontSize = 12
-        debugLabel?.fontColor = .green
-        debugLabel?.zPosition = 1000
-        debugLabel?.horizontalAlignmentMode = .left
-        debugLabel?.verticalAlignmentMode = .bottom
-        debugLabel?.numberOfLines = 3
-        debugLabel?.isHidden = !DebugSettings.shared.isDeveloperModeEnabled
-        debugLabel?.position = CGPoint(x: -size.width/2 + 10, y: -size.height/2 + 60)
-        gameCamera.addChild(debugLabel!)
+        let newDebugLabel = SKLabelNode(fontNamed: "Courier-Bold")
+        newDebugLabel.fontSize = 12
+        newDebugLabel.fontColor = .green
+        newDebugLabel.zPosition = 1000
+        newDebugLabel.horizontalAlignmentMode = .left
+        newDebugLabel.verticalAlignmentMode = .bottom
+        newDebugLabel.numberOfLines = 3
+        newDebugLabel.isHidden = !DebugSettings.shared.isDeveloperModeEnabled
+        newDebugLabel.position = CGPoint(x: -size.width/2 + 10, y: -size.height/2 + 60)
+        debugLabel = newDebugLabel
+        gameCamera.addChild(newDebugLabel)
     }
     
     private func setupJoystick() {
-        joystick = VirtualJoystick()
-        gameCamera.addChild(joystick)
-        joystick.zPosition = Constants.ZPosition.hud
+        guard let gameCamera = gameCamera else { return }
+
+        let newJoystick = VirtualJoystick()
+        newJoystick.zPosition = Constants.ZPosition.hud
+        joystick = newJoystick
+        gameCamera.addChild(newJoystick)
     }
     
     private func setupLevelUpUI() {
-        levelUpUI = LevelUpUI()
-        gameCamera.addChild(levelUpUI)
-        levelUpUI.position = .zero
-        
-        levelUpUI.onChoiceSelected = { [weak self] choice in
+        guard let gameCamera = gameCamera else { return }
+
+        let newLevelUpUI = LevelUpUI()
+        newLevelUpUI.position = .zero
+        levelUpUI = newLevelUpUI
+        gameCamera.addChild(newLevelUpUI)
+
+        newLevelUpUI.onChoiceSelected = { [weak self] choice in
             self?.handleLevelUpSelection(choice)
         }
     }
@@ -165,15 +188,15 @@ class GameScene: SKScene {
     }
     
     @objc private func deviceRotated() {
-        hud.positionHUD(in: self)
-        
+        hud?.positionHUD(in: self)
+
         // Position debug label in bottom-left corner
         debugLabel?.position = CGPoint(x: -size.width/2 + 10, y: -size.height/2 + 60)
     }
     
     @objc private func handleLevelUpNotification(_ notification: Notification) {
         if let level = notification.userInfo?["level"] as? Int {
-            hud.updateLevel(level)
+            hud?.updateLevel(level)
             levelUp()
         }
     }
@@ -182,66 +205,75 @@ class GameScene: SKScene {
         guard let userInfo = notification.userInfo,
               let position = userInfo["position"] as? CGPoint,
               let xp = userInfo["xp"] as? Float else { return }
-        
-        pickupManager.spawnExperienceGem(at: position, xpValue: xp)
+
+        pickupManager?.spawnExperienceGem(at: position, xpValue: xp)
         addKill()
-        hud.updateKillCount(killCount)
+        hud?.updateKillCount(killCount)
     }
-    
+
     @objc private func handleExperienceCollection(_ notification: Notification) {
         guard let userInfo = notification.userInfo,
-              let xp = userInfo["xp"] as? Float else { return }
-        
-        levelUpSystem.addXP(xp, multiplier: player.stats.experienceMultiplier)
+              let xp = userInfo["xp"] as? Float,
+              let player = player else { return }
+
+        levelUpSystem?.addXP(xp, multiplier: player.stats.experienceMultiplier)
     }
     
     // MARK: - Game Loop
     
     override func update(_ currentTime: TimeInterval) {
         if isGamePaused { return }
-        
+
+        // Guard all critical game objects
+        guard let player = player,
+              let weaponManager = weaponManager,
+              let enemySpawner = enemySpawner,
+              let pickupManager = pickupManager,
+              let collisionManager = collisionManager,
+              let levelUpSystem = levelUpSystem,
+              let worldManager = worldManager,
+              let hud = hud,
+              let joystick = joystick,
+              let gameCamera = gameCamera else { return }
+
         if lastUpdateTime == 0 {
             lastUpdateTime = currentTime
         }
-        
+
         var deltaTime = currentTime - lastUpdateTime
         lastUpdateTime = currentTime
-        
+
         if deltaTime > 0.1 { deltaTime = 0.1 }
-        
+
         gameTime += deltaTime
-        
+
         // Logic
         player.update(deltaTime: deltaTime)
         player.setMovementDirection(joystick.direction) // Fixed: direction instead of velocity
-        
+
         gameCamera.position = player.position
         worldManager.update(playerPos: player.position)
-        
+
         // Update spatial hash grid for this frame
         let activeEnemies = enemySpawner.getActiveEnemies()
         collisionManager.update(nodes: activeEnemies)
-        
+
         // System updates
         weaponManager.update(deltaTime: deltaTime, playerPosition: player.position, spatialHash: collisionManager.spatialHash)
         enemySpawner.update(deltaTime: deltaTime)
         // LevelUpSystem and Generator do not have update() methods
-        
+
         pickupManager.update(deltaTime: deltaTime)
-        
+
         // Collisions
         // Pickups handling is done in pickupManager.update()
         collisionManager.checkCollisions(player: player, activeEnemies: activeEnemies, pickups: [])
-        
-        // HUD
-        hud.updateTimer(gameTime)
-        hud.updateHealth(player.stats.currentHealth / player.stats.maxHealth)
-        hud.updateXP(levelUpSystem.currentXP / levelUpSystem.xpForNextLevel)
-        hud.updateKillCount(killCount)
-        hud.updateGold(gold)
-        
+
+        // HUD - Optimized: only update when values change significantly
+        updateHUDOptimized(deltaTime: deltaTime, player: player, levelUpSystem: levelUpSystem)
+
         // hud.positionHUD removed from here - now handled by rotation notification
-        
+
         if !player.stats.isAlive {
             gameOver()
         }
@@ -249,25 +281,67 @@ class GameScene: SKScene {
         // Debug overlay (runtime toggleable via Settings > Developer Mode)
         updateDebugOverlay(deltaTime: deltaTime, activeEnemies: activeEnemies)
     }
-    
+
+    // MARK: - HUD Optimization
+    private func updateHUDOptimized(deltaTime: TimeInterval, player: Player, levelUpSystem: LevelUpSystem) {
+        guard let hud = hud else { return }
+
+        // Update timer only once per second (not every frame)
+        hudTimerAccumulator += deltaTime
+        if hudTimerAccumulator >= 1.0 {
+            let currentTimerSeconds = Int(gameTime)
+            if currentTimerSeconds != cachedTimerSeconds {
+                hud.updateTimer(gameTime)
+                cachedTimerSeconds = currentTimerSeconds
+            }
+            hudTimerAccumulator = 0
+        }
+
+        // Update health only if changed by >1%
+        let currentHealthPercent = player.stats.currentHealth / player.stats.maxHealth
+        if abs(currentHealthPercent - cachedHealthPercent) > 0.01 {
+            hud.updateHealth(currentHealthPercent)
+            cachedHealthPercent = currentHealthPercent
+        }
+
+        // Update XP only if changed by >1%
+        let currentXPPercent = levelUpSystem.currentXP / levelUpSystem.xpForNextLevel
+        if abs(currentXPPercent - cachedXPPercent) > 0.01 {
+            hud.updateXP(currentXPPercent)
+            cachedXPPercent = currentXPPercent
+        }
+
+        // Update kill count only when it changes
+        if killCount != cachedKillCount {
+            hud.updateKillCount(killCount)
+            cachedKillCount = killCount
+        }
+
+        // Update gold only when it changes
+        if gold != cachedGold {
+            hud.updateGold(gold)
+            cachedGold = gold
+        }
+    }
+
     private func updateDebugOverlay(deltaTime: TimeInterval, activeEnemies: [BaseEnemy]) {
         // Check if developer mode is enabled (can change at runtime)
         let shouldShow = DebugSettings.shared.isDeveloperModeEnabled
         debugLabel?.isHidden = !shouldShow
-        
+
         guard shouldShow else { return }
-        
+
         frameCounter += 1
         fpsTimer += deltaTime
-        
+
         // Update every second to avoid excessive string allocations
         if fpsTimer >= 1.0 {
             let fps = frameCounter
             let enemyCount = activeEnemies.count
-            let weaponCount = weaponManager.getWeapons().count
-            
+            let weaponCount = weaponManager?.getWeapons().count ?? 0
+
             debugLabel?.text = "FPS: \(fps)\nEnemies: \(enemyCount)\nWeapons: \(weaponCount)"
-            
+
             frameCounter = 0
             fpsTimer = 0
         }
@@ -284,19 +358,23 @@ class GameScene: SKScene {
         let minutes = Int(gameTime) / 60
         let seconds = Int(gameTime) % 60
         let timeString = String(format: "%02d:%02d", minutes, seconds)
-        
+
         // Save Data
         PersistenceManager.shared.addGold(gold)
         PersistenceManager.shared.updateProgression(runKills: killCount, runTime: gameTime)
-        
-        SceneManager.shared.presentGameOver(finalLevel: levelUpSystem.currentLevel, kills: killCount, timeSurvived: timeString)
+
+        let finalLevel = levelUpSystem?.currentLevel ?? 1
+        SceneManager.shared.presentGameOver(finalLevel: finalLevel, kills: killCount, timeSurvived: timeString)
     }
     
     // MARK: - Pause & UI Logic
     
     func togglePause() {
+        guard let gameCamera = gameCamera,
+              let joystick = joystick else { return }
+
         isGamePaused.toggle()
-        
+
         if isGamePaused {
             let pauseMenu = PauseMenuUI()
             pauseMenu.name = "pauseMenu"
@@ -307,7 +385,7 @@ class GameScene: SKScene {
                 SceneManager.shared.presentMainMenu()
             }
             gameCamera.addChild(pauseMenu)
-            
+
             physicsWorld.speed = 0
             joystick.isUserInteractionEnabled = false
         } else {
@@ -319,20 +397,32 @@ class GameScene: SKScene {
     }
     
     func levelUp() {
+        guard let levelUpChoiceGenerator = levelUpChoiceGenerator,
+              let levelUpSystem = levelUpSystem,
+              let weaponManager = weaponManager,
+              let passiveItemManager = passiveItemManager,
+              let player = player,
+              let levelUpUI = levelUpUI else { return }
+
         isGamePaused = true
         physicsWorld.speed = 0
-        
+
         let choices = levelUpChoiceGenerator.generateChoices(
             currentLevel: levelUpSystem.currentLevel, // Fixed: Added currentLevel
             currentWeapons: weaponManager.getWeapons(), // Fixed: getWeapons()
             currentPassives: passiveItemManager.getPassives(), // Fixed: getPassives()
             playerStats: player.stats
         )
-        
+
         levelUpUI.showChoices(choices, in: self) // Fixed: showChoices
     }
     
     func handleLevelUpSelection(_ choice: LevelUpChoice) {
+        guard let weaponManager = weaponManager,
+              let passiveItemManager = passiveItemManager,
+              let player = player,
+              let levelUpUI = levelUpUI else { return }
+
         switch choice {
         case .newWeapon(let weapon):
             weaponManager.addWeapon(weapon)
@@ -352,7 +442,7 @@ class GameScene: SKScene {
         case .gold:
             gold += 50
         }
-        
+
         // Resume
         levelUpUI.hide()
         isGamePaused = false
@@ -363,15 +453,17 @@ class GameScene: SKScene {
     // MARK: - Input
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-         guard let gameCamera = gameCamera else { return }
-         
+         guard let gameCamera = gameCamera,
+               let levelUpUI = levelUpUI,
+               let joystick = joystick else { return }
+
          for touch in touches {
              let location = touch.location(in: gameCamera)
-             
+
              if levelUpUI.isVisible {
                  if levelUpUI.handleTouch(at: location) { return }
              }
-             
+
              let nodes = gameCamera.nodes(at: location)
              for node in nodes {
                  if node.name == "pauseButton" || node.parent?.name == "pauseButton" {
@@ -380,24 +472,25 @@ class GameScene: SKScene {
                  }
              }
          }
-        
+
         guard !isGamePaused else { return }
         joystick.touchesBegan(touches, with: event)
     }
-    
+
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard !isGamePaused else { return }
+        guard !isGamePaused,
+              let joystick = joystick else { return }
         joystick.touchesMoved(touches, with: event)
     }
-    
+
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        joystick.touchesEnded(touches, with: event)
+        joystick?.touchesEnded(touches, with: event)
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        joystick.touchesCancelled(touches, with: event)
+        joystick?.touchesCancelled(touches, with: event)
     }
-    func getCollisionManager() -> CollisionManager {
+    func getCollisionManager() -> CollisionManager? {
         return collisionManager
     }
     

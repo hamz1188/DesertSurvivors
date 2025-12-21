@@ -51,19 +51,86 @@ class SpatialHash {
     func clear() {
         cells.removeAll(keepingCapacity: true)
     }
+
+    // Incremental update methods for optimization
+    func remove(_ node: SKNode, from position: CGPoint) {
+        let key = hash(position)
+        if let index = cells[key]?.firstIndex(where: { $0 === node }) {
+            cells[key]?.remove(at: index)
+            if cells[key]?.isEmpty == true {
+                cells[key] = nil
+            }
+        }
+    }
+
+    func move(_ node: SKNode, from oldPosition: CGPoint, to newPosition: CGPoint) {
+        let oldKey = hash(oldPosition)
+        let newKey = hash(newPosition)
+
+        // If keys are the same, no need to update
+        guard oldKey != newKey else { return }
+
+        // Remove from old cell
+        if let index = cells[oldKey]?.firstIndex(where: { $0 === node }) {
+            cells[oldKey]?.remove(at: index)
+            if cells[oldKey]?.isEmpty == true {
+                cells[oldKey] = nil
+            }
+        }
+
+        // Insert into new cell
+        if cells[newKey] == nil {
+            cells[newKey] = []
+        }
+        cells[newKey]?.append(node)
+    }
 }
 
 class CollisionManager {
     private(set) var spatialHash: SpatialHash
-    
+    private var framesSinceFullRebuild: Int = 0
+    private let fullRebuildInterval: Int = 120 // Full rebuild every 2 seconds at 60fps
+
     init() {
         spatialHash = SpatialHash()
     }
-    
+
     func update(nodes: [SKNode]) {
-        spatialHash.clear()
+        framesSinceFullRebuild += 1
+
+        // Periodically do a full rebuild to clean up dead enemies
+        if framesSinceFullRebuild >= fullRebuildInterval {
+            spatialHash.clear()
+            for node in nodes {
+                spatialHash.insert(node)
+                if let enemy = node as? BaseEnemy {
+                    enemy.lastHashedPosition = enemy.position
+                    enemy.needsRehash = false
+                }
+            }
+            framesSinceFullRebuild = 0
+            return
+        }
+
+        // Optimized: incremental updates for active enemies
         for node in nodes {
-            spatialHash.insert(node)
+            if let enemy = node as? BaseEnemy {
+                if enemy.needsRehash {
+                    // Move to new cell (or insert if first time)
+                    if enemy.lastHashedPosition == .zero {
+                        // First insertion
+                        spatialHash.insert(enemy)
+                    } else {
+                        // Move from old position to new position
+                        spatialHash.move(enemy, from: enemy.lastHashedPosition, to: enemy.position)
+                    }
+                    enemy.lastHashedPosition = enemy.position
+                    enemy.needsRehash = false
+                }
+            } else {
+                // Non-enemy nodes: always insert (for compatibility)
+                spatialHash.insert(node)
+            }
         }
     }
     

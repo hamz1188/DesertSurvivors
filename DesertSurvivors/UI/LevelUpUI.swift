@@ -51,8 +51,8 @@ enum LevelUpChoice {
 }
 
 class LevelUpUI: SKNode {
-    private var background: SKShapeNode!
-    private var titleLabel: SKLabelNode!
+    private var background: SKShapeNode?
+    private var titleLabel: SKLabelNode?
     private var choiceButtons: [SKNode] = []
     private var choices: [LevelUpChoice] = []
     
@@ -70,32 +70,34 @@ class LevelUpUI: SKNode {
     
     private func setupUI() {
         zPosition = Constants.ZPosition.ui
-        
+
         // Background overlay
-        background = SKShapeNode(rectOf: CGSize(width: 400, height: 500))
-        background.fillColor = SKColor(white: 0.1, alpha: 0.95)
-        background.strokeColor = .white
-        background.lineWidth = 3
-        background.isHidden = true
-        addChild(background)
-        
+        let newBackground = SKShapeNode(rectOf: CGSize(width: 400, height: 500))
+        newBackground.fillColor = SKColor(white: 0.1, alpha: 0.95)
+        newBackground.strokeColor = .white
+        newBackground.lineWidth = 3
+        newBackground.isHidden = true
+        background = newBackground
+        addChild(newBackground)
+
         // Title
-        titleLabel = SKLabelNode(fontNamed: "Arial-BoldMT")
-        titleLabel.fontSize = 32
-        titleLabel.fontColor = .yellow
-        titleLabel.text = "LEVEL UP!"
-        titleLabel.position = CGPoint(x: 0, y: 200)
-        titleLabel.isHidden = true
-        addChild(titleLabel)
+        let newTitleLabel = SKLabelNode(fontNamed: "Arial-BoldMT")
+        newTitleLabel.fontSize = 32
+        newTitleLabel.fontColor = .yellow
+        newTitleLabel.text = "LEVEL UP!"
+        newTitleLabel.position = CGPoint(x: 0, y: 200)
+        newTitleLabel.isHidden = true
+        titleLabel = newTitleLabel
+        addChild(newTitleLabel)
     }
     
     func showChoices(_ choices: [LevelUpChoice], in scene: SKScene) {
         self.choices = choices
         isVisible = true
-        
+
         // Show background and title
-        background.isHidden = false
-        titleLabel.isHidden = false
+        background?.isHidden = false
+        titleLabel?.isHidden = false
         
         // Play Sound
         SoundManager.shared.playSFX(filename: "sfx_level_up.wav", scene: scene)
@@ -154,8 +156,8 @@ class LevelUpUI: SKNode {
     
     func hide() {
         isVisible = false
-        background.isHidden = true
-        titleLabel.isHidden = true
+        background?.isHidden = true
+        titleLabel?.isHidden = true
         for button in choiceButtons {
             button.removeFromParent()
         }

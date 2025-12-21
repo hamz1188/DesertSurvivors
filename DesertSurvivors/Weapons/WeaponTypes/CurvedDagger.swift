@@ -147,40 +147,58 @@ class CurvedDagger: BaseWeapon {
     
     private func checkDaggerSweepCollision(daggerAngle: CGFloat, previousAngle: CGFloat, playerPosition: CGPoint, enemies: [BaseEnemy]) {
         let hitWidth: CGFloat = 25 // Width of the dagger hit area
-        
+
+        // Optimized: Pre-calculate dagger directions (avoid repeated trig)
+        let daggerDir = CGPoint(x: cos(daggerAngle), y: sin(daggerAngle))
+        let prevDaggerDir = CGPoint(x: cos(previousAngle), y: sin(previousAngle))
+
+        // Pre-calculate distance thresholds squared (avoid sqrt in loop)
+        let innerRadius = max(0, orbitRadius - hitWidth)
+        let outerRadius = orbitRadius + hitWidth
+        let innerRadiusSq = innerRadius * innerRadius
+        let outerRadiusSq = outerRadius * outerRadius
+        let minInnerDistSq: CGFloat = 15 * 15
+
         for enemy in enemies where enemy.isAlive {
             let enemyId = ObjectIdentifier(enemy)
-            
+
             // Skip if enemy was hit recently
             if hitCooldowns[enemyId] != nil {
                 continue
             }
-            
+
             // Calculate enemy position relative to player
             let toEnemy = enemy.position - playerPosition
-            let enemyDistance = toEnemy.length()
-            
-            // Check if enemy is within orbit range (including a bit inside and outside)
-            let innerRadius = max(0, orbitRadius - hitWidth)
-            let outerRadius = orbitRadius + hitWidth
-            
-            if enemyDistance >= innerRadius && enemyDistance <= outerRadius {
-                // Enemy is at the right distance - check angle
-                let enemyAngle = atan2(toEnemy.y, toEnemy.x)
-                
-                // Check if dagger swept through enemy's angle
-                if isAngleInSweep(angle: enemyAngle, from: previousAngle, to: daggerAngle) {
+            let enemyDistSq = toEnemy.x * toEnemy.x + toEnemy.y * toEnemy.y
+
+            // Optimized: Check distance using squared values (no sqrt needed)
+            if enemyDistSq >= innerRadiusSq && enemyDistSq <= outerRadiusSq {
+                // Enemy is at the right distance - check angle using dot product
+                let enemyDist = sqrt(enemyDistSq) // Only sqrt once we know it's in range
+                let toEnemyNorm = CGPoint(x: toEnemy.x / enemyDist, y: toEnemy.y / enemyDist)
+
+                // Dot product check: enemy is "close enough" to dagger direction
+                // Threshold 0.94 ~= 20 degrees, 0.98 ~= 11.5 degrees
+                let dotCurrent = toEnemyNorm.x * daggerDir.x + toEnemyNorm.y * daggerDir.y
+                let dotPrevious = toEnemyNorm.x * prevDaggerDir.x + toEnemyNorm.y * prevDaggerDir.y
+
+                // Hit if currently aligned OR was aligned last frame (sweep detection)
+                if dotCurrent > 0.94 || dotPrevious > 0.94 {
                     enemy.takeDamage(getDamage())
                     hitCooldowns[enemyId] = hitCooldownDuration
                 }
             }
             // Also check enemies INSIDE the orbit (closer to player)
-            else if enemyDistance < innerRadius && enemyDistance > 15 { // Not too close (player collision)
-                // For enemies inside orbit, check if dagger passed their angle
-                let enemyAngle = atan2(toEnemy.y, toEnemy.x)
-                
-                // Use wider angle tolerance for inner enemies
-                if isAngleInSweep(angle: enemyAngle, from: previousAngle, to: daggerAngle, tolerance: 0.3) {
+            else if enemyDistSq < innerRadiusSq && enemyDistSq > minInnerDistSq {
+                // For inner enemies, use wider tolerance
+                let enemyDist = sqrt(enemyDistSq)
+                let toEnemyNorm = CGPoint(x: toEnemy.x / enemyDist, y: toEnemy.y / enemyDist)
+
+                let dotCurrent = toEnemyNorm.x * daggerDir.x + toEnemyNorm.y * daggerDir.y
+                let dotPrevious = toEnemyNorm.x * prevDaggerDir.x + toEnemyNorm.y * prevDaggerDir.y
+
+                // Wider tolerance for inner enemies (0.85 ~= 32 degrees)
+                if dotCurrent > 0.85 || dotPrevious > 0.85 {
                     enemy.takeDamage(getDamage())
                     hitCooldowns[enemyId] = hitCooldownDuration
                 }

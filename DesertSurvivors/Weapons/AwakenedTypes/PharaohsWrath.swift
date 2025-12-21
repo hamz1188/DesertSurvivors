@@ -93,19 +93,19 @@ class PharaohsWrath: BaseWeapon {
     override func update(deltaTime: TimeInterval, playerPosition: CGPoint, spatialHash: SpatialHash) {
         super.update(deltaTime: deltaTime, playerPosition: playerPosition, spatialHash: spatialHash)
         
-        activeSeals = activeSeals.compactMap { seal in
+        activeSeals = activeSeals.compactMap { seal -> SealEffect? in
             var activeSeal = seal
             activeSeal.duration -= deltaTime
-            
+
             let enemy = seal.enemy
-            
+
             if !enemy.isAlive {
                 // Explode using spatial hash
                 explode(at: enemy.position, spatialHash: spatialHash)
                 seal.marker.removeFromParent()
                 return nil
             }
-            
+
             if activeSeal.duration <= 0 {
                 // Expired
                 seal.marker.removeFromParent()
@@ -118,10 +118,11 @@ class PharaohsWrath: BaseWeapon {
                 enemy.takeDamage(getDamage())
                 
                 // Heal Player
-                if let gameScene = scene as? GameScene {
-                   gameScene.player.stats.currentHealth = min(
-                       gameScene.player.stats.currentHealth + self.healAmount,
-                       gameScene.player.stats.maxHealth
+                if let gameScene = scene as? GameScene,
+                   let player = gameScene.player {
+                   player.stats.currentHealth = min(
+                       player.stats.currentHealth + self.healAmount,
+                       player.stats.maxHealth
                    )
                 }
             }

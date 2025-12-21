@@ -8,8 +8,8 @@
 import SpriteKit
 
 class VirtualJoystick: SKNode {
-    private var baseCircle: SKShapeNode!
-    private var stickCircle: SKShapeNode!
+    private var baseCircle: SKShapeNode?
+    private var stickCircle: SKShapeNode?
     private var isActive: Bool = false
     private var baseRadius: CGFloat = 50
     private var stickRadius: CGFloat = 25
@@ -31,19 +31,21 @@ class VirtualJoystick: SKNode {
     
     private func setupJoystick() {
         // Base circle
-        baseCircle = SKShapeNode(circleOfRadius: baseRadius)
-        baseCircle.fillColor = SKColor(white: 0.3, alpha: 0.8) // Increased opacity
-        baseCircle.strokeColor = SKColor(white: 0.5, alpha: 1.0)
-        baseCircle.lineWidth = 2
-        addChild(baseCircle)
-        
+        let newBaseCircle = SKShapeNode(circleOfRadius: baseRadius)
+        newBaseCircle.fillColor = SKColor(white: 0.3, alpha: 0.8) // Increased opacity
+        newBaseCircle.strokeColor = SKColor(white: 0.5, alpha: 1.0)
+        newBaseCircle.lineWidth = 2
+        baseCircle = newBaseCircle
+        addChild(newBaseCircle)
+
         // Stick circle
-        stickCircle = SKShapeNode(circleOfRadius: stickRadius)
-        stickCircle.fillColor = SKColor(white: 0.6, alpha: 0.9) // Increased opacity
-        stickCircle.strokeColor = SKColor(white: 0.8, alpha: 1.0)
-        stickCircle.lineWidth = 2
-        addChild(stickCircle)
-        
+        let newStickCircle = SKShapeNode(circleOfRadius: stickRadius)
+        newStickCircle.fillColor = SKColor(white: 0.6, alpha: 0.9) // Increased opacity
+        newStickCircle.strokeColor = SKColor(white: 0.8, alpha: 1.0)
+        newStickCircle.lineWidth = 2
+        stickCircle = newStickCircle
+        addChild(newStickCircle)
+
         // Secretly hidden by default (Floating Mode)
         isHidden = true
         isActive = false
@@ -77,7 +79,7 @@ class VirtualJoystick: SKNode {
             
             trackingTouch = touch
             isActive = true
-            stickCircle.position = .zero // Reset stick to center of base
+            stickCircle?.position = .zero // Reset stick to center of base
             return
         }
     }
@@ -102,13 +104,13 @@ class VirtualJoystick: SKNode {
     private func updateStickPosition(_ location: CGPoint) {
         // Limit stick movement to maxDistance
         let distance = location.length()
-        
+
         if distance > maxDistance {
             let normalized = location.normalized()
-            stickCircle.position = normalized * maxDistance
+            stickCircle?.position = normalized * maxDistance
             direction = normalized
         } else {
-            stickCircle.position = location
+            stickCircle?.position = location
             // If distance is very small (deadzone), zero out direction
             if distance < 5 {
                 direction = .zero
@@ -122,7 +124,7 @@ class VirtualJoystick: SKNode {
         trackingTouch = nil
         isActive = false
         isHidden = true // Hide when released
-        stickCircle.position = .zero
+        stickCircle?.position = .zero
         direction = .zero
     }
 

@@ -73,7 +73,7 @@ class GreekFire: BaseWeapon {
         let flask = SKShapeNode(circleOfRadius: 8)
         flask.fillColor = .cyan
         flask.strokeColor = .blue
-        flask.position = (scene as? GameScene)?.player.position ?? .zero
+        flask.position = (scene as? GameScene)?.player?.position ?? .zero
         flask.zPosition = Constants.ZPosition.projectile
         scene.addChild(flask)
         
