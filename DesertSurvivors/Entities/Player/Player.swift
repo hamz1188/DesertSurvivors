@@ -66,7 +66,7 @@ class Player: SKNode {
         loadDirectionalTextures()
 
         // Start with south-facing sprite
-        let defaultTexture = directionalTextures[.south] ?? SKTexture(imageNamed: character.displayName)
+        let defaultTexture = directionalTextures[.south] ?? SKTexture(imageNamed: "Characters/\(character.displayName)")
         spriteNode = SKSpriteNode(texture: defaultTexture)
 
         // If asset not found, fallback to color
@@ -85,7 +85,7 @@ class Player: SKNode {
     }
 
     private func loadDirectionalTextures() {
-        let baseName = character.displayName
+        let baseName = "Characters/\(character.displayName)"
 
         // Load all 8 directional textures
         directionalTextures[.south] = SKTexture(imageNamed: "\(baseName)-south")
