@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "desert_bandit-walking-south-002.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

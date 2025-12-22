@@ -9,11 +9,13 @@ import SpriteKit
 
 /// Tanky enemy - high HP, slow speed
 class MummifiedWanderer: BaseEnemy {
+    override var animationFrameCount: Int { 6 }
+    override var uses8Directions: Bool { false }
+
     init() {
         super.init(name: "Mummified Wanderer", maxHealth: 60, moveSpeed: 50, damage: 10, xpValue: 15, textureName: "mummified_wanderer")
-
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

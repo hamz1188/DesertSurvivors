@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "sand_cobra-walking-north-000.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

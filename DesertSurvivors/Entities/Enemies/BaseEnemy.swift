@@ -8,6 +8,49 @@
 import SpriteKit
 
 class BaseEnemy: SKNode {
+
+    // MARK: - Direction Enum (matches Player's for consistency)
+
+    enum Direction: String, CaseIterable {
+        case south, north, east, west
+        case southEast = "south-east"
+        case southWest = "south-west"
+        case northEast = "north-east"
+        case northWest = "north-west"
+
+        /// Get direction from movement vector
+        static func from(vector: CGPoint) -> Direction {
+            guard vector.length() > 0.01 else { return .south }
+
+            let angle = atan2(vector.y, vector.x)
+            let degrees = angle * 180 / .pi
+
+            // Convert angle to 8-direction
+            switch degrees {
+            case -22.5..<22.5: return .east
+            case 22.5..<67.5: return .northEast
+            case 67.5..<112.5: return .north
+            case 112.5..<157.5: return .northWest
+            case -67.5..<(-22.5): return .southEast
+            case -112.5..<(-67.5): return .south
+            case -157.5..<(-112.5): return .southWest
+            default: return .west
+            }
+        }
+
+        /// Map 8 directions to 4 for enemies with only 4-directional sprites
+        var fourDirectional: Direction {
+            switch self {
+            case .south, .southEast, .southWest: return .south
+            case .north, .northEast, .northWest: return .north
+            case .east: return .east
+            case .west: return .west
+            }
+        }
+    }
+
+    // MARK: - Properties
+
     var enemyName: String
     var maxHealth: Float
     var currentHealth: Float
@@ -28,10 +71,16 @@ class BaseEnemy: SKNode {
     var lastHashedPosition: CGPoint = .zero
     var needsRehash: Bool = true
 
-    // Rotation caching optimization - avoid atan2() every frame
-    private var cachedRotation: CGFloat = 0
-    private var lastRotationDirection: CGPoint = .zero
-    private let rotationUpdateThreshold: CGFloat = 0.1 // Only update rotation if direction changed significantly
+    // Direction and animation
+    private var currentDirection: Direction = .south
+    private var walkAnimations: [Direction: [SKTexture]] = [:]
+    private var isAnimating: Bool = false
+
+    /// Number of animation frames (override in subclasses: 4, 6, or 8)
+    var animationFrameCount: Int { 4 }
+
+    /// Whether this enemy uses 8-directional sprites (false = 4 directions)
+    var uses8Directions: Bool { true }
 
     var textureName: String? // Added property
     var poolType: String? // Tracks which pool this enemy belongs to for recycling
@@ -52,12 +101,13 @@ class BaseEnemy: SKNode {
 
         setupSprite()
         setupPhysics()
+        loadWalkAnimations()
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     private func setupSprite() {
         if let textureName = textureName {
             // Try to load the base texture
@@ -76,6 +126,74 @@ class BaseEnemy: SKNode {
         spriteNode.zPosition = Constants.ZPosition.enemy
         addChild(spriteNode)
     }
+
+    // MARK: - Animation Loading
+
+    private func loadWalkAnimations() {
+        guard let textureName = textureName else { return }
+
+        let directions: [Direction] = uses8Directions
+            ? Direction.allCases
+            : [.south, .north, .east, .west]
+
+        for direction in directions {
+            var frames: [SKTexture] = []
+            for i in 0..<animationFrameCount {
+                let frameName = "\(textureName)-walking-\(direction.rawValue)-\(String(format: "%03d", i))"
+                let texture = SKTexture(imageNamed: frameName)
+                // Only add if texture is valid
+                if texture.size().width > 0 {
+                    texture.filteringMode = .nearest
+                    frames.append(texture)
+                }
+            }
+            if !frames.isEmpty {
+                walkAnimations[direction] = frames
+            }
+        }
+    }
+
+    /// Update animation to face a direction (can be called by subclasses)
+    func updateFacingDirection(_ direction: Direction) {
+        startWalkAnimation(direction: direction)
+    }
+
+    /// Update animation based on movement vector (can be called by subclasses)
+    func updateFacingVector(_ vector: CGPoint) {
+        if vector.length() > 0.01 {
+            let direction = Direction.from(vector: vector)
+            startWalkAnimation(direction: direction)
+        }
+    }
+
+    private func startWalkAnimation(direction: Direction) {
+        let effectiveDirection = uses8Directions ? direction : direction.fourDirectional
+
+        guard let frames = walkAnimations[effectiveDirection], !frames.isEmpty else { return }
+
+        // Don't restart if already animating this direction
+        if isAnimating && currentDirection == effectiveDirection { return }
+
+        currentDirection = effectiveDirection
+        isAnimating = true
+
+        spriteNode.removeAction(forKey: "walk")
+        let animate = SKAction.animate(with: frames, timePerFrame: 0.1)
+        let repeatAction = SKAction.repeatForever(animate)
+        spriteNode.run(repeatAction, withKey: "walk")
+    }
+
+    private func stopWalkAnimation() {
+        guard isAnimating else { return }
+        isAnimating = false
+        spriteNode.removeAction(forKey: "walk")
+
+        // Set to first frame of current direction
+        let effectiveDirection = uses8Directions ? currentDirection : currentDirection.fourDirectional
+        if let frames = walkAnimations[effectiveDirection], let firstFrame = frames.first {
+            spriteNode.texture = firstFrame
+        }
+    }
     
     private func setupPhysics() {
         physicsBody = SKPhysicsBody(circleOfRadius: 12.5)
@@ -90,8 +208,8 @@ class BaseEnemy: SKNode {
         guard isAlive else { return }
 
         // Move toward player
-        let direction = (playerPosition - position).normalized()
-        let movement = direction * moveSpeed * CGFloat(deltaTime)
+        let directionVector = (playerPosition - position).normalized()
+        let movement = directionVector * moveSpeed * CGFloat(deltaTime)
         let oldPosition = position
         position = position + movement
 
@@ -101,14 +219,10 @@ class BaseEnemy: SKNode {
             needsRehash = true
         }
 
-        // Rotate sprite to face movement direction (optimized: only recalculate if direction changed significantly)
-        if direction.length() > 0 {
-            let directionDelta = abs(direction.x - lastRotationDirection.x) + abs(direction.y - lastRotationDirection.y)
-            if directionDelta > rotationUpdateThreshold {
-                cachedRotation = atan2(direction.y, direction.x)
-                lastRotationDirection = direction
-                spriteNode.zRotation = cachedRotation
-            }
+        // Update animation based on movement direction
+        if directionVector.length() > 0.01 {
+            let newDirection = Direction.from(vector: directionVector)
+            startWalkAnimation(direction: newDirection)
         }
     }
     
@@ -195,12 +309,15 @@ class BaseEnemy: SKNode {
         setScale(1.0)
         lastHashedPosition = .zero
         needsRehash = true
-        cachedRotation = 0
-        lastRotationDirection = .zero
+        currentDirection = .south
+        isAnimating = false
         spriteNode?.removeAllActions()
         spriteNode?.alpha = 1.0
         spriteNode?.setScale(1.0)
-        spriteNode?.zRotation = 0
+        // Set initial texture to south-facing
+        if let frames = walkAnimations[.south], let firstFrame = frames.first {
+            spriteNode?.texture = firstFrame
+        }
         // Note: eventDelegate is set by EnemySpawner after spawning
     }
 
