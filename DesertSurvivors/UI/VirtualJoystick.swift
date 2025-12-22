@@ -108,14 +108,16 @@ class VirtualJoystick: SKNode {
         if distance > maxDistance {
             let normalized = location.normalized()
             stickCircle?.position = normalized * maxDistance
-            direction = normalized
+            // Validate direction to ensure magnitude is clamped to 1.0
+            direction = InputValidation.validateJoystickInput(normalized)
         } else {
             stickCircle?.position = location
             // If distance is very small (deadzone), zero out direction
             if distance < 5 {
                 direction = .zero
             } else {
-                direction = location.normalized()
+                // Validate direction output
+                direction = InputValidation.validateJoystickInput(location.normalized())
             }
         }
     }

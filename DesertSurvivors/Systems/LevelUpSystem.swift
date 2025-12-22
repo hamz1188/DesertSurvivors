@@ -11,25 +11,31 @@ class LevelUpSystem {
     var currentLevel: Int = 1
     var currentXP: Float = 0
     var xpForNextLevel: Float
-    
+
+    /// Delegate for level up events (preferred over NotificationCenter)
+    weak var delegate: LevelUpEventDelegate?
+
     init() {
         xpForNextLevel = LevelUpSystem.calculateXPForLevel(2)
     }
-    
+
     func addXP(_ amount: Float, multiplier: Float = 1.0) {
         currentXP += amount * multiplier
-        
+
         while currentXP >= xpForNextLevel {
             levelUp()
         }
     }
-    
+
     private func levelUp() {
         currentLevel += 1
         currentXP -= xpForNextLevel
         xpForNextLevel = LevelUpSystem.calculateXPForLevel(currentLevel + 1)
-        
-        // Trigger level up event (will show UI)
+
+        // Notify via delegate (preferred)
+        delegate?.playerDidLevelUp(to: currentLevel)
+
+        // Also post notification for backward compatibility
         NotificationCenter.default.post(name: .playerLevelUp, object: nil, userInfo: ["level": currentLevel])
     }
     

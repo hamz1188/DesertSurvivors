@@ -7,6 +7,9 @@
 
 import SpriteKit
 import AVFoundation
+import os.log
+
+private let logger = Logger(subsystem: "com.desertsurvivors", category: "SoundManager")
 
 class SoundManager {
     static let shared = SoundManager()
@@ -42,7 +45,7 @@ class SoundManager {
         }
         
         guard let url = Bundle.main.url(forResource: filename, withExtension: nil) else {
-            print("SoundManager: Music file \(filename) not found.")
+            logger.warning("Music file \(filename) not found")
             return
         }
         
@@ -53,7 +56,7 @@ class SoundManager {
             backgroundMusicPlayer?.prepareToPlay()
             backgroundMusicPlayer?.play()
         } catch {
-            print("SoundManager: Could not play music file \(filename). Error: \(error)")
+            logger.error("Could not play music file \(filename): \(error.localizedDescription)")
         }
     }
     
@@ -89,9 +92,7 @@ class SoundManager {
         // Note: filename should include extension, e.g. "hit.wav"
         
         if Bundle.main.url(forResource: filename, withExtension: nil) == nil {
-            #if DEBUG
-            print("SoundManager: SFX file \(filename) not found.") 
-            #endif
+            logger.debug("SFX file \(filename) not found")
             return
         }
         

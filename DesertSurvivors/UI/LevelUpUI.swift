@@ -55,8 +55,11 @@ class LevelUpUI: SKNode {
     private var titleLabel: SKLabelNode?
     private var choiceButtons: [SKNode] = []
     private var choices: [LevelUpChoice] = []
-    
+    private var rerollButton: SKNode?
+    private var rerollsRemaining: Int = 0
+
     var onChoiceSelected: ((LevelUpChoice) -> Void)?
+    var onRerollRequested: (() -> Void)?
     var isVisible: Bool = false
     
     override init() {
@@ -91,34 +94,48 @@ class LevelUpUI: SKNode {
         addChild(newTitleLabel)
     }
     
-    func showChoices(_ choices: [LevelUpChoice], in scene: SKScene) {
+    func showChoices(_ choices: [LevelUpChoice], in scene: SKScene, rerolls: Int = 0) {
         self.choices = choices
+        self.rerollsRemaining = rerolls
         isVisible = true
 
         // Show background and title
         background?.isHidden = false
         titleLabel?.isHidden = false
-        
+
         // Play Sound
         SoundManager.shared.playSFX(filename: "sfx_level_up.wav", scene: scene)
-        
+
         // Clear old buttons
         for button in choiceButtons {
             button.removeFromParent()
         }
         choiceButtons.removeAll()
-        
+
+        // Remove old reroll button
+        rerollButton?.removeFromParent()
+        rerollButton = nil
+
         // Create choice buttons
         let buttonHeight: CGFloat = 80
         let spacing: CGFloat = 10
         let startY: CGFloat = 120
-        
+
         for (index, choice) in choices.enumerated() {
             let button = createChoiceButton(choice: choice, index: index)
             let yPosition = startY - CGFloat(index) * (buttonHeight + spacing)
             button.position = CGPoint(x: 0, y: yPosition)
             addChild(button)
             choiceButtons.append(button)
+        }
+
+        // Create reroll button if player has rerolls available
+        if rerolls > 0 {
+            let reroll = createRerollButton(count: rerolls)
+            let lastButtonY = startY - CGFloat(choices.count - 1) * (buttonHeight + spacing)
+            reroll.position = CGPoint(x: 0, y: lastButtonY - buttonHeight - spacing - 20)
+            addChild(reroll)
+            rerollButton = reroll
         }
     }
     
@@ -153,7 +170,30 @@ class LevelUpUI: SKNode {
         
         return container
     }
-    
+
+    private func createRerollButton(count: Int) -> SKNode {
+        let container = SKNode()
+
+        // Button background - smaller and different color
+        let buttonBg = SKShapeNode(rectOf: CGSize(width: 200, height: 50), cornerRadius: 8)
+        buttonBg.fillColor = SKColor(red: 0.3, green: 0.2, blue: 0.5, alpha: 0.9)
+        buttonBg.strokeColor = .cyan
+        buttonBg.lineWidth = 2
+        buttonBg.name = "reroll_button"
+        container.addChild(buttonBg)
+
+        // Reroll label with count
+        let label = SKLabelNode(fontNamed: "Arial-BoldMT")
+        label.fontSize = 18
+        label.fontColor = .cyan
+        label.text = "🎲 Reroll (\(count))"
+        label.verticalAlignmentMode = .center
+        label.horizontalAlignmentMode = .center
+        container.addChild(label)
+
+        return container
+    }
+
     func hide() {
         isVisible = false
         background?.isHidden = true
@@ -162,11 +202,20 @@ class LevelUpUI: SKNode {
             button.removeFromParent()
         }
         choiceButtons.removeAll()
+        rerollButton?.removeFromParent()
+        rerollButton = nil
     }
     
     func handleTouch(at location: CGPoint) -> Bool {
         guard isVisible else { return false }
-        
+
+        // Check reroll button first
+        if let reroll = rerollButton, reroll.contains(location), rerollsRemaining > 0 {
+            onRerollRequested?()
+            return true
+        }
+
+        // Check choice buttons
         for (index, button) in choiceButtons.enumerated() {
             if button.contains(location) {
                 if index < choices.count {

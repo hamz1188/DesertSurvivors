@@ -28,6 +28,8 @@ struct Constants {
     static let playerDefaultSpeed: CGFloat = 200 // points per second
     static let playerDefaultHealth: Float = 100
     static let playerDefaultPickupRadius: CGFloat = 50
+    static let playerSpriteSize: CGSize = CGSize(width: 48, height: 48)
+    static let playerInvincibilityDuration: TimeInterval = 0.5 // seconds of invincibility after taking damage
     
     // Experience System
     static let baseXP: Float = 10
@@ -37,6 +39,15 @@ struct Constants {
     static let baseEnemiesPerMinute: Int = 30
     static let enemiesPerMinuteGrowth: Float = 1.15
     static let spawnDistanceFromPlayer: CGFloat = 800 // spawn off-screen
+    static let tier2UnlockTime: TimeInterval = 120 // seconds until Tier 2 enemies start spawning
+
+    // Weapons
+    struct Weapon {
+        // CurvedDagger
+        static let curvedDaggerOrbitRadius: CGFloat = 60
+        static let curvedDaggerOrbitSpeed: CGFloat = 3.0 // radians per second
+        static let curvedDaggerHitCooldown: TimeInterval = 0.3 // seconds before can hit same enemy again
+    }
     
     // Collision
     static let spatialHashCellSize: CGFloat = 100

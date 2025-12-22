@@ -6,6 +6,9 @@
 //
 
 import SpriteKit
+import os.log
+
+private let logger = Logger(subsystem: "com.desertsurvivors", category: "Achievements")
 
 enum AchievementType: String, CaseIterable {
     case firstBlood = "first_blood"
@@ -75,7 +78,7 @@ class AchievementManager {
     
     private func unlock(_ type: AchievementType, in scene: SKScene?) {
         if PersistenceManager.shared.unlockAchievement(type.rawValue) {
-            print("Achievement Unlocked: \(type.title)")
+            logger.info("Achievement Unlocked: \(type.title)")
             if let scene = scene {
                 showNotification(for: type, in: scene)
             }

@@ -6,6 +6,9 @@
 //
 
 import SpriteKit
+import os.log
+
+private let logger = Logger(subsystem: "com.desertsurvivors", category: "TextureCache")
 
 /// A centralized texture cache for improved loading performance and memory management.
 /// Caches textures lazily and applies pixel art filtering mode automatically.
@@ -110,9 +113,7 @@ class TextureCache {
         } else {
             // Return a visible placeholder for debugging
             let placeholder = SKSpriteNode(color: fallbackColor, size: fallbackSize)
-            #if DEBUG
-            print("TextureCache: Missing texture '\(name)'")
-            #endif
+            logger.debug("Missing texture '\(name)'")
             return placeholder
         }
     }

@@ -14,7 +14,10 @@ class EnemySpawner {
     private var spawnTimer: TimeInterval = 0
     private var gameTime: TimeInterval = 0
     private let spawnInterval: TimeInterval = 2.0 // spawn every 2 seconds initially
-    
+
+    /// Delegate for enemy events (set on all spawned enemies)
+    weak var enemyEventDelegate: EnemyEventDelegate?
+
     init(scene: SKScene, player: Player) {
         self.scene = scene
         self.player = player
@@ -33,10 +36,19 @@ class EnemySpawner {
             spawnTimer = 0
         }
         
-        // Update all enemies and remove those that have been removed from scene or are dead
+        // Update all enemies and return dead ones to the pool
         activeEnemies.removeAll { enemy in
-            // If enemy was removed from parent (by GameScene) or is dead, remove from array
-            if enemy.parent == nil || !enemy.isAlive {
+            // If enemy is dead, return to pool
+            if !enemy.isAlive {
+                if let poolType = enemy.poolType {
+                    PoolingManager.shared.despawnEnemy(enemy, enemyType: poolType)
+                } else {
+                    enemy.removeFromParent()
+                }
+                return true
+            }
+            // If enemy was removed from parent unexpectedly, clean up
+            if enemy.parent == nil {
                 return true
             }
             // Update alive enemies
@@ -63,10 +75,10 @@ class EnemySpawner {
         
         // Determine allowable tiers based on time
         // Tier 1: 0+ seconds
-        // Tier 2: 120+ seconds (2:00)
-        
+        // Tier 2: After tier2UnlockTime seconds
+
         var allowedTiers: [Int] = [1]
-        if gameTime >= 120 {
+        if gameTime >= Constants.tier2UnlockTime {
             allowedTiers.append(2)
         }
         
@@ -78,7 +90,10 @@ class EnemySpawner {
         } else {
             enemy = createTier1Enemy()
         }
-        
+
+        // Set delegate for enemy events
+        enemy.eventDelegate = enemyEventDelegate
+
         enemy.position = CGPoint(x: spawnX, y: spawnY)
         scene.addChild(enemy)
         activeEnemies.append(enemy)
@@ -88,36 +103,42 @@ class EnemySpawner {
         // Randomly select a Tier 1 enemy type
         let types = ["SandScarab", "DesertRat", "Scorpion", "DustSprite"]
         let type = types.randomElement() ?? "SandScarab"
-        
-        switch type {
-        case "SandScarab":
-            return SandScarab()
-        case "DesertRat":
-            return DesertRat()
-        case "Scorpion":
-            return Scorpion()
-        case "DustSprite":
-            return DustSprite()
-        default:
-            return SandScarab()
+
+        // Use object pooling for better performance
+        return PoolingManager.shared.spawnEnemy(enemyType: type) {
+            switch type {
+            case "SandScarab":
+                return SandScarab()
+            case "DesertRat":
+                return DesertRat()
+            case "Scorpion":
+                return Scorpion()
+            case "DustSprite":
+                return DustSprite()
+            default:
+                return SandScarab()
+            }
         }
     }
-    
+
     private func createTier2Enemy() -> BaseEnemy {
         let types = ["MummifiedWanderer", "SandCobra", "DesertBandit", "CursedJackal"]
         let type = types.randomElement() ?? "MummifiedWanderer"
-        
-        switch type {
-        case "MummifiedWanderer":
-            return MummifiedWanderer()
-        case "SandCobra":
-            return SandCobra()
-        case "DesertBandit":
-            return DesertBandit()
-        case "CursedJackal":
-            return CursedJackal()
-        default:
-            return MummifiedWanderer()
+
+        // Use object pooling for better performance
+        return PoolingManager.shared.spawnEnemy(enemyType: type) {
+            switch type {
+            case "MummifiedWanderer":
+                return MummifiedWanderer()
+            case "SandCobra":
+                return SandCobra()
+            case "DesertBandit":
+                return DesertBandit()
+            case "CursedJackal":
+                return CursedJackal()
+            default:
+                return MummifiedWanderer()
+            }
         }
     }
     
@@ -127,9 +148,14 @@ class EnemySpawner {
     
     func clearAll() {
         for enemy in activeEnemies {
-            enemy.removeFromParent()
+            if let poolType = enemy.poolType {
+                PoolingManager.shared.despawnEnemy(enemy, enemyType: poolType)
+            } else {
+                enemy.removeFromParent()
+            }
         }
         activeEnemies.removeAll()
+        PoolingManager.shared.clearEnemies()
     }
 }
 

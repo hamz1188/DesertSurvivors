@@ -35,7 +35,7 @@ class Player: SKNode {
     // Invincibility frames system
     private var isInvincible: Bool = false
     private var invincibilityTimer: TimeInterval = 0
-    private let invincibilityDuration: TimeInterval = 0.5 // 0.5 seconds of invincibility after hit
+    private let invincibilityDuration: TimeInterval = Constants.playerInvincibilityDuration
     
     // Health regeneration
     private var regenTimer: TimeInterval = 0
@@ -76,7 +76,7 @@ class Player: SKNode {
         if hasDirectionalSprites {
             // Use new directional sprite system
             newSpriteNode = SKSpriteNode(texture: directionalTextures[.south])
-            newSpriteNode.size = CGSize(width: 48, height: 48) // 64x64 canvas scaled to gameplay size
+            newSpriteNode.size = Constants.playerSpriteSize
         } else {
             // Fallback to legacy single sprite
             let textureName = "player_\(character.rawValue)"
@@ -257,10 +257,12 @@ class Player: SKNode {
     private var wasMoving: Bool = false
 
     func update(deltaTime: TimeInterval) {
-        // Update movement
-        if isMoving && movementDirection.length() > 0 {
+        // Update movement (optimized: calculate length once for both check and normalization)
+        let directionLength = movementDirection.length()
+        if isMoving && directionLength > 0 {
             let speed = CGFloat(stats.moveSpeed) * CGFloat(deltaTime)
-            let movement = movementDirection.normalized() * speed
+            let normalizedDirection = CGPoint(x: movementDirection.x / directionLength, y: movementDirection.y / directionLength)
+            let movement = normalizedDirection * speed
             position = position + movement
 
             if hasDirectionalSprites {

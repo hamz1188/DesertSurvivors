@@ -82,16 +82,41 @@ class ShopManager {
         return baseCost * (level + 1)
     }
     
+    /// Purchase an upgrade (legacy Bool-based API for backward compatibility)
     func purchaseUpgrade(_ type: ShopUpgradeType) -> Bool {
-        let cost = getCost(for: type)
-        guard cost > 0 else { return false } // Maxed
-        
-        if PersistenceManager.shared.spendGold(cost) {
-            let currentLevel = getUpgradeLevel(type)
-            PersistenceManager.shared.setUpgradeLevel(id: type.rawValue, level: currentLevel + 1)
+        switch tryPurchaseUpgrade(type) {
+        case .success:
             return true
+        case .failure:
+            return false
         }
-        return false
+    }
+
+    /// Purchase an upgrade with type-safe error handling
+    /// - Parameter type: The upgrade type to purchase
+    /// - Returns: Result with new level on success, or ShopError on failure
+    func tryPurchaseUpgrade(_ type: ShopUpgradeType) -> ShopResult<Int> {
+        let currentLevel = getUpgradeLevel(type)
+
+        // Check if already at max level
+        guard currentLevel < type.maxLevel else {
+            return .failure(.maxLevelReached(upgrade: type.displayName, maxLevel: type.maxLevel))
+        }
+
+        let cost = getCost(for: type)
+        let availableGold = PersistenceManager.shared.data.totalGold
+
+        // Check if enough gold
+        guard availableGold >= cost else {
+            return .failure(.insufficientGold(required: cost, available: availableGold))
+        }
+
+        // Perform purchase
+        _ = PersistenceManager.shared.spendGold(cost)
+        let newLevel = currentLevel + 1
+        PersistenceManager.shared.setUpgradeLevel(id: type.rawValue, level: newLevel)
+
+        return .success(newLevel)
     }
     
     func applyUpgrades(to stats: inout PlayerStats) {

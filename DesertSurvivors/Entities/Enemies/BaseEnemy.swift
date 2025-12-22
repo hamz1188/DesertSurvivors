@@ -14,9 +14,12 @@ class BaseEnemy: SKNode {
     var moveSpeed: CGFloat
     var damage: Float
     var xpValue: Float = 10 // Experience value when killed
-    
+
     var spriteNode: SKSpriteNode!
     weak var target: Player?
+
+    /// Delegate for enemy death events (preferred over NotificationCenter)
+    weak var eventDelegate: EnemyEventDelegate?
 
     private var originalColor: SKColor = .red
     private var isDying: Bool = false
@@ -25,21 +28,28 @@ class BaseEnemy: SKNode {
     var lastHashedPosition: CGPoint = .zero
     var needsRehash: Bool = true
 
+    // Rotation caching optimization - avoid atan2() every frame
+    private var cachedRotation: CGFloat = 0
+    private var lastRotationDirection: CGPoint = .zero
+    private let rotationUpdateThreshold: CGFloat = 0.1 // Only update rotation if direction changed significantly
+
     var textureName: String? // Added property
+    var poolType: String? // Tracks which pool this enemy belongs to for recycling
     
     init(name: String, maxHealth: Float, moveSpeed: CGFloat, damage: Float, xpValue: Float = 10, textureName: String? = nil) {
         self.enemyName = name
-        self.maxHealth = maxHealth
-        self.currentHealth = maxHealth
-        self.moveSpeed = moveSpeed
-        self.damage = damage
-        self.xpValue = xpValue
+        // Validate all numeric inputs to prevent exploits/bugs
+        self.maxHealth = InputValidation.validateMaxHealth(maxHealth)
+        self.currentHealth = self.maxHealth
+        self.moveSpeed = InputValidation.validateSpeed(moveSpeed)
+        self.damage = InputValidation.validateEnemyDamage(damage)
+        self.xpValue = InputValidation.validateXP(xpValue)
         self.textureName = textureName
         super.init()
-        
+
         // Set SKNode's name property (inherited, optional String)
         self.name = name
-        
+
         setupSprite()
         setupPhysics()
     }
@@ -50,11 +60,13 @@ class BaseEnemy: SKNode {
     
     private func setupSprite() {
         if let textureName = textureName {
+            // Try to load the base texture
             spriteNode = SKSpriteNode(imageNamed: textureName)
             if spriteNode.texture == nil {
-               spriteNode = SKSpriteNode(color: originalColor, size: CGSize(width: 30, height: 30))
+                // Fallback if texture missing
+                spriteNode = SKSpriteNode(color: originalColor, size: CGSize(width: 30, height: 30))
             } else {
-               spriteNode.scale(to: CGSize(width: 35, height: 35))
+                spriteNode.scale(to: CGSize(width: 35, height: 35))
             }
         } else {
             // Placeholder sprite - colored circle
@@ -63,43 +75,6 @@ class BaseEnemy: SKNode {
         }
         spriteNode.zPosition = Constants.ZPosition.enemy
         addChild(spriteNode)
-        
-        setupAnimation()
-    }
-    
-    private func setupAnimation() {
-        guard let textureName = textureName else { return }
-        let sheetName = textureName + "_sheet"
-        let sheetTexture = SKTexture(imageNamed: sheetName)
-        
-        // Check if the sheet texture exists by checking its size (0,0 if missing)
-        // Note: SpriteKit logs an error if image is missing but returns a placeholder or empty texture.
-        // Size of empty texture is usually (0,0) or (1,1) depending on version, but let's try safely.
-        
-        // Actually, 'imageNamed' might return a valid object even if file missing, but with execution time error log.
-        // A better check is difficult without trying to load. 
-        // We will assume if texture size > 10 it's valid.
-        
-        if sheetTexture.size().width < 10 { return }
-        
-        // Slice into 4 frames (Horizontal Strip)
-        // Texture coordinates (u,v) are normalized 0.0 to 1.0
-        var frames: [SKTexture] = []
-        let frameCount = 4
-        let frameWidth = 1.0 / CGFloat(frameCount)
-        
-        for i in 0..<frameCount {
-            let u = CGFloat(i) * frameWidth
-            let rect = CGRect(x: u, y: 0, width: frameWidth, height: 1.0)
-            let frame = SKTexture(rect: rect, in: sheetTexture)
-            frame.filteringMode = .nearest
-            frames.append(frame)
-        }
-        
-        if !frames.isEmpty {
-            let animate = SKAction.animate(with: frames, timePerFrame: 0.15)
-            spriteNode.run(SKAction.repeatForever(animate), withKey: "walk")
-        }
     }
     
     private func setupPhysics() {
@@ -126,16 +101,23 @@ class BaseEnemy: SKNode {
             needsRehash = true
         }
 
-        // Rotate sprite to face movement direction
+        // Rotate sprite to face movement direction (optimized: only recalculate if direction changed significantly)
         if direction.length() > 0 {
-            spriteNode.zRotation = atan2(direction.y, direction.x)
+            let directionDelta = abs(direction.x - lastRotationDirection.x) + abs(direction.y - lastRotationDirection.y)
+            if directionDelta > rotationUpdateThreshold {
+                cachedRotation = atan2(direction.y, direction.x)
+                lastRotationDirection = direction
+                spriteNode.zRotation = cachedRotation
+            }
         }
     }
     
     func takeDamage(_ amount: Float) {
         guard isAlive else { return }
-        currentHealth -= amount
-        
+        // Validate damage to prevent negative values or exploits
+        let validatedDamage = InputValidation.validateDamage(amount)
+        currentHealth -= validatedDamage
+
         // Visual feedback
         flashDamage()
         
@@ -177,7 +159,10 @@ class BaseEnemy: SKNode {
             SoundManager.shared.playSFX(filename: "sfx_enemy_die.wav", scene: scene)
         }
 
-        // Notify game to spawn XP and count kill
+        // Notify via delegate (preferred)
+        eventDelegate?.enemyDidDie(at: position, xpValue: xpValue)
+
+        // Also post notification for backward compatibility
         NotificationCenter.default.post(name: .enemyDied, object: nil, userInfo: ["position": position, "xp": xpValue])
 
         // Scale down and fade out
@@ -192,11 +177,38 @@ class BaseEnemy: SKNode {
     var isAlive: Bool {
         return currentHealth > 0 && parent != nil
     }
-    
+
     /// Set the enemy's base color (used by subclasses)
     func setColor(_ color: SKColor) {
         originalColor = color
         spriteNode?.color = color
+    }
+
+    // MARK: - Object Pooling Support
+
+    /// Reset enemy state for reuse from object pool
+    func reset() {
+        currentHealth = maxHealth
+        isDying = false
+        isHidden = false
+        alpha = 1.0
+        setScale(1.0)
+        lastHashedPosition = .zero
+        needsRehash = true
+        cachedRotation = 0
+        lastRotationDirection = .zero
+        spriteNode?.removeAllActions()
+        spriteNode?.alpha = 1.0
+        spriteNode?.setScale(1.0)
+        spriteNode?.zRotation = 0
+        // Note: eventDelegate is set by EnemySpawner after spawning
+    }
+
+    /// Prepare enemy for return to pool (called instead of removeFromParent in pooled scenarios)
+    func prepareForPool() {
+        removeFromParent()
+        isHidden = true
+        removeAllActions()
     }
 }
 

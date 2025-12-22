@@ -53,9 +53,10 @@ class ObjectPool<T: SKNode> {
 
 class PoolingManager {
     static let shared = PoolingManager()
-    
+
     private var projectilePools: [String: ObjectPool<Projectile>] = [:]
-    
+    private var enemyPools: [String: ObjectPool<BaseEnemy>] = [:]
+
     private init() {}
     
     func spawnProjectile(weaponName: String, factory: @escaping () -> Projectile) -> Projectile {
@@ -73,12 +74,48 @@ class PoolingManager {
         projectile.removeFromParent()
         projectilePools[weaponName]?.despawn(projectile)
     }
-    
+
+    // MARK: - Enemy Pooling
+
+    func spawnEnemy(enemyType: String, factory: @escaping () -> BaseEnemy) -> BaseEnemy {
+        if enemyPools[enemyType] == nil {
+            enemyPools[enemyType] = ObjectPool<BaseEnemy>(initialSize: 10, factory: factory)
+        }
+
+        let enemy = enemyPools[enemyType]!.spawn()
+        enemy.poolType = enemyType
+        enemy.reset()
+        return enemy
+    }
+
+    func despawnEnemy(_ enemy: BaseEnemy, enemyType: String) {
+        enemy.prepareForPool()
+        enemyPools[enemyType]?.despawn(enemy)
+    }
+
+    func getActiveEnemies(enemyType: String) -> [BaseEnemy] {
+        return enemyPools[enemyType]?.getActive() ?? []
+    }
+
+    // MARK: - Cleanup
+
     func clearAll() {
         for pool in projectilePools.values {
             pool.clear()
         }
         projectilePools.removeAll()
+
+        for pool in enemyPools.values {
+            pool.clear()
+        }
+        enemyPools.removeAll()
+    }
+
+    func clearEnemies() {
+        for pool in enemyPools.values {
+            pool.clear()
+        }
+        enemyPools.removeAll()
     }
 }
 

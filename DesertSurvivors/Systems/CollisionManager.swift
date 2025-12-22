@@ -33,8 +33,10 @@ class SpatialHash {
         for dx in -cellsToCheck...cellsToCheck {
             for dy in -cellsToCheck...cellsToCheck {
                 // Skip corner cells outside circular radius
+                // Buffer multiplier (2.0) ensures we don't miss entities near cell boundaries
+                // due to position updates between hash rebuilds
                 let cellDistSquared = CGFloat(dx * dx + dy * dy) * cellSize * cellSize
-                if cellDistSquared > radiusSquared * 2.0 { continue } // *2.0 offers a safe buffer
+                if cellDistSquared > radiusSquared * 2.0 { continue }
                 
                 let checkPos = CGPoint(
                     x: position.x + CGFloat(dx) * cellSize,
@@ -90,6 +92,7 @@ class CollisionManager {
     private(set) var spatialHash: SpatialHash
     private var framesSinceFullRebuild: Int = 0
     private let fullRebuildInterval: Int = 120 // Full rebuild every 2 seconds at 60fps
+    private var trackedNonEnemyNodes: Set<ObjectIdentifier> = [] // Track non-enemy nodes to prevent duplicate insertion
 
     init() {
         spatialHash = SpatialHash()
@@ -101,11 +104,14 @@ class CollisionManager {
         // Periodically do a full rebuild to clean up dead enemies
         if framesSinceFullRebuild >= fullRebuildInterval {
             spatialHash.clear()
+            trackedNonEnemyNodes.removeAll(keepingCapacity: true)
             for node in nodes {
                 spatialHash.insert(node)
                 if let enemy = node as? BaseEnemy {
                     enemy.lastHashedPosition = enemy.position
                     enemy.needsRehash = false
+                } else {
+                    trackedNonEnemyNodes.insert(ObjectIdentifier(node))
                 }
             }
             framesSinceFullRebuild = 0
@@ -128,8 +134,12 @@ class CollisionManager {
                     enemy.needsRehash = false
                 }
             } else {
-                // Non-enemy nodes: always insert (for compatibility)
-                spatialHash.insert(node)
+                // Non-enemy nodes: only insert once (tracked to prevent duplicates)
+                let nodeId = ObjectIdentifier(node)
+                if !trackedNonEnemyNodes.contains(nodeId) {
+                    spatialHash.insert(node)
+                    trackedNonEnemyNodes.insert(nodeId)
+                }
             }
         }
     }

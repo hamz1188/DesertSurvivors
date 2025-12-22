@@ -9,14 +9,14 @@ import SpriteKit
 
 class CurvedDagger: BaseWeapon {
     private var daggers: [SKSpriteNode] = []
-    private var orbitRadius: CGFloat = 60
-    private var orbitSpeed: CGFloat = 3.0 // radians per second
+    private var orbitRadius: CGFloat = Constants.Weapon.curvedDaggerOrbitRadius
+    private var orbitSpeed: CGFloat = Constants.Weapon.curvedDaggerOrbitSpeed
     private var currentAngle: CGFloat = 0
     private var previousAngle: CGFloat = 0
-    
+
     // Track which enemies have been hit recently to prevent spam
     private var hitCooldowns: [ObjectIdentifier: TimeInterval] = [:]
-    private let hitCooldownDuration: TimeInterval = 0.3 // Can hit same enemy again after 0.3s
+    private let hitCooldownDuration: TimeInterval = Constants.Weapon.curvedDaggerHitCooldown
     
     init() {
         super.init(name: "Curved Dagger", baseDamage: 10, cooldown: 1.5)
