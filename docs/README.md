@@ -1,36 +1,20 @@
-# Desert Survivors - Web Demo
+# Desert Survivors - Landing Page
 
-A browser-based demo of **Desert Survivors**, a Vampire Survivors-style roguelike survival game set in the mythical Arabian desert.
+A showcase landing page for **Desert Survivors**, a Vampire Survivors-style roguelike survival game set in the mythical Arabian desert.
 
-## Play Now
+## View the Page
 
-**[Play on Vercel](https://desert-survivors.vercel.app/)** | [GitHub Pages Mirror](https://hamz1188.github.io/DesertSurvivors/)
+**[Visit Landing Page](https://desert-survivors.vercel.app/)** | [GitHub Pages Mirror](https://hamz1188.github.io/DesertSurvivors/)
 
-## About This Demo
+## About This Page
 
-This is a simplified web version of Desert Survivors, built with [Kaboom.js](https://kaboomjs.com/) to showcase the core gameplay mechanics. The demo runs directly in your browser and features:
-
-### Gameplay
-- **Auto-attacking daggers** that orbit your character and damage enemies on contact
-- **Enemy waves** that spawn from screen edges and chase you
-- **XP orbs** with magnetic collection - get close and they fly to you
-- **Leveling system** - gain XP, level up, get stronger
-- **Progressive difficulty** - enemies get faster and tougher over time
-- **Multiple enemy types** - normal, fast, and tank variants
-
-### Controls
-| Input | Action |
-|-------|--------|
-| WASD / Arrow Keys | Move |
-| Click/Tap | Move toward cursor |
-| On-screen D-Pad | Mobile touch controls |
-| ESC / Pause Button | Pause game |
-
-### HUD
-- Health bar with numeric display
-- Level indicator with XP progress bar
-- Survival timer
-- Kill counter
+This landing page showcases the iOS game with:
+- App icon and branding
+- Feature highlights
+- Character roster (8 playable characters)
+- Weapon gallery (12 weapons + evolutions)
+- Game statistics
+- Coming Soon to App Store call-to-action
 
 ## The Full Game
 
