@@ -393,10 +393,11 @@
 
             // Player
             const player = add([
-                circle(16),
+                rect(32, 32, { radius: 16 }),
                 pos(GAME_WIDTH / 2, GAME_HEIGHT / 2),
+                anchor("center"),
                 color(COLORS.player),
-                area({ shape: new Circle(vec2(0), 14) }),
+                area(),
                 z(10),
                 "player",
                 {
@@ -491,10 +492,11 @@
             // XP Orb spawning
             function spawnXP(position) {
                 add([
-                    circle(5),
+                    rect(10, 10, { radius: 5 }),
                     pos(position),
+                    anchor("center"),
                     color(COLORS.xp),
-                    area({ shape: new Circle(vec2(0), 8) }),
+                    area(),
                     z(5),
                     "xp",
                     { collected: false },
@@ -604,10 +606,11 @@
                 }
 
                 add([
-                    circle(size),
+                    rect(size * 2, size * 2, { radius: size }),
                     pos(spawnPos),
+                    anchor("center"),
                     color(enemyColor),
-                    area({ shape: new Circle(vec2(0), size - 2) }),
+                    area(),
                     z(8),
                     "enemy",
                     {
@@ -852,11 +855,12 @@
             // D-pad buttons
             function createDpadBtn(direction, offset) {
                 const btn = add([
-                    circle(22),
+                    rect(44, 44, { radius: 22 }),
                     pos(DPAD_CENTER.add(offset)),
+                    anchor("center"),
                     color(rgb(80, 80, 80)),
                     opacity(0.8),
-                    area({ shape: new Circle(vec2(0), 25) }),
+                    area(),
                     fixed(),
                     z(100),
                     "dpad",
