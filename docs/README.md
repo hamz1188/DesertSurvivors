@@ -4,7 +4,7 @@ A browser-based demo of **Desert Survivors**, a Vampire Survivors-style roguelik
 
 ## Play Now
 
-**[Play the Demo](https://hamz1188.github.io/DesertSurvivors/)**
+**[Play on Vercel](https://desert-survivors.vercel.app/)** | [GitHub Pages Mirror](https://hamz1188.github.io/DesertSurvivors/)
 
 ## About This Demo
 
