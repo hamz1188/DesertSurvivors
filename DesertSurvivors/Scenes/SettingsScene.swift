@@ -60,13 +60,14 @@ class SettingsScene: SKScene {
         resetLabel.position = CGPoint(x: size.width / 2, y: startY - spacing * 4.5)
         addChild(resetLabel)
         
-        // Back Button
+        // Back Button - positioned below Dynamic Island safe area
         let backButton = SKLabelNode(fontNamed: "AvenirNext-Bold")
         backButton.name = "backButton"
-        backButton.text = "BACK"
+        backButton.text = "< BACK"
         backButton.fontSize = 28
         backButton.fontColor = .white
-        backButton.position = CGPoint(x: 80, y: size.height - 80) // Standard Top-Left
+        backButton.horizontalAlignmentMode = .left
+        backButton.position = CGPoint(x: 20, y: size.height - 120)
         addChild(backButton)
     }
     

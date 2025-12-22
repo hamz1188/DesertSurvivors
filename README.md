@@ -376,3 +376,44 @@ Utilities/
 | Input Validation | None | Full |
 
 **Documentation**: See `IMPROVEMENT_PLAN.md` for detailed analysis and implementation notes.
+
+### 🎬 Enemy Animation Integration (2025-12-22)
+
+Full walk animation support for all 8 enemy types using PixelLab AI-generated sprites:
+
+#### Animation System:
+- ✅ **BaseEnemy Animation Framework**: Added `Direction` enum with 8 directions and walk cycle loading
+- ✅ **Dynamic Frame Support**: Configurable frame counts per enemy (4, 6, or 8 frames)
+- ✅ **4/8 Direction Support**: Enemies can use either 4 or 8 directional sprites via `uses8Directions`
+- ✅ **248 Animation Frames**: Generated and integrated into asset catalog
+
+#### Enemy Animations:
+| Enemy | Directions | Frames | Notes |
+|-------|------------|--------|-------|
+| Sand Scarab | 8 | 4 | Default walker |
+| Desert Rat | 8 | 8 | Fast, smooth animation |
+| Scorpion | 8 | 4 | Default walker |
+| Dust Sprite | 8 | 1 | Static (generation failed) |
+| Mummified Wanderer | 4 | 6 | Slow, shambling gait |
+| Sand Cobra | 8 | 4 | Slithering motion |
+| Desert Bandit | 4 | 4 | Human walk cycle |
+| Cursed Jackal | 8 | 4 | Four-legged run |
+
+### 🐛 Bug Fixes (2025-12-22)
+
+Critical gameplay and visual bug fixes:
+
+#### Player Visual Drift Fix:
+- ✅ **Root Cause**: `visualContainer` position drifting due to `SKAction.moveBy()` not resetting between animation switches
+- ✅ **Fix**: Added position/scale reset in `startIdleAnimation()` and `startWalkAnimation()`
+- ✅ **Impact**: Fixes weapon orbit, gem collection, and animation consistency
+
+#### Map Pixelation Fix:
+- ✅ **Root Cause**: Both `MapGenerator` and `WorldManager` creating overlapping background tiles
+- ✅ **Fix**: Removed duplicate tile creation from `WorldManager` (now only handles dynamic props)
+- ✅ **Impact**: Clean single-layer ground rendering
+
+#### UI Safe Area Fix:
+- ✅ **Issue**: Back buttons overlapping with Dynamic Island
+- ✅ **Fix**: Repositioned from `y: size.height - 80` to `y: size.height - 120`
+- ✅ **Files**: CharacterSelectionScene, SettingsScene, ShopScene

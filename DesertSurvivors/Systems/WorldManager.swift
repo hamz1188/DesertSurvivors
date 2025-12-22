@@ -140,14 +140,14 @@ class WorldManager {
     
     private func createTile(at coord: CGPoint) {
         guard let scene = scene else { return }
-        
-        let tile = SKSpriteNode(texture: backgroundTexture)
-        tile.size = CGSize(width: tileSize, height: tileSize)
-        tile.position = CGPoint(x: coord.x * tileSize, y: coord.y * tileSize)
-        tile.zPosition = Constants.ZPosition.background
-        scene.addChild(tile)
-        tiles[coord] = tile
-        
+
+        // NOTE: Background tiles are handled by MapGenerator's SKTileMapNode.
+        // We only track tile coordinates here for prop management (no duplicate background).
+        // Using an empty placeholder node to track the coordinate.
+        let placeholder = SKNode()
+        placeholder.position = CGPoint(x: coord.x * tileSize, y: coord.y * tileSize)
+        tiles[coord] = SKSpriteNode() // Dummy entry for tracking
+
         spawnProps(for: coord)
     }
     

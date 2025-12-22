@@ -350,6 +350,10 @@ class Player: SKNode {
         visualContainer?.removeAction(forKey: "walkBounce")
         spriteNode?.removeAction(forKey: walkActionKey)
 
+        // CRITICAL: Reset container position and scale to prevent drift
+        visualContainer?.position = .zero
+        visualContainer?.setScale(1.0)
+
         // Reset to idle texture for current direction
         if hasDirectionalSprites, let idleTexture = directionalTextures[currentDirection] {
             spriteNode?.texture = idleTexture
@@ -375,6 +379,10 @@ class Player: SKNode {
     private func startWalkAnimation() {
         visualContainer?.removeAction(forKey: idleActionKey)
         spriteNode?.removeAction(forKey: walkActionKey)
+
+        // CRITICAL: Reset container position and scale to prevent drift
+        visualContainer?.position = .zero
+        visualContainer?.setScale(1.0)
 
         // Use frame-based walk animation if available
         if hasWalkAnimations, let frames = walkAnimationTextures[currentDirection], !frames.isEmpty {

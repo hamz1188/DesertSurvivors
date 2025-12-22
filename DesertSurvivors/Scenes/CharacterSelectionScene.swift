@@ -35,12 +35,13 @@ class CharacterSelectionScene: SKScene {
             addChild(card)
         }
         
-        // Back Button
+        // Back Button - positioned below Dynamic Island safe area
         let backButton = SKLabelNode(fontNamed: "AvenirNext-Bold")
         backButton.text = "< Back"
         backButton.fontSize = 24
         backButton.fontColor = .gray
-        backButton.position = CGPoint(x: 60, y: size.height - 80) // Lowered from 50.
+        backButton.horizontalAlignmentMode = .left
+        backButton.position = CGPoint(x: 20, y: size.height - 120)
         backButton.name = "backButton"
         addChild(backButton)
     }

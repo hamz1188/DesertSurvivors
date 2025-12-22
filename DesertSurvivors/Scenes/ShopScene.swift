@@ -42,13 +42,14 @@ class ShopScene: SKScene {
         
         updateGoldDisplay()
         
-        // Back Button
+        // Back Button - positioned below Dynamic Island safe area
         backButton = SKLabelNode(fontNamed: "Arial-BoldMT")
-        backButton.text = "BACK"
+        backButton.text = "< BACK"
         backButton.fontSize = 28
         backButton.fontColor = .white
         backButton.name = "backButton"
-        backButton.position = CGPoint(x: 80, y: size.height - 80) // Standardized to 80
+        backButton.horizontalAlignmentMode = .left
+        backButton.position = CGPoint(x: 20, y: size.height - 120)
         addChild(backButton)
     }
     
