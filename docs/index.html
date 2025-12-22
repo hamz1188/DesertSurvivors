@@ -434,6 +434,82 @@
             height: 20px;
         }
 
+        /* Screenshots Section */
+        .screenshots {
+            padding: 100px 20px;
+            overflow: hidden;
+        }
+
+        .screenshots-container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .iphone-mockup {
+            position: relative;
+            background: #1c1c1e;
+            border-radius: 45px;
+            padding: 10px;
+            box-shadow:
+                0 0 0 2px #3a3a3c,
+                0 0 0 4px #1c1c1e,
+                0 30px 60px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s;
+        }
+
+        .iphone-mockup:hover {
+            transform: translateY(-10px);
+        }
+
+        .iphone-screen {
+            position: relative;
+            width: 220px;
+            height: 476px;
+            background: #000;
+            border-radius: 36px;
+            overflow: hidden;
+        }
+
+        .iphone-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .iphone-notch {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 24px;
+            background: #000;
+            border-radius: 15px;
+            z-index: 10;
+        }
+
+        .iphone-home {
+            position: absolute;
+            bottom: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            z-index: 10;
+        }
+
+        .screenshot-label {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .hero {
@@ -453,6 +529,19 @@
 
             .scroll-hint {
                 display: none;
+            }
+
+            .iphone-screen {
+                width: 180px;
+                height: 390px;
+            }
+
+            .iphone-mockup {
+                border-radius: 38px;
+            }
+
+            .screenshots-container {
+                gap: 25px;
             }
         }
     </style>
@@ -485,6 +574,31 @@
             </div>
         </a>
         <div class="scroll-hint">Scroll to explore</div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="screenshots">
+        <div class="container">
+            <h2 class="section-title">Game <span>Screenshots</span></h2>
+            <div class="screenshots-container">
+                <div class="iphone-mockup">
+                    <div class="iphone-screen">
+                        <div class="iphone-notch"></div>
+                        <img src="images/gameplay-2.png" alt="Desert Survivors Gameplay">
+                        <div class="iphone-home"></div>
+                    </div>
+                    <p class="screenshot-label">Early Game Combat</p>
+                </div>
+                <div class="iphone-mockup">
+                    <div class="iphone-screen">
+                        <div class="iphone-notch"></div>
+                        <img src="images/gameplay-1.png" alt="Desert Survivors World">
+                        <div class="iphone-home"></div>
+                    </div>
+                    <p class="screenshot-label">Desert Exploration</p>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- Features Section -->
