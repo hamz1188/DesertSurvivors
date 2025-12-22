@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Desert Survivors - Web Demo</title>
+    <script src="https://unpkg.com/kaboom@3000.1.17/dist/kaboom.mjs" type="module"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        .page-title {
+            color: #f4d03f;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            text-align: center;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            font-weight: bold;
+        }
+
+        .page-subtitle {
+            color: #bbb;
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .iphone-frame {
+            position: relative;
+            background: #1c1c1e;
+            border-radius: 50px;
+            padding: 12px;
+            box-shadow:
+                0 0 0 3px #3a3a3c,
+                0 0 0 6px #1c1c1e,
+                0 25px 50px rgba(0,0,0,0.5),
+                inset 0 0 20px rgba(255,255,255,0.05);
+        }
+
+        .iphone-screen {
+            position: relative;
+            width: 320px;
+            height: 568px;
+            background: #000;
+            border-radius: 38px;
+            overflow: hidden;
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 28px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 100;
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.8);
+        }
+
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 5px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            z-index: 100;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #game-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .controls-info {
+            color: #888;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .controls-info kbd {
+            background: #333;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        .app-store-badge {
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .app-store-badge:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .app-store-badge svg {
+            width: 30px;
+            height: 30px;
+        }
+
+        .app-store-badge span {
+            font-size: 0.9rem;
+        }
+
+        .app-store-badge strong {
+            display: block;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 400px) {
+            .iphone-frame {
+                border-radius: 40px;
+                padding: 8px;
+            }
+            .iphone-screen {
+                width: 280px;
+                height: 500px;
+                border-radius: 32px;
+            }
+            .dynamic-island {
+                width: 75px;
+                height: 24px;
+            }
+        }
+
+        @media (min-height: 900px) {
+            .iphone-screen {
+                width: 375px;
+                height: 667px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-title">Desert Survivors</h1>
+    <p class="page-subtitle">A Vampire Survivors-style roguelike set in the mythical Arabian desert</p>
+
+    <div class="iphone-frame">
+        <div class="iphone-screen">
+            <div class="dynamic-island"></div>
+            <div id="game-container"></div>
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+
+    <div class="controls-info">
+        <kbd>WASD</kbd> or <kbd>Arrow Keys</kbd> to move | Click/Tap to move toward cursor | On-screen D-Pad for mobile
+    </div>
+
+    <a href="#" class="app-store-badge">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        <span>Coming Soon on the<strong>App Store</strong></span>
+    </a>
+
+    <script type="module">
+        import kaboom from "https://unpkg.com/kaboom@3000.1.17/dist/kaboom.mjs";
+
+        // Initialize Kaboom
+        const k = kaboom({
+            root: document.getElementById("game-container"),
+            width: 320,
+            height: 568,
+            background: [194, 158, 108],
+            scale: 1,
+            crisp: true,
+        });
+
+        // Game constants
+        const GAME_WIDTH = 320;
+        const GAME_HEIGHT = 568;
+        const PLAYER_SPEED = 120;
+        const ENEMY_SPEED_BASE = 40;
+        const DAGGER_ORBIT_RADIUS = 45;
+        const DAGGER_ROTATION_SPEED = 3;
+        const XP_MAGNET_RANGE = 60;
+        const XP_MAGNET_SPEED = 200;
+
+        // Colors
+        const COLORS = {
+            sand: rgb(194, 158, 108),
+            sandDark: rgb(160, 120, 80),
+            sandLight: rgb(220, 190, 140),
+            player: rgb(70, 130, 180),
+            enemy: rgb(139, 90, 43),
+            enemyFast: rgb(100, 149, 237),
+            enemyTank: rgb(85, 107, 47),
+            dagger: rgb(192, 192, 192),
+            xp: rgb(50, 205, 50),
+            health: rgb(220, 20, 60),
+            healthBg: rgb(60, 60, 60),
+            gold: rgb(255, 215, 0),
+            white: rgb(255, 255, 255),
+            black: rgb(0, 0, 0),
+        };
+
+        // Game state
+        let gameState = {
+            health: 100,
+            maxHealth: 100,
+            kills: 0,
+            xp: 0,
+            xpToLevel: 10,
+            level: 1,
+            time: 0,
+            daggers: 2,
+            daggerDamage: 25,
+            moveTarget: null,
+            gameOver: false,
+            paused: false,
+        };
+
+        // Input state
+        let inputDir = vec2(0, 0);
+        let dpadDir = vec2(0, 0);
+
+        // Scenes
+        scene("menu", () => {
+            // Desert background
+            add([
+                rect(GAME_WIDTH, GAME_HEIGHT),
+                pos(0, 0),
+                color(COLORS.sand),
+            ]);
+
+            // Decorative dunes
+            for (let i = 0; i < 5; i++) {
+                add([
+                    circle(rand(80, 150)),
+                    pos(rand(0, GAME_WIDTH), rand(200, 500)),
+                    color(COLORS.sandDark),
+                    opacity(0.3),
+                ]);
+            }
+
+            // Title
+            add([
+                text("DESERT\nSURVIVORS", { size: 42, align: "center" }),
+                pos(GAME_WIDTH / 2, 180),
+                anchor("center"),
+                color(COLORS.white),
+                {
+                    draw() {
+                        drawText({
+                            text: "DESERT\nSURVIVORS",
+                            size: 42,
+                            align: "center",
+                            pos: vec2(2, 2),
+                            anchor: "center",
+                            color: rgb(0, 0, 0),
+                            opacity: 0.5,
+                        });
+                    }
+                }
+            ]);
+
+            // Subtitle
+            add([
+                text("Survive the endless desert", { size: 14 }),
+                pos(GAME_WIDTH / 2, 260),
+                anchor("center"),
+                color(rgb(100, 80, 60)),
+            ]);
+
+            // Play button
+            const playBtn = add([
+                rect(180, 50, { radius: 25 }),
+                pos(GAME_WIDTH / 2, 380),
+                anchor("center"),
+                color(rgb(218, 165, 32)),
+                area(),
+                "playBtn",
+            ]);
+
+            add([
+                text("PLAY", { size: 24 }),
+                pos(GAME_WIDTH / 2, 380),
+                anchor("center"),
+                color(COLORS.white),
+            ]);
+
+            // Instructions
+            add([
+                text("Tap or use WASD to move\nAuto-attack nearby enemies", { size: 11, align: "center" }),
+                pos(GAME_WIDTH / 2, 480),
+                anchor("center"),
+                color(rgb(120, 100, 80)),
+            ]);
+
+            onClick("playBtn", () => {
+                go("game");
+            });
+
+            onKeyPress("space", () => {
+                go("game");
+            });
+        });
+
+        scene("game", () => {
+            // Reset game state
+            gameState = {
+                health: 100,
+                maxHealth: 100,
+                kills: 0,
+                xp: 0,
+                xpToLevel: 10,
+                level: 1,
+                time: 0,
+                daggers: 2,
+                daggerDamage: 25,
+                moveTarget: null,
+                gameOver: false,
+                paused: false,
+            };
+            inputDir = vec2(0, 0);
+            dpadDir = vec2(0, 0);
+
+            // World bounds (larger than screen for scrolling feel)
+            const WORLD_SIZE = 1500;
+
+            // Create tiled desert background
+            for (let x = -WORLD_SIZE; x <= WORLD_SIZE; x += 64) {
+                for (let y = -WORLD_SIZE; y <= WORLD_SIZE; y += 64) {
+                    add([
+                        rect(64, 64),
+                        pos(x, y),
+                        color(
+                            (Math.floor(x / 64) + Math.floor(y / 64)) % 2 === 0
+                                ? COLORS.sand
+                                : COLORS.sandLight
+                        ),
+                        z(-10),
+                        "background",
+                    ]);
+                }
+            }
+
+            // Add scattered rocks and cacti
+            for (let i = 0; i < 40; i++) {
+                const px = rand(-WORLD_SIZE, WORLD_SIZE);
+                const py = rand(-WORLD_SIZE, WORLD_SIZE);
+                if (vec2(px, py).len() < 100) continue; // Keep spawn area clear
+
+                const isRock = rand() > 0.5;
+                add([
+                    circle(isRock ? rand(8, 15) : rand(4, 8)),
+                    pos(px, py),
+                    color(isRock ? COLORS.sandDark : rgb(60, 120, 60)),
+                    z(-5),
+                    opacity(0.7),
+                    "prop",
+                ]);
+            }
+
+            // Player
+            const player = add([
+                circle(16),
+                pos(GAME_WIDTH / 2, GAME_HEIGHT / 2),
+                color(COLORS.player),
+                area({ shape: new Circle(vec2(0), 14) }),
+                z(10),
+                "player",
+                {
+                    invincibleTime: 0,
+                },
+            ]);
+
+            // Player inner detail
+            const playerInner = add([
+                circle(8),
+                pos(0, 0),
+                color(rgb(100, 160, 210)),
+                z(11),
+                follow(player),
+            ]);
+
+            // Orbiting daggers
+            let daggerAngle = 0;
+            const daggers = [];
+
+            function updateDaggers() {
+                // Remove old daggers
+                daggers.forEach(d => d.destroy());
+                daggers.length = 0;
+
+                // Create new daggers based on count
+                for (let i = 0; i < gameState.daggers; i++) {
+                    const angleOffset = (Math.PI * 2 / gameState.daggers) * i;
+                    const dagger = add([
+                        rect(20, 6, { radius: 2 }),
+                        pos(0, 0),
+                        color(COLORS.dagger),
+                        anchor("center"),
+                        area(),
+                        z(15),
+                        rotate(0),
+                        "dagger",
+                        { angleOffset, hitEnemies: new Set() },
+                    ]);
+                    daggers.push(dagger);
+                }
+            }
+            updateDaggers();
+
+            // Update dagger positions
+            onUpdate(() => {
+                if (gameState.paused || gameState.gameOver) return;
+
+                daggerAngle += DAGGER_ROTATION_SPEED * dt();
+
+                daggers.forEach((dagger, i) => {
+                    const angle = daggerAngle + dagger.angleOffset;
+                    dagger.pos = player.pos.add(vec2(
+                        Math.cos(angle) * DAGGER_ORBIT_RADIUS,
+                        Math.sin(angle) * DAGGER_ORBIT_RADIUS
+                    ));
+                    dagger.angle = (angle * 180 / Math.PI) + 90;
+
+                    // Reset hit tracking periodically (every half rotation)
+                    if (Math.floor(daggerAngle / Math.PI) !== Math.floor((daggerAngle - DAGGER_ROTATION_SPEED * dt()) / Math.PI)) {
+                        dagger.hitEnemies.clear();
+                    }
+                });
+            });
+
+            // Dagger collision with enemies
+            onCollide("dagger", "enemy", (dagger, enemy) => {
+                if (dagger.hitEnemies.has(enemy)) return;
+                dagger.hitEnemies.add(enemy);
+
+                enemy.hp -= gameState.daggerDamage;
+
+                // Damage flash
+                enemy.use(color(rgb(255, 255, 255)));
+                wait(0.05, () => {
+                    if (enemy.exists()) {
+                        enemy.use(color(enemy.originalColor));
+                    }
+                });
+
+                if (enemy.hp <= 0) {
+                    // Spawn XP
+                    const xpCount = enemy.xpValue || 1;
+                    for (let i = 0; i < xpCount; i++) {
+                        spawnXP(enemy.pos.add(vec2(rand(-10, 10), rand(-10, 10))));
+                    }
+                    enemy.destroy();
+                    gameState.kills++;
+                }
+            });
+
+            // XP Orb spawning
+            function spawnXP(position) {
+                add([
+                    circle(5),
+                    pos(position),
+                    color(COLORS.xp),
+                    area({ shape: new Circle(vec2(0), 8) }),
+                    z(5),
+                    "xp",
+                    { collected: false },
+                ]);
+            }
+
+            // XP magnet and collection
+            onUpdate("xp", (xp) => {
+                if (gameState.gameOver) return;
+
+                const dist = xp.pos.dist(player.pos);
+
+                if (dist < XP_MAGNET_RANGE) {
+                    const dir = player.pos.sub(xp.pos).unit();
+                    xp.pos = xp.pos.add(dir.scale(XP_MAGNET_SPEED * dt()));
+                }
+
+                if (dist < 15) {
+                    xp.destroy();
+                    gameState.xp++;
+
+                    // Level up check
+                    if (gameState.xp >= gameState.xpToLevel) {
+                        gameState.xp = 0;
+                        gameState.level++;
+                        gameState.xpToLevel = Math.floor(gameState.xpToLevel * 1.5);
+
+                        // Level up bonuses
+                        if (gameState.level % 3 === 0 && gameState.daggers < 8) {
+                            gameState.daggers++;
+                            updateDaggers();
+                        }
+                        gameState.daggerDamage += 5;
+                        gameState.maxHealth += 10;
+                        gameState.health = Math.min(gameState.health + 20, gameState.maxHealth);
+
+                        // Level up flash effect
+                        add([
+                            circle(50),
+                            pos(player.pos),
+                            color(COLORS.gold),
+                            opacity(0.5),
+                            z(20),
+                            lifespan(0.3, { fade: 0.3 }),
+                        ]);
+                    }
+                }
+            });
+
+            // Enemy spawning
+            function spawnEnemy() {
+                if (gameState.gameOver) return;
+
+                // Spawn from edges relative to player
+                const side = Math.floor(rand(0, 4));
+                let spawnPos;
+                const offset = 50;
+                const camPos = camPos ? camPos() : player.pos;
+
+                switch (side) {
+                    case 0: // Top
+                        spawnPos = vec2(rand(player.pos.x - 200, player.pos.x + 200), player.pos.y - GAME_HEIGHT/2 - offset);
+                        break;
+                    case 1: // Right
+                        spawnPos = vec2(player.pos.x + GAME_WIDTH/2 + offset, rand(player.pos.y - 300, player.pos.y + 300));
+                        break;
+                    case 2: // Bottom
+                        spawnPos = vec2(rand(player.pos.x - 200, player.pos.x + 200), player.pos.y + GAME_HEIGHT/2 + offset);
+                        break;
+                    case 3: // Left
+                        spawnPos = vec2(player.pos.x - GAME_WIDTH/2 - offset, rand(player.pos.y - 300, player.pos.y + 300));
+                        break;
+                }
+
+                // Enemy types based on time
+                const timeMultiplier = 1 + gameState.time / 60;
+                let enemyType, enemyColor, hp, speed, size, xpValue, damage;
+
+                const typeRoll = rand();
+                if (gameState.time > 90 && typeRoll < 0.15) {
+                    // Tank enemy (after 90s)
+                    enemyType = "tank";
+                    enemyColor = COLORS.enemyTank;
+                    hp = 150 * timeMultiplier;
+                    speed = ENEMY_SPEED_BASE * 0.6;
+                    size = 22;
+                    xpValue = 3;
+                    damage = 20;
+                } else if (gameState.time > 30 && typeRoll < 0.35) {
+                    // Fast enemy (after 30s)
+                    enemyType = "fast";
+                    enemyColor = COLORS.enemyFast;
+                    hp = 30 * timeMultiplier;
+                    speed = ENEMY_SPEED_BASE * 1.8;
+                    size = 10;
+                    xpValue = 1;
+                    damage = 8;
+                } else {
+                    // Normal enemy
+                    enemyType = "normal";
+                    enemyColor = COLORS.enemy;
+                    hp = 50 * timeMultiplier;
+                    speed = ENEMY_SPEED_BASE * (1 + gameState.time / 120);
+                    size = 14;
+                    xpValue = 1;
+                    damage = 12;
+                }
+
+                add([
+                    circle(size),
+                    pos(spawnPos),
+                    color(enemyColor),
+                    area({ shape: new Circle(vec2(0), size - 2) }),
+                    z(8),
+                    "enemy",
+                    {
+                        hp,
+                        speed,
+                        originalColor: enemyColor,
+                        xpValue,
+                        damage,
+                        enemyType,
+                    },
+                ]);
+            }
+
+            // Spawn timer (increases over time)
+            let spawnTimer = 0;
+            onUpdate(() => {
+                if (gameState.paused || gameState.gameOver) return;
+
+                spawnTimer += dt();
+                const spawnRate = Math.max(0.3, 1.5 - gameState.time / 120);
+
+                if (spawnTimer >= spawnRate) {
+                    spawnTimer = 0;
+                    const count = 1 + Math.floor(gameState.time / 45);
+                    for (let i = 0; i < count; i++) {
+                        spawnEnemy();
+                    }
+                }
+            });
+
+            // Enemy AI
+            onUpdate("enemy", (enemy) => {
+                if (gameState.paused || gameState.gameOver) return;
+
+                const dir = player.pos.sub(enemy.pos).unit();
+                enemy.pos = enemy.pos.add(dir.scale(enemy.speed * dt()));
+            });
+
+            // Enemy collision with player
+            onCollide("enemy", "player", (enemy, player) => {
+                if (player.invincibleTime > 0) return;
+
+                gameState.health -= enemy.damage;
+                player.invincibleTime = 0.5;
+
+                // Damage flash
+                player.use(color(rgb(255, 100, 100)));
+                wait(0.1, () => {
+                    player.use(color(COLORS.player));
+                });
+
+                // Knockback
+                const knockDir = player.pos.sub(enemy.pos).unit();
+                player.pos = player.pos.add(knockDir.scale(30));
+
+                if (gameState.health <= 0) {
+                    gameState.gameOver = true;
+                    wait(0.5, () => go("gameover"));
+                }
+            });
+
+            // Player invincibility timer
+            onUpdate(() => {
+                if (player.invincibleTime > 0) {
+                    player.invincibleTime -= dt();
+                    player.opacity = Math.sin(time() * 20) > 0 ? 0.5 : 1;
+                } else {
+                    player.opacity = 1;
+                }
+            });
+
+            // Player movement
+            onUpdate(() => {
+                if (gameState.paused || gameState.gameOver) return;
+
+                // Keyboard input
+                let moveDir = vec2(0, 0);
+
+                if (isKeyDown("left") || isKeyDown("a")) moveDir.x -= 1;
+                if (isKeyDown("right") || isKeyDown("d")) moveDir.x += 1;
+                if (isKeyDown("up") || isKeyDown("w")) moveDir.y -= 1;
+                if (isKeyDown("down") || isKeyDown("s")) moveDir.y += 1;
+
+                // Combine with D-pad input
+                moveDir = moveDir.add(dpadDir);
+
+                // Click/tap to move
+                if (gameState.moveTarget) {
+                    const toTarget = gameState.moveTarget.sub(player.pos);
+                    if (toTarget.len() > 10) {
+                        moveDir = toTarget.unit();
+                    } else {
+                        gameState.moveTarget = null;
+                    }
+                }
+
+                // Apply movement
+                if (moveDir.len() > 0) {
+                    player.pos = player.pos.add(moveDir.unit().scale(PLAYER_SPEED * dt()));
+                }
+
+                // Clamp to world bounds
+                player.pos.x = clamp(player.pos.x, -WORLD_SIZE + 20, WORLD_SIZE - 20);
+                player.pos.y = clamp(player.pos.y, -WORLD_SIZE + 20, WORLD_SIZE - 20);
+            });
+
+            // Camera follow
+            onUpdate(() => {
+                camPos(player.pos);
+            });
+
+            // Click/tap to move (only on game area, not UI)
+            onClick(() => {
+                const clickPos = toWorld(mousePos());
+                // Check if click is on UI area
+                const screenClick = mousePos();
+                if (screenClick.y < 80) return; // Top UI area
+                if (screenClick.y > GAME_HEIGHT - 100) return; // Bottom D-pad area
+
+                gameState.moveTarget = clickPos;
+            });
+
+            // Game timer
+            onUpdate(() => {
+                if (!gameState.paused && !gameState.gameOver) {
+                    gameState.time += dt();
+                }
+            });
+
+            // ========== HUD ==========
+
+            // Health bar background
+            const healthBarBg = add([
+                rect(140, 14, { radius: 7 }),
+                pos(10, 50),
+                color(COLORS.healthBg),
+                fixed(),
+                z(100),
+            ]);
+
+            // Health bar
+            const healthBar = add([
+                rect(136, 10, { radius: 5 }),
+                pos(12, 52),
+                color(COLORS.health),
+                fixed(),
+                z(101),
+            ]);
+
+            // Health text
+            const healthText = add([
+                text("100/100", { size: 10 }),
+                pos(80, 52),
+                anchor("center"),
+                color(COLORS.white),
+                fixed(),
+                z(102),
+            ]);
+
+            // Level indicator
+            const levelText = add([
+                text("Lv.1", { size: 16 }),
+                pos(10, 70),
+                color(COLORS.gold),
+                fixed(),
+                z(100),
+            ]);
+
+            // XP bar
+            const xpBarBg = add([
+                rect(100, 6, { radius: 3 }),
+                pos(55, 75),
+                color(COLORS.healthBg),
+                fixed(),
+                z(100),
+            ]);
+
+            const xpBar = add([
+                rect(0, 4, { radius: 2 }),
+                pos(56, 76),
+                color(COLORS.xp),
+                fixed(),
+                z(101),
+            ]);
+
+            // Timer
+            const timerText = add([
+                text("0:00", { size: 14 }),
+                pos(GAME_WIDTH / 2, 50),
+                anchor("center"),
+                color(COLORS.white),
+                fixed(),
+                z(100),
+            ]);
+
+            // Kills
+            const killsText = add([
+                text("Kills: 0", { size: 12 }),
+                pos(GAME_WIDTH - 10, 50),
+                anchor("topright"),
+                color(COLORS.white),
+                fixed(),
+                z(100),
+            ]);
+
+            // Update HUD
+            onUpdate(() => {
+                // Health bar
+                const healthPercent = gameState.health / gameState.maxHealth;
+                healthBar.width = 136 * Math.max(0, healthPercent);
+                healthText.text = `${Math.ceil(gameState.health)}/${gameState.maxHealth}`;
+
+                // Level and XP
+                levelText.text = `Lv.${gameState.level}`;
+                const xpPercent = gameState.xp / gameState.xpToLevel;
+                xpBar.width = 98 * xpPercent;
+
+                // Timer
+                const mins = Math.floor(gameState.time / 60);
+                const secs = Math.floor(gameState.time % 60);
+                timerText.text = `${mins}:${secs.toString().padStart(2, "0")}`;
+
+                // Kills
+                killsText.text = `Kills: ${gameState.kills}`;
+            });
+
+            // ========== D-PAD ==========
+            const DPAD_SIZE = 45;
+            const DPAD_CENTER = vec2(70, GAME_HEIGHT - 90);
+            const DPAD_OFFSET = 40;
+
+            // D-pad background
+            add([
+                circle(60),
+                pos(DPAD_CENTER),
+                color(rgb(40, 40, 40)),
+                opacity(0.5),
+                fixed(),
+                z(99),
+            ]);
+
+            // D-pad buttons
+            function createDpadBtn(direction, offset) {
+                const btn = add([
+                    circle(22),
+                    pos(DPAD_CENTER.add(offset)),
+                    color(rgb(80, 80, 80)),
+                    opacity(0.8),
+                    area({ shape: new Circle(vec2(0), 25) }),
+                    fixed(),
+                    z(100),
+                    "dpad",
+                    { dir: direction },
+                ]);
+
+                // Arrow indicator
+                add([
+                    text(direction === "up" ? "^" : direction === "down" ? "v" : direction === "left" ? "<" : ">", { size: 20 }),
+                    pos(DPAD_CENTER.add(offset)),
+                    anchor("center"),
+                    color(COLORS.white),
+                    fixed(),
+                    z(101),
+                ]);
+
+                return btn;
+            }
+
+            createDpadBtn("up", vec2(0, -DPAD_OFFSET));
+            createDpadBtn("down", vec2(0, DPAD_OFFSET));
+            createDpadBtn("left", vec2(-DPAD_OFFSET, 0));
+            createDpadBtn("right", vec2(DPAD_OFFSET, 0));
+
+            // D-pad input handling
+            onUpdate("dpad", (btn) => {
+                const touching = isMouseDown() && btn.isHovering();
+                btn.opacity = touching ? 1 : 0.7;
+            });
+
+            onMouseDown(() => {
+                dpadDir = vec2(0, 0);
+                get("dpad").forEach(btn => {
+                    if (btn.isHovering()) {
+                        switch (btn.dir) {
+                            case "up": dpadDir.y = -1; break;
+                            case "down": dpadDir.y = 1; break;
+                            case "left": dpadDir.x = -1; break;
+                            case "right": dpadDir.x = 1; break;
+                        }
+                    }
+                });
+            });
+
+            onMouseRelease(() => {
+                dpadDir = vec2(0, 0);
+            });
+
+            // Pause button
+            const pauseBtn = add([
+                rect(36, 36, { radius: 8 }),
+                pos(GAME_WIDTH - 28, 85),
+                anchor("center"),
+                color(rgb(60, 60, 60)),
+                opacity(0.7),
+                area(),
+                fixed(),
+                z(100),
+                "pauseBtn",
+            ]);
+
+            add([
+                text("||", { size: 18 }),
+                pos(GAME_WIDTH - 28, 85),
+                anchor("center"),
+                color(COLORS.white),
+                fixed(),
+                z(101),
+            ]);
+
+            onClick("pauseBtn", () => {
+                gameState.paused = !gameState.paused;
+            });
+
+            onKeyPress("escape", () => {
+                gameState.paused = !gameState.paused;
+            });
+
+            // Pause overlay
+            onDraw(() => {
+                if (gameState.paused) {
+                    drawRect({
+                        width: GAME_WIDTH,
+                        height: GAME_HEIGHT,
+                        pos: vec2(0, 0),
+                        color: rgb(0, 0, 0),
+                        opacity: 0.7,
+                        fixed: true,
+                    });
+                    drawText({
+                        text: "PAUSED",
+                        size: 36,
+                        pos: vec2(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20),
+                        anchor: "center",
+                        color: COLORS.white,
+                        fixed: true,
+                    });
+                    drawText({
+                        text: "Tap to Resume",
+                        size: 16,
+                        pos: vec2(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30),
+                        anchor: "center",
+                        color: rgb(180, 180, 180),
+                        fixed: true,
+                    });
+                }
+            });
+        });
+
+        scene("gameover", () => {
+            // Background
+            add([
+                rect(GAME_WIDTH, GAME_HEIGHT),
+                pos(0, 0),
+                color(rgb(30, 20, 15)),
+            ]);
+
+            // Title
+            add([
+                text("GAME OVER", { size: 36 }),
+                pos(GAME_WIDTH / 2, 150),
+                anchor("center"),
+                color(COLORS.health),
+            ]);
+
+            // Stats
+            add([
+                text(`Survived: ${Math.floor(gameState.time / 60)}m ${Math.floor(gameState.time % 60)}s`, { size: 18 }),
+                pos(GAME_WIDTH / 2, 250),
+                anchor("center"),
+                color(COLORS.white),
+            ]);
+
+            add([
+                text(`Kills: ${gameState.kills}`, { size: 18 }),
+                pos(GAME_WIDTH / 2, 285),
+                anchor("center"),
+                color(COLORS.white),
+            ]);
+
+            add([
+                text(`Level: ${gameState.level}`, { size: 18 }),
+                pos(GAME_WIDTH / 2, 320),
+                anchor("center"),
+                color(COLORS.gold),
+            ]);
+
+            // Retry button
+            const retryBtn = add([
+                rect(160, 50, { radius: 25 }),
+                pos(GAME_WIDTH / 2, 420),
+                anchor("center"),
+                color(rgb(218, 165, 32)),
+                area(),
+                "retryBtn",
+            ]);
+
+            add([
+                text("RETRY", { size: 22 }),
+                pos(GAME_WIDTH / 2, 420),
+                anchor("center"),
+                color(COLORS.white),
+            ]);
+
+            // Menu button
+            const menuBtn = add([
+                rect(160, 40, { radius: 20 }),
+                pos(GAME_WIDTH / 2, 485),
+                anchor("center"),
+                color(rgb(100, 100, 100)),
+                area(),
+                "menuBtn",
+            ]);
+
+            add([
+                text("MENU", { size: 18 }),
+                pos(GAME_WIDTH / 2, 485),
+                anchor("center"),
+                color(COLORS.white),
+            ]);
+
+            onClick("retryBtn", () => go("game"));
+            onClick("menuBtn", () => go("menu"));
+            onKeyPress("space", () => go("game"));
+            onKeyPress("escape", () => go("menu"));
+        });
+
+        // Start with menu
+        go("menu");
+    </script>
+</body>
+</html>
